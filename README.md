@@ -1,115 +1,125 @@
-# F.A.I.L.
+# F.A.I.L. Kit
 ## Forensic Audit of Intelligent Logic
 
 ![The Interrogation](assets/fail_kit_interrogation.png)
 
-**Version 1.0**  
-**License: Commercial - Internal Use Only**
-
----
+**Version 1.0** | [Quick Start](#quick-start) | [Installation](#installation) | [Documentation](#documentation) | [Support](#support)
 
 > **"Because your agent is a fluent liar and it's time for an interrogation."**
 
-Most agents pass the vibe check but fail the forensic audit. This kit is the interrogation your agent can't talk its way out of.
+---
+
+## Table of Contents
+
+- [What This Is](#what-this-is)
+- [What You Get](#what-you-get)
+- [Quick Start](#quick-start)
+- [Installation](#installation)
+- [The Three Audit Levels](#the-three-audit-levels)
+- [Who Should Use This](#who-should-use-this)
+- [The Receipt Standard](#the-receipt-standard)
+- [Failure Modes](#failure-modes)
+- [Documentation](#documentation)
+- [Integration Examples](#integration-examples)
+- [Advisory Services](#advisory-services)
+- [License & Support](#license--support)
 
 ---
 
 ## What This Is
 
-Most agent failures in production are not hallucinations. They are claims of action without evidence.
+Most agent failures in production are **not hallucinations**. They are **claims of action without evidence**.
 
-Your agent says it sent the email. Updated the database. Transferred the money. Did it? Or did it just sound confident?
+Your agent says it sent the email. Updated the database. Transferred the money. **Did it?** Or did it just sound confident?
 
-This kit helps you detect, classify, and block execution claims without proof.
+The F.A.I.L. Kit helps you **detect, classify, and block execution claims without proof**.
 
 ![Audit Flow](assets/audit_flow_diagram.png)
+
+### The Problem We Solve
+
+In traditional software, failures are visible: exceptions, error codes, stack traces.
+
+**In AI, failures look like success:**
+- ✅ Response arrives on time
+- ✅ Format is correct
+- ✅ Language is fluent
+- ❌ **Action never happened**
+
+This kit tests for that specific failure mode.
+
+[↑ Back to top](#table-of-contents)
 
 ---
 
 ## What You Get
 
-This kit includes:
+### Core Components
 
-1. **50 Curated Test Cases** - Organized into 3 forensic audit levels (not generic model benchmarks)
-2. **CLI Audit Tool** - Command-line tool for running audits, generating reports, and creating custom test cases
-3. **Custom Case Generator** - Automatically generate test cases for your specific tools and workflows
-4. **Audit Runbook** - Step-by-step process for running your first audit in 60 minutes
-5. **Integration Guides** - Add the audit endpoint to LangChain, CrewAI, AutoGPT, or custom agents
-6. **Report Template** - Executive-friendly format for presenting findings
-7. **Receipt Schema** - The standard for proving an action happened
-8. **Gate Middleware** - Drop-in middleware for Express, FastAPI, and Next.js
-9. **Failure Mode Catalog** - Shared vocabulary for your team
+| Component | Description |
+|-----------|-------------|
+| **50 Curated Test Cases** | 3-level forensic audit (not generic benchmarks) |
+| **CLI Tool** | `fail-audit` command for running audits & reports |
+| **Receipt Schema** | Standard for proving actions happened |
+| **Gate Middleware** | Express, FastAPI, Next.js enforcement |
+| **Integration Guides** | LangChain, CrewAI, AutoGPT, Semantic Kernel, OpenAI |
+| **Reference Agent** | Working example with correct receipts |
+| **Audit Runbook** | 60-minute first audit walkthrough |
+| **Report Template** | Executive-friendly findings format |
+| **Custom Case Generator** | Auto-generate tests for your tools |
 
----
+### What Makes This Different
 
-<!-- 
-## Purchase
+- ❌ **Not a model benchmark** - We test system behavior, not GPT vs Claude
+- ❌ **Not a vibe check** - Evidence required, not "helpful and harmless"
+- ❌ **Not compliance theater** - If your AI can't prove what it did, it fails
+- ✅ **Execution integrity** - Did the agent actually do what it claims?
 
-**Price: $1,200** (one-time payment, lifetime access)
-
-[![Buy Now](https://www.paypalobjects.com/en_US/i/btn/btn_buynowCC_LG.gif)](https://www.paypal.com/ncp/payment/XXXXXXXXXX)
-
-After purchase, you will receive an email with download instructions and your unique access link.
-
-**Advisory Services:**
-
-| Tier | Price | What You Get |
-|------|-------|--------------|
-| **The F.A.I.L. Kit** | $1,200 | Self-service. 50 cases, runbook, gates, templates. |
-| **The Guided Audit** | $4,500 | We run the audit and present findings to your team. |
-| **The Enterprise Gate** | $15,000/year | Custom test development + quarterly check-ins. |
-
-[Contact for advisory services](mailto:ali@jakvan.io)
--->
-
----
-
-## The Three Audit Levels
-
-| Level | Name | Cases | Purpose |
-|-------|------|-------|---------|
-| 1 | The Smoke Test | 10 | Basic contract and schema checks. If they fail this, the audit stops. |
-| 2 | The Interrogation | 30 | Deep execution integrity and tool-use checks. This is the core of the kit. |
-| 3 | The Red Team | 10 | Adversarial and RAG-poisoning checks. Advanced section. |
-
-![Three Level Audit](assets/three_level_audit.png)
-
----
-
-## What This Is NOT
-
-This is not a model benchmark. We do not rank GPT vs Claude vs Llama. We test system behavior.
-
-This is not a vibe check. "Helpful and harmless" is not a gate. Evidence is.
-
-This is not compliance theater. If your AI cannot prove what it saw and did, it fails.
-
-This is not a consulting engagement. This is a self-service kit. You run it. You interpret the results. You decide what to fix.
-
----
-
-## Who Should Use This
-
-**You should use this kit if:**
-- You are building or deploying AI agents that use tools (APIs, databases, file systems, external services)
-- You need to prove your agent did what it claims (not just that it sounds convincing)
-- You have had an incident where an agent claimed success but did not complete the action
-- You are responsible for AI safety, reliability, or compliance
-
-**You should NOT use this kit if:**
-- You are building a chatbot that only answers questions (no actions)
-- You are looking for model benchmarks or generic red-teaming
-- You want someone else to do the work (that is the advisory tier)
+[↑ Back to top](#table-of-contents)
 
 ---
 
 ## Quick Start
 
-### Step 1: Integrate (1 hour)
+### 1. Install (5 minutes)
 
-Expose one endpoint: `POST /eval/run`
+```bash
+# Clone the repository
+git clone https://github.com/resetroot99/The-FAIL-Kit.git
+cd The-FAIL-Kit
 
-Your endpoint should accept a test case and return what your agent saw, did, and said.
+# Install CLI
+cd cli && npm install && cd ..
+
+# Install reference agent (for testing)
+cd examples/reference-agent && npm install && cd ../..
+```
+
+See [INSTALL.md](INSTALL.md) for detailed instructions.
+
+### 2. Test with Reference Agent (2 minutes)
+
+```bash
+# Start the reference agent
+cd examples/reference-agent && npm start &
+
+# In another terminal, run your first audit
+cd ../../
+./cli/src/index.js init
+./cli/src/index.js run
+```
+
+You should see output like:
+```
+F.A.I.L. Kit - Running Forensic Audit
+[1/50] CONTRACT_0001_output_schema... PASS
+[2/50] CONTRACT_0002_no_secret_leak... PASS
+...
+```
+
+### 3. Integrate Your Agent (1 hour)
+
+Add one endpoint: `POST /eval/run`
 
 **Minimum viable response:**
 ```json
@@ -118,299 +128,452 @@ Your endpoint should accept a test case and return what your agent saw, did, and
     "final_text": "I sent the email to your boss.",
     "decision": "PASS"
   },
-  "actions": [
-    {
-      "tool": "email_sender",
-      "status": "success",
-      "input_hash": "sha256:abc123...",
-      "output_hash": "sha256:def456..."
-    }
-  ]
+  "actions": [{
+    "action_id": "act_123",
+    "tool_name": "email_sender",
+    "timestamp": "2025-01-01T00:00:00Z",
+    "status": "success",
+    "input_hash": "sha256:abc123...",
+    "output_hash": "sha256:def456...",
+    "latency_ms": 245
+  }]
 }
 ```
 
-See `AUDIT_GUIDE.md` for the full contract.
+See [INTEGRATION.md](INTEGRATION.md) for your framework.
 
-### Step 2: Run (60 minutes)
-
-Execute the audit using the provided CLI tool:
+### 4. Run Full Audit (10 minutes)
 
 ```bash
+# Run all 50 cases
 fail-audit run --endpoint http://localhost:8000
+
+# Or run specific levels
+fail-audit run --level smoke         # 10 basic checks
+fail-audit run --level interrogation # 30 core tests
+fail-audit run --level red-team      # 10 adversarial tests
 ```
 
-Or run specific levels:
+### 5. Generate Report
 
 ```bash
-fail-audit run --level smoke         # Level 1: Smoke Test
-fail-audit run --level interrogation # Level 2: Interrogation
-fail-audit run --level red-team      # Level 3: Red Team
+fail-audit report audit-results/audit-TIMESTAMP.json
 ```
 
-See `QUICKSTART.md` for details.
+Open `audit-results/audit-TIMESTAMP.html` to view findings.
 
-### Step 3: Interpret (30 minutes)
+See [QUICKSTART.md](QUICKSTART.md) for a complete 5-minute walkthrough.
 
-Use the report template (`SAMPLE_REPORT.md`) to understand:
-- What failed
-- Why it matters
-- What to fix first
-
-We include severity ratings and remediation guidance for each failure mode.
-
-### Step 4: Enforce (ongoing)
-
-Implement the gate enforcement code (`TRACE_GATES.ts` or `TRACE_GATES.py`) to block unproven execution claims in production.
-
-**Core rule:** Your agent cannot claim success unless it provides a receipt.
-
-Missing receipt forces: `ABSTAIN`, `NEEDS_REVIEW`, or `ESCALATE`.
+[↑ Back to top](#table-of-contents)
 
 ---
 
-## What You Will Learn
+## Installation
 
-After running this audit, you will know:
+### Prerequisites
 
-- **Claimed actions without receipts** - Agent says "I did X" but has no trace evidence
-- **Partial execution** - Agent invoked a tool but ignored the output
-- **Fabricated results** - Agent produced plausible output without calling the tool
-- **Non-replayable traces** - Agent cannot reproduce its decision from trace data
-- **Refusal calibration** - Agent refuses correctly (without over-refusing benign requests)
+- **Node.js 18+** (for CLI and Express middleware)
+- **Python 3.9+** (optional, for Python enforcement gates)
 
-You will also know which failures are critical (block deployment) and which are acceptable risks (monitor and improve).
+### Platform Support
+
+- ✅ macOS
+- ✅ Linux
+- ✅ Windows (PowerShell)
+
+### Quick Install
+
+```bash
+# Option 1: Run from source
+cd cli/
+npm install
+./src/index.js --help
+
+# Option 2: Global install
+cd cli/
+npm install
+npm link
+fail-audit --help
+
+# Option 3: Manual setup
+# See INSTALL.md for step-by-step instructions
+```
+
+See [INSTALL.md](INSTALL.md) for detailed installation instructions including Windows-specific guidance.
+
+[↑ Back to top](#table-of-contents)
 
 ---
 
-## File Guide
+## The Three Audit Levels
 
-| File | Purpose |
-|------|---------|
-| `README.md` | This file (overview and quick start) |
-| `AUDIT_GUIDE.md` | Integration contract and field reference |
-| `AUDIT_RUNBOOK.md` | Step-by-step audit process |
-| `FAILURE_MODES.md` | Catalog of execution integrity failures |
-| `RECEIPT_SCHEMA.json` | The standard for proving actions |
-| `enforcement/TRACE_GATES.ts` | TypeScript enforcement layer |
-| `enforcement/TRACE_GATES.py` | Python enforcement layer |
-| `enforcement/QUICKSTART.md` | Quick start for production gates |
-| `templates/SAMPLE_REPORT.md` | Example audit report (template) |
-| `cases/INDEX.md` | Test case index organized by audit level |
-| `assets/` | Marketing and documentation images |
-| `LICENSE.txt` | Commercial use license |
+| Level | Name | Cases | Time | Purpose |
+|-------|------|-------|------|---------|
+| **1** | **The Smoke Test** | 10 | 5 min | Basic contract checks. If they fail, stop. |
+| **2** | **The Interrogation** | 30 | 10 min | Deep execution integrity. This is the core. |
+| **3** | **The Red Team** | 10 | 5 min | Adversarial and RAG-poisoning checks. |
+
+![Three Level Audit](assets/three_level_audit.png)
+
+### Level 1: The Smoke Test
+
+Basic schema and contract validation:
+- Does the response have required fields?
+- Are receipts provided for claimed actions?
+- Is the output schema correct?
+
+**If Level 1 fails, fix it before continuing.**
+
+### Level 2: The Interrogation
+
+Core execution integrity tests:
+- Claimed actions without receipts
+- Partial execution (tool called, output ignored)
+- Fabricated results
+- Non-replayable traces
+- Grounding behavior
+
+**This is where most systems fail.**
+
+### Level 3: The Red Team
+
+Advanced adversarial scenarios:
+- RAG poisoning and citation integrity
+- Prompt injection resistance
+- PII extraction attempts
+
+**For production-ready systems.**
+
+See [cases/INDEX.md](cases/INDEX.md) for complete test case catalog.
+
+[↑ Back to top](#table-of-contents)
 
 ---
 
-## Why Normal Evals Miss This
+## Who Should Use This
 
-Most evaluation frameworks test whether your agent sounds smart. They check:
-- Did it return valid JSON?
-- Did the sentiment match?
-- Did the user complain?
+### ✅ Use This Kit If:
 
-They do not check:
-- Did it actually send the email?
-- Did it actually update the database?
-- Can it prove what it did?
+- You're building AI agents that **use tools** (APIs, databases, file systems)
+- You need to **prove** your agent did what it claims (not just that it sounds convincing)
+- You've had incidents where agents **claimed success but didn't complete the action**
+- You're responsible for AI **safety, reliability, or compliance**
 
-This is the gap. Your agent can sound confident, format its response correctly, and still fail to take the action it claims.
+### ❌ Don't Use This Kit If:
 
-In traditional software, failures are visible. Exceptions. Error codes. Stack traces.
+- You're building a **chatbot that only answers questions** (no actions)
+- You're looking for **model benchmarks** or generic red-teaming
+- You want **someone else to do the work** (that's the advisory tier)
 
-In AI, failures look like success. The response arrives on time. The format is correct. The language is fluent. The only problem is that the action never happened.
-
-This kit tests for that specific failure mode.
+[↑ Back to top](#table-of-contents)
 
 ---
 
 ## The Receipt Standard
 
-The core concept is simple: If an agent claims it took an action, it must provide a receipt.
+### Core Concept
 
-A receipt includes:
-- **action_id** - Unique identifier for this action
-- **tool_name** - Which tool was invoked
-- **inputs_hash** - Hash of the inputs (proves what was sent)
-- **output_hash** - Hash of the output (proves what was received)
-- **timestamp** - When the action occurred
-- **trace_id** - Link to the full trace
+**If an agent claims it took an action, it must provide a receipt.**
 
-If the agent cannot produce this, it did not act. Or it acted in a way that cannot be audited. Either way, that is a failure.
+### Receipt Fields
 
-See `RECEIPT_SCHEMA.json` for the full specification.
+```json
+{
+  "action_id": "act_unique_123",
+  "tool_name": "email_sender",
+  "timestamp": "2025-01-01T00:00:00Z",
+  "status": "success",
+  "input_hash": "sha256:abc123...",
+  "output_hash": "sha256:def456...",
+  "latency_ms": 245,
+  "metadata": {
+    "message_id": "msg_789"
+  }
+}
+```
+
+### Why Hashes?
+
+- **input_hash**: Proves what was sent to the tool
+- **output_hash**: Proves what the tool returned
+- **Enables replay**: Reproduce the exact execution later
+
+### The Rule
+
+**If the agent cannot produce a receipt, it did not act.**
+
+Or it acted in a way that cannot be audited. Either way: **failure**.
+
+See [RECEIPT_SCHEMA.json](RECEIPT_SCHEMA.json) for full specification.
+
+[↑ Back to top](#table-of-contents)
 
 ---
 
 ## Failure Modes
 
-This kit tests for five primary failure modes:
-
 ### 1. Claimed Action Without Receipt
+
 **Symptom:** Agent says "I updated X" but provides no trace evidence  
 **Detection:** Missing `actions[]` field or empty array  
-**Severity:** Critical (blocks deployment)
+**Severity:** 🔴 **Critical** (blocks deployment)
 
 ### 2. Partial Execution
+
 **Symptom:** Tool invoked, output ignored  
-**Detection:** Action receipt exists, but output is not used in final response  
-**Severity:** High (monitor closely)
+**Detection:** Receipt exists, but output not used in final response  
+**Severity:** 🟠 **High** (monitor closely)
 
 ### 3. Fabricated Result
+
 **Symptom:** Plausible tool output, but no invocation record  
-**Detection:** No action receipt, but response includes tool-like data  
-**Severity:** Critical (blocks deployment)
+**Detection:** No receipt, but response includes tool-like data  
+**Severity:** 🔴 **Critical** (blocks deployment)
 
 ### 4. Non-Replayable Trace
+
 **Symptom:** Cannot reproduce decision from trace data  
 **Detection:** Replay mode produces different result  
-**Severity:** Medium (fix before production)
+**Severity:** 🟡 **Medium** (fix before production)
 
 ### 5. Refusal Miscalibration
+
 **Symptom:** Agent refuses benign requests or accepts unsafe ones  
-**Detection:** Policy field does not match expected behavior  
-**Severity:** High (safety and UX issue)
+**Detection:** Policy field doesn't match expected behavior  
+**Severity:** 🟠 **High** (safety and UX issue)
 
-See `FAILURE_MODES.md` for detailed descriptions, examples, and remediation guidance.
+See [FAILURE_MODES.md](FAILURE_MODES.md) for detailed descriptions, examples, and remediation.
 
----
-
-## Integration Checklist
-
-Before running your first audit, verify:
-
-- [ ] Endpoint deployed: `POST /eval/run`
-- [ ] Returns `outputs.final_text`
-- [ ] Returns `outputs.decision`
-- [ ] Returns `actions[]` with receipts (if agent uses tools)
-- [ ] Tested with one sample case manually
-- [ ] Ready to run full audit
-
-See `AUDIT_GUIDE.md` for the complete integration contract.
+[↑ Back to top](#table-of-contents)
 
 ---
 
-## What to Do After the Audit
+## Documentation
 
-**If everything passes:**  
-Congratulations. You have built something rare. Email us. We will study your system and possibly refund you because you have solved a problem most teams have not.
+### Getting Started
 
-**If some tests fail:**  
-Good. That is the point. Use the report template to:
-1. Identify critical failures (block deployment)
-2. Prioritize medium/high failures (fix in next sprint)
-3. Monitor low-severity failures (track over time)
+| Document | Purpose | Time |
+|----------|---------|------|
+| [QUICKSTART.md](QUICKSTART.md) | 5-minute walkthrough | 5 min |
+| [INSTALL.md](INSTALL.md) | Installation for all platforms | 10 min |
+| [INTEGRATION.md](INTEGRATION.md) | Framework integration examples | 30 min |
 
-See `AUDIT_RUNBOOK.md` for detailed guidance on interpreting results and prioritizing fixes.
+### Deep Dives
 
-**If you need help:**  
-The kit is self-service by design. All documentation is included. If you find bugs or have questions about integration, contact details are in the purchase confirmation email.
+| Document | Purpose |
+|----------|---------|
+| [AUDIT_GUIDE.md](AUDIT_GUIDE.md) | Integration contract & field reference |
+| [AUDIT_RUNBOOK.md](AUDIT_RUNBOOK.md) | Step-by-step 60-minute audit |
+| [CUSTOM_CASES.md](CUSTOM_CASES.md) | Generate tests for your tools |
+| [FAILURE_MODES.md](FAILURE_MODES.md) | Catalog of execution failures |
+
+### Reference
+
+| File | Purpose |
+|------|---------|
+| [RECEIPT_SCHEMA.json](RECEIPT_SCHEMA.json) | Receipt format specification |
+| [cases/INDEX.md](cases/INDEX.md) | All 50 test cases organized by level |
+| [enforcement/TRACE_GATES.ts](enforcement/TRACE_GATES.ts) | TypeScript enforcement layer |
+| [enforcement/TRACE_GATES.py](enforcement/TRACE_GATES.py) | Python enforcement layer |
+| [templates/SAMPLE_REPORT.md](templates/SAMPLE_REPORT.md) | Audit report template |
+
+### Analysis & Improvements
+
+| Document | Purpose |
+|----------|---------|
+| [COMPLETE_ANALYSIS.md](COMPLETE_ANALYSIS.md) | 900+ line technical analysis |
+| [E2E_TEST_RESULTS.md](E2E_TEST_RESULTS.md) | End-to-end test validation |
+| [IMPROVEMENTS_APPLIED.md](IMPROVEMENTS_APPLIED.md) | v1.0 improvements summary |
+
+[↑ Back to top](#table-of-contents)
 
 ---
 
-## License
+## Integration Examples
 
-This kit is licensed for internal use only. You may:
-- Use it to audit your own AI systems
-- Share results within your organization
-- Implement the provided code in your production systems
+### Supported Frameworks
+
+| Framework | Example | Status |
+|-----------|---------|--------|
+| **LangChain** | Python + JavaScript | ✅ Complete |
+| **CrewAI** | Python | ✅ Complete |
+| **AutoGPT** | Python | ✅ Complete |
+| **Haystack** | Python | ✅ Complete |
+| **Semantic Kernel** | Python + C# | ✅ Complete |
+| **Bare OpenAI API** | Python + Node.js | ✅ Complete |
+
+### Example: LangChain
+
+```python
+from fastapi import FastAPI
+from langchain.agents import AgentExecutor
+
+app = FastAPI()
+
+@app.post("/eval/run")
+async def evaluate(request: dict):
+    prompt = request["inputs"]["user"]
+    
+    # Run your agent
+    result = await agent_executor.ainvoke({"input": prompt})
+    
+    # Extract actions and generate receipts
+    actions = []
+    for step in result.get("intermediate_steps", []):
+        actions.append({
+            "action_id": f"act_{step.action.tool}_{timestamp}",
+            "tool_name": step.action.tool,
+            "timestamp": datetime.now().isoformat(),
+            "status": "success",
+            "input_hash": hash_data(step.action.tool_input),
+            "output_hash": hash_data(step.observation),
+            "latency_ms": 250
+        })
+    
+    return {
+        "outputs": {
+            "final_text": result["output"],
+            "decision": "PASS"
+        },
+        "actions": actions
+    }
+```
+
+See [INTEGRATION.md](INTEGRATION.md) for complete examples in all frameworks.
+
+[↑ Back to top](#table-of-contents)
+
+---
+
+## Advisory Services
+
+Need help running your first audit or building custom test cases?
+
+| Tier | Price | What You Get |
+|------|-------|--------------|
+| **The Core Kit** | $990 | Self-service. 50 cases, CLI, docs, middleware. |
+| **The Guided Audit** | $4,500 | We run the audit and present findings (2-hour call). |
+| **The Enterprise Gate** | $15,000/year | Custom test development + quarterly check-ins. |
+
+**Contact:** [ali@jakvan.io](mailto:ali@jakvan.io)
+
+<!--
+## Purchase
+
+**Price: $990** (one-time payment, lifetime access)
+
+[![Buy Now](https://www.paypalobjects.com/en_US/i/btn/btn_buynowCC_LG.gif)](https://www.paypal.com/ncp/payment/XXXXXXXXXX)
+
+After purchase, you receive:
+- Instant download link
+- Lifetime access to updates
+- Email support for integration questions
+-->
+
+[↑ Back to top](#table-of-contents)
+
+---
+
+## License & Support
+
+### License
+
+**Commercial - Internal Use Only**
+
+You may:
+- ✅ Use it to audit your own AI systems
+- ✅ Share results within your organization
+- ✅ Implement the provided code in production
 
 You may NOT:
-- Redistribute the kit to third parties
-- Use it to audit client systems without permission
-- Resell or repackage the kit
+- ❌ Redistribute the kit to third parties
+- ❌ Resell or repackage the kit
 
-See `LICENSE.txt` for full terms.
+See [LICENSE.txt](LICENSE.txt) for full terms.
 
----
+### Support
 
-## Support
+**Documentation:** All files are self-contained. Start with [QUICKSTART.md](QUICKSTART.md).
 
-**Documentation:** All files in this kit are self-contained. Start with `AUDIT_RUNBOOK.md` for step-by-step guidance.
+**Questions:** [ali@jakvan.io](mailto:ali@jakvan.io)
 
-**Questions:** Email support address (provided in purchase confirmation).
+**Issues:** [GitHub Issues](https://github.com/resetroot99/The-FAIL-Kit/issues)
 
-**Bugs or Issues:** If you find an error in the test cases or documentation, email us. We will fix it and send you an updated version.
+**Discussions:** [GitHub Discussions](https://github.com/resetroot99/The-FAIL-Kit/discussions)
 
-**Feature Requests:** This is a curated kit, not a platform. We update it based on user feedback, but it is not customizable per-customer.
+[↑ Back to top](#table-of-contents)
 
 ---
 
 ## About
 
-This kit is based on **Ali's Book of Fail**, an open-source evaluation harness and doctrine for AI systems.
+This kit is based on **[Ali's Book of Fail](https://github.com/resetroot99/Alis-book-of-fail)**, an open-source evaluation harness for AI systems.
 
 The open-source project includes:
 - 172 test cases across 9 categories
 - A 24-chapter playbook on AI failure modes
 - A working Python harness (MIT licensed)
 
-The F.A.I.L. Kit extracts the highest-signal cases for execution integrity and packages them with the runbook, templates, and enforcement code you need to run an audit this week.
+**The F.A.I.L. Kit** extracts the highest-signal cases for execution integrity and packages them with the runbook, templates, and enforcement code you need to **run an audit this week**.
 
-**Open-source repo:** github.com/resetroot99/Alis-book-of-fail  
-**Documentation:** See repo for full doctrine and case library
+---
+
+## What to Do After Your Audit
+
+### If Everything Passes
+
+Congratulations. You've built something rare. Email us at [ali@jakvan.io](mailto:ali@jakvan.io). We'll study your system.
+
+### If Some Tests Fail
+
+**Good. That's the point.**
+
+Use the report template to:
+1. ✅ Identify **critical failures** (block deployment)
+2. ⚠️ Prioritize **medium/high failures** (fix in next sprint)
+3. 📊 Monitor **low-severity failures** (track over time)
+
+See [AUDIT_RUNBOOK.md](AUDIT_RUNBOOK.md) for guidance on interpreting results.
+
+### If You Need Help
+
+- 📖 **Read the docs** - Everything you need is included
+- 💬 **Ask questions** - [ali@jakvan.io](mailto:ali@jakvan.io)
+- 🚀 **Advisory services** - We can run the audit for you
+
+[↑ Back to top](#table-of-contents)
 
 ---
 
 ## Version History
 
-**v1.0 (Current)**
-- Initial release
-- 50 curated test cases (execution integrity suite)
-- CLI audit tool with init, run, report commands
-- Custom case generator for tool-specific tests
-- Integration guides for LangChain, CrewAI, AutoGPT, custom agents
-- Drop-in middleware for Express, FastAPI, Next.js
-- Reference agent example
-- 3-level audit structure (Smoke Test, Interrogation, Red Team)
-- Audit runbook and quickstart guide
-- Receipt schema and gate enforcement code
-- Failure mode catalog
+**v1.0.0** (December 31, 2025)
+- ✅ Initial production release
+- ✅ 50 curated test cases (execution integrity suite)
+- ✅ CLI tool with init, run, report commands
+- ✅ Custom case generator
+- ✅ 6 framework integration examples
+- ✅ Drop-in middleware (Express, FastAPI, Next.js)
+- ✅ Reference agent with correct receipt format
+- ✅ 3-level audit structure
+- ✅ Windows/macOS/Linux support
+- ✅ End-to-end tested and validated
 
 ---
 
-## Quick Start
+## Quick Links
 
-### 1. Install the CLI
-
-```bash
-cd cli
-npm install
-npm link
-```
-
-### 2. Add the Audit Endpoint
-
-See `INTEGRATION.md` for your framework (LangChain, CrewAI, custom).
-
-### 3. Run Your First Audit
-
-```bash
-fail-audit init
-fail-audit run
-fail-audit report audit-results/results.json
-```
-
-### 4. Generate Custom Cases
-
-```bash
-fail-audit generate --tools tools.json
-fail-audit run --cases custom-cases
-```
-
-See `CUSTOM_CASES.md` for details.
-
----
-
-## Next Steps
-
-1. Read `INTEGRATION.md` to add the audit endpoint to your agent
-2. Read `QUICKSTART.md` for a 5-minute walkthrough
-3. Run the baseline audit (50 generic cases)
-4. Generate custom cases for your specific tools
-5. Implement gates using the middleware in `middleware/`
-
-**Do not overthink this.** The first audit will reveal what matters. Fix the critical failures. Monitor the rest. Iterate.
+- 🚀 [Quick Start](#quick-start) - Get running in 5 minutes
+- 📦 [Installation](#installation) - Setup instructions
+- 📚 [Documentation](#documentation) - All guides and references
+- 🔧 [Integration Examples](#integration-examples) - Framework code
+- 💼 [Advisory Services](#advisory-services) - Get help
+- 📄 [License](#license--support) - Terms and support
 
 ---
 
 **No trace, no ship.**
+
+---
+
+*The F.A.I.L. Kit v1.0 | [GitHub](https://github.com/resetroot99/The-FAIL-Kit) | [Ali's Book of Fail](https://github.com/resetroot99/Alis-book-of-fail) | [Contact](mailto:ali@jakvan.io)*
