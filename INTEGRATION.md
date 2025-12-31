@@ -442,6 +442,379 @@ Fix your code and run the audit again.
 
 ---
 
+## Semantic Kernel (Microsoft)
+
+### Python
+
+```python
+from fastapi import FastAPI
+from semantic_kernel import Kernel
+from semantic_kernel.connectors.ai.open_ai import OpenAIChatCompletion
+from semantic_kernel.functions import KernelFunction
+import hashlib
+import json
+from datetime import datetime
+
+app = FastAPI()
+
+# Initialize Semantic Kernel
+kernel = Kernel()
+kernel.add_service(OpenAIChatCompletion(service_id="default"))
+
+def hash_data(data):
+    serialized = json.dumps(data, sort_keys=True)
+    hash_hex = hashlib.sha256(serialized.encode()).hexdigest()
+    return f"sha256:{hash_hex}"
+
+# Define a plugin with functions
+class EmailPlugin:
+    @staticmethod
+    async def send_email(to: str, subject: str) -> str:
+        """Send an email"""
+        # Your actual email logic
+        return f"Email sent to {to}"
+
+# Register the plugin
+kernel.add_plugin(EmailPlugin(), "EmailPlugin")
+
+@app.post("/eval/run")
+async def evaluate(request: dict):
+    prompt = request.get("inputs", {}).get("user", request.get("prompt", ""))
+    
+    # Create a function that logs actions
+    actions = []
+    
+    # Execute with Semantic Kernel
+    result = await kernel.invoke_prompt(
+        function_name="process_request",
+        plugin_name="core",
+        prompt=prompt
+    )
+    
+    # Extract function calls from kernel history
+    if hasattr(result, 'function_results'):
+        for func_result in result.function_results:
+            tool_input = {"prompt": prompt, **func_result.arguments}
+            tool_output = {"result": str(func_result.value)}
+            
+            actions.append({
+                "action_id": f"act_{func_result.function.name}_{datetime.now().timestamp()}",
+                "tool_name": func_result.function.name,
+                "timestamp": datetime.now().isoformat(),
+                "status": "success" if func_result.value else "failed",
+                "input_hash": hash_data(tool_input),
+                "output_hash": hash_data(tool_output),
+                "latency_ms": 300,
+                "metadata": {"function": func_result.function.name}
+            })
+    
+    return {
+        "outputs": {
+            "final_text": str(result),
+            "decision": "PASS"
+        },
+        "actions": actions,
+        "policy": {
+            "refuse": False,
+            "abstain": False,
+            "escalate": False,
+            "reasons": []
+        }
+    }
+```
+
+### C# (.NET)
+
+```csharp
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.Connectors.OpenAI;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+
+[ApiController]
+[Route("eval")]
+public class EvalController : ControllerBase
+{
+    private readonly Kernel _kernel;
+    
+    public EvalController()
+    {
+        var builder = Kernel.CreateBuilder();
+        builder.AddOpenAIChatCompletion("gpt-4", Environment.GetEnvironmentVariable("OPENAI_API_KEY"));
+        _kernel = builder.Build();
+        
+        // Register plugins
+        _kernel.ImportPluginFromType<EmailPlugin>();
+    }
+    
+    private string HashData(object data)
+    {
+        var json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = false });
+        var bytes = Encoding.UTF8.GetBytes(json);
+        var hash = SHA256.HashData(bytes);
+        return $"sha256:{BitConverter.ToString(hash).Replace("-", "").ToLower()}";
+    }
+    
+    [HttpPost("run")]
+    public async Task<IActionResult> Run([FromBody] EvalRequest request)
+    {
+        var prompt = request.Inputs?.User ?? request.Prompt ?? "";
+        
+        var actions = new List<ActionReceipt>();
+        
+        // Execute with function calling
+        var settings = new OpenAIPromptExecutionSettings
+        {
+            ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions
+        };
+        
+        var result = await _kernel.InvokePromptAsync(prompt, new(settings));
+        
+        // Extract function invocations
+        var functionResults = result.Metadata?["FunctionResults"] as List<FunctionResult>;
+        if (functionResults != null)
+        {
+            foreach (var funcResult in functionResults)
+            {
+                var toolInput = new { prompt, arguments = funcResult.Arguments };
+                var toolOutput = new { result = funcResult.Value?.ToString() };
+                
+                actions.Add(new ActionReceipt
+                {
+                    ActionId = $"act_{funcResult.FunctionName}_{DateTimeOffset.Now.ToUnixTimeMilliseconds()}",
+                    ToolName = funcResult.FunctionName,
+                    Timestamp = DateTime.UtcNow.ToString("O"),
+                    Status = "success",
+                    InputHash = HashData(toolInput),
+                    OutputHash = HashData(toolOutput),
+                    LatencyMs = 300,
+                    Metadata = new { function = funcResult.FunctionName }
+                });
+            }
+        }
+        
+        return Ok(new
+        {
+            outputs = new
+            {
+                final_text = result.ToString(),
+                decision = "PASS"
+            },
+            actions,
+            policy = new
+            {
+                refuse = false,
+                abstain = false,
+                escalate = false,
+                reasons = new string[] { }
+            }
+        });
+    }
+}
+
+public class EmailPlugin
+{
+    [KernelFunction, Description("Send an email")]
+    public string SendEmail(string to, string subject)
+    {
+        // Your actual email logic
+        return $"Email sent to {to}";
+    }
+}
+```
+
+---
+
+## Bare OpenAI API (No Framework)
+
+If you're using the OpenAI API directly without a framework:
+
+### Python + FastAPI
+
+```python
+from fastapi import FastAPI
+from openai import OpenAI
+import hashlib
+import json
+from datetime import datetime
+
+app = FastAPI()
+client = OpenAI(api_key="your-api-key")
+
+def hash_data(data):
+    """Generate SHA256 hash for receipts"""
+    serialized = json.dumps(data, sort_keys=True)
+    hash_hex = hashlib.sha256(serialized.encode()).hexdigest()
+    return f"sha256:{hash_hex}"
+
+@app.post("/eval/run")
+async def evaluate(request: dict):
+    prompt = request.get("inputs", {}).get("user", request.get("prompt", ""))
+    
+    # Define tools
+    tools = [
+        {
+            "type": "function",
+            "function": {
+                "name": "send_email",
+                "description": "Send an email",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "to": {"type": "string"},
+                        "subject": {"type": "string"}
+                    }
+                }
+            }
+        }
+    ]
+    
+    # Call OpenAI
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}],
+        tools=tools
+    )
+    
+    actions = []
+    message = response.choices[0].message
+    
+    # Check if tools were called
+    if message.tool_calls:
+        for tool_call in message.tool_calls:
+            tool_input = json.loads(tool_call.function.arguments)
+            
+            # Execute the actual tool
+            if tool_call.function.name == "send_email":
+                tool_output = {"status": "sent", "message_id": f"msg_{tool_call.id}"}
+            else:
+                tool_output = {"status": "unknown"}
+            
+            # Generate receipt per RECEIPT_SCHEMA.json
+            actions.append({
+                "action_id": f"act_{tool_call.id}",
+                "tool_name": tool_call.function.name,
+                "timestamp": datetime.now().isoformat(),
+                "status": "success",
+                "input_hash": hash_data(tool_input),
+                "output_hash": hash_data(tool_output),
+                "latency_ms": 250,
+                "metadata": tool_output
+            })
+    
+    return {
+        "outputs": {
+            "final_text": message.content or "I completed the requested actions.",
+            "decision": "PASS"
+        },
+        "actions": actions,
+        "policy": {
+            "refuse": False,
+            "abstain": False,
+            "escalate": False,
+            "reasons": []
+        }
+    }
+```
+
+### Node.js + Express
+
+```javascript
+const express = require('express');
+const OpenAI = require('openai');
+const crypto = require('crypto');
+
+const app = express();
+app.use(express.json());
+
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+function hashData(data) {
+  const serialized = JSON.stringify(data, Object.keys(data).sort());
+  const hash = crypto.createHash('sha256').update(serialized).digest('hex');
+  return `sha256:${hash}`;
+}
+
+app.post('/eval/run', async (req, res) => {
+  const prompt = req.body.inputs?.user || req.body.prompt || '';
+  
+  // Define tools
+  const tools = [
+    {
+      type: 'function',
+      function: {
+        name: 'send_email',
+        description: 'Send an email',
+        parameters: {
+          type: 'object',
+          properties: {
+            to: { type: 'string' },
+            subject: { type: 'string' }
+          }
+        }
+      }
+    }
+  ];
+  
+  // Call OpenAI
+  const response = await openai.chat.completions.create({
+    model: 'gpt-4',
+    messages: [{ role: 'user', content: prompt }],
+    tools
+  });
+  
+  const actions = [];
+  const message = response.choices[0].message;
+  
+  // Check if tools were called
+  if (message.tool_calls) {
+    for (const toolCall of message.tool_calls) {
+      const toolInput = JSON.parse(toolCall.function.arguments);
+      
+      // Execute the actual tool
+      let toolOutput;
+      if (toolCall.function.name === 'send_email') {
+        toolOutput = { status: 'sent', message_id: `msg_${toolCall.id}` };
+      } else {
+        toolOutput = { status: 'unknown' };
+      }
+      
+      // Generate receipt per RECEIPT_SCHEMA.json
+      actions.push({
+        action_id: `act_${toolCall.id}`,
+        tool_name: toolCall.function.name,
+        timestamp: new Date().toISOString(),
+        status: 'success',
+        input_hash: hashData(toolInput),
+        output_hash: hashData(toolOutput),
+        latency_ms: 250,
+        metadata: toolOutput
+      });
+    }
+  }
+  
+  res.json({
+    outputs: {
+      final_text: message.content || 'I completed the requested actions.',
+      decision: 'PASS'
+    },
+    actions,
+    policy: {
+      refuse: false,
+      abstain: false,
+      escalate: false,
+      reasons: []
+    }
+  });
+});
+
+app.listen(8000);
+```
+
+---
+
 ## Common Issues
 
 ### "ECONNREFUSED"

@@ -75,8 +75,14 @@ Results saved to: audit-results/results.json
 This creates `audit-results/report.html`. Open it in a browser:
 
 ```bash
-open audit-results/report.html  # macOS
-xdg-open audit-results/report.html  # Linux
+# macOS
+open audit-results/report.html
+
+# Linux
+xdg-open audit-results/report.html
+
+# Windows PowerShell
+start audit-results/report.html
 ```
 
 You will see:

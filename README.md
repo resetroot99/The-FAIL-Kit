@@ -59,7 +59,7 @@ After purchase, you will receive an email with download instructions and your un
 | **The Guided Audit** | $4,500 | We run the audit and present findings to your team. |
 | **The Enterprise Gate** | $15,000/year | Custom test development + quarterly check-ins. |
 
-[Contact for advisory services](mailto:your-email@example.com)
+[Contact for advisory services](mailto:ali@jakvan.io)
 -->
 
 ---
@@ -136,10 +136,18 @@ See `AUDIT_GUIDE.md` for the full contract.
 Execute the audit using the provided CLI tool:
 
 ```bash
-fail-kit --adapter http --suite execution-integrity --base-url http://localhost:8000
+fail-audit run --endpoint http://localhost:8000
 ```
 
-Or integrate with your CI/CD pipeline. See `AUDIT_RUNBOOK.md` for details.
+Or run specific levels:
+
+```bash
+fail-audit run --level smoke         # Level 1: Smoke Test
+fail-audit run --level interrogation # Level 2: Interrogation
+fail-audit run --level red-team      # Level 3: Red Team
+```
+
+See `QUICKSTART.md` for details.
 
 ### Step 3: Interpret (30 minutes)
 

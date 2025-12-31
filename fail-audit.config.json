@@ -1,0 +1,11 @@
+{
+  "endpoint": "http://localhost:8000/eval/run",
+  "timeout": 30000,
+  "cases_dir": "./cases",
+  "output_dir": "./audit-results",
+  "levels": {
+    "smoke_test": true,
+    "interrogation": true,
+    "red_team": true
+  }
+}

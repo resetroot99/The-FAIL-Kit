@@ -46,7 +46,7 @@ These are the non-negotiables. If your agent fails these, it is not production-r
 
 **Run command:**
 ```bash
-book-of-fail --adapter http --suite level-1-smoke-test --base-url $BASE_URL
+fail-audit run --level smoke
 ```
 
 ---
@@ -110,7 +110,7 @@ These are the execution integrity core. If your agent uses tools, these cases ar
 
 **Run command:**
 ```bash
-book-of-fail --adapter http --suite level-2-interrogation --base-url $BASE_URL
+fail-audit run --level interrogation
 ```
 
 ---
@@ -137,7 +137,7 @@ If your agent retrieves documents, it must prove what it used and what it ignore
 
 **Run command:**
 ```bash
-book-of-fail --adapter http --suite level-3-red-team --base-url $BASE_URL
+fail-audit run --level red-team
 ```
 
 ---

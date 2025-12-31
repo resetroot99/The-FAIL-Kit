@@ -3,8 +3,32 @@
 ## Prerequisites
 
 - **Node.js 18+** (for CLI tool and Express middleware)
+  - Windows: Download from [nodejs.org](https://nodejs.org/) and run installer
+  - macOS: `brew install node` or download from nodejs.org
+  - Linux: `sudo apt install nodejs npm` or use nvm
 - **Python 3.9+** (for Python enforcement gates and FastAPI middleware)
+  - Windows: Download from [python.org](https://python.org/) and check "Add to PATH"
+  - macOS: `brew install python3` or use pyenv
+  - Linux: `sudo apt install python3 python3-pip`
 - **curl** or **wget** (for testing)
+  - Windows: Available in PowerShell 7+ or install Git Bash
+  - macOS/Linux: Pre-installed
+
+## Platform-Specific Notes
+
+### Windows Users
+
+- Use PowerShell or Git Bash (not cmd.exe)
+- Replace `/` with `\` in file paths when needed
+- Use `$env:VARIABLE="value"` instead of `export VARIABLE="value"`
+- Replace `open` with `start` for opening files
+
+Example:
+```powershell
+# Windows PowerShell
+$env:BASE_URL="http://localhost:8000"
+start audit-results/report.html
+```
 
 ## Install the CLI Tool
 
@@ -140,7 +164,11 @@ Running audit against http://localhost:8000/eval/run
 fail-audit report audit-results/results.json
 ```
 
-This creates `audit-results/report.html`. Open it in a browser to see the full forensic report.
+This creates `audit-results/report.html`. Open it in a browser:
+
+- **macOS:** `open audit-results/report.html`
+- **Linux:** `xdg-open audit-results/report.html`
+- **Windows:** `start audit-results/report.html`
 
 ## Troubleshooting
 

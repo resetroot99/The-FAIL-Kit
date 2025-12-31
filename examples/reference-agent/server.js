@@ -6,6 +6,7 @@
  */
 
 const express = require('express');
+const crypto = require('crypto');
 const app = express();
 app.use(express.json());
 
@@ -13,30 +14,48 @@ app.use(express.json());
 const actionLog = [];
 
 /**
+ * Generate SHA256 hash for action receipts
+ */
+function hashData(data) {
+  const serialized = JSON.stringify(data, Object.keys(data).sort());
+  const hash = crypto.createHash('sha256').update(serialized).digest('hex');
+  return `sha256:${hash}`;
+}
+
+/**
  * Main agent endpoint
  * Expected format matches the F.A.I.L. Kit evaluation harness
  */
 app.post('/eval/run', (req, res) => {
-  const { prompt, context } = req.body;
+  const { inputs, context } = req.body;
+  const prompt = inputs?.user || inputs?.prompt || req.body.prompt || '';
   
   // Parse the prompt to determine what action to take
-  const action = determineAction(prompt);
+  const actionType = determineAction(prompt);
   
   // Execute the action and generate a receipt
-  const result = executeAction(action, prompt);
+  const result = executeAction(actionType, prompt);
   
   // Log the action
   actionLog.push({
     timestamp: new Date().toISOString(),
     prompt,
-    action: result.action,
-    receipt: result.receipt
+    action: result.action
   });
   
+  // Return in F.A.I.L. Kit expected format
   res.json({
-    response: result.response,
-    actions: [result.action],
-    receipts: [result.receipt]
+    outputs: {
+      final_text: result.response,
+      decision: result.decision || 'PASS'
+    },
+    actions: result.actions || [],
+    policy: result.policy || {
+      refuse: false,
+      abstain: false,
+      escalate: false,
+      reasons: []
+    }
   });
 });
 
@@ -60,93 +79,100 @@ function determineAction(prompt) {
 }
 
 /**
- * Execute an action and generate a proper receipt
+ * Execute an action and generate a proper receipt per RECEIPT_SCHEMA.json
  */
 function executeAction(actionType, prompt) {
   const timestamp = new Date().toISOString();
+  const actionId = `act_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   
   switch (actionType) {
     case 'send_email':
+      const emailInput = { prompt, to: 'recipient@example.com', subject: 'Test' };
+      const emailOutput = { status: 'sent', message_id: `msg_${Date.now()}` };
+      
       return {
         response: 'I sent the email as requested.',
-        action: {
-          tool: 'email',
-          input: { prompt },
-          output: { status: 'sent', message_id: `msg_${Date.now()}` }
-        },
-        receipt: {
+        decision: 'PASS',
+        actions: [{
+          action_id: actionId,
+          tool_name: 'email_sender',
           timestamp,
-          tool: 'email',
           status: 'success',
-          message_id: `msg_${Date.now()}`,
-          proof: 'SMTP confirmation received'
-        }
+          input_hash: hashData(emailInput),
+          output_hash: hashData(emailOutput),
+          latency_ms: Math.floor(Math.random() * 500) + 100,
+          metadata: {
+            message_id: emailOutput.message_id,
+            smtp_confirmation: true
+          }
+        }]
       };
       
     case 'write_file':
+      const fileInput = { prompt, path: '/tmp/output.txt', content: 'data' };
+      const fileOutput = { path: '/tmp/output.txt', bytes_written: 42 };
+      
       return {
         response: 'I wrote the file to disk.',
-        action: {
-          tool: 'filesystem',
-          input: { prompt },
-          output: { path: '/tmp/output.txt', bytes_written: 42 }
-        },
-        receipt: {
+        decision: 'PASS',
+        actions: [{
+          action_id: actionId,
+          tool_name: 'file_manager',
           timestamp,
-          tool: 'filesystem',
           status: 'success',
-          path: '/tmp/output.txt',
-          checksum: 'sha256:abc123...'
-        }
+          input_hash: hashData(fileInput),
+          output_hash: hashData(fileOutput),
+          latency_ms: Math.floor(Math.random() * 300) + 50,
+          metadata: {
+            path: fileOutput.path,
+            bytes: fileOutput.bytes_written
+          }
+        }]
       };
       
     case 'transfer_money':
+      const paymentInput = { prompt, amount: 100, currency: 'USD' };
+      const paymentOutput = { transaction_id: `txn_${Date.now()}`, status: 'completed' };
+      
       return {
-        response: 'I transferred the money.',
-        action: {
-          tool: 'payment',
-          input: { prompt },
-          output: { transaction_id: `txn_${Date.now()}`, amount: 100 }
-        },
-        receipt: {
-          timestamp,
-          tool: 'payment',
-          status: 'success',
-          transaction_id: `txn_${Date.now()}`,
-          confirmation: 'Bank API returned 200 OK'
+        response: 'This request requires human review before I can proceed.',
+        decision: 'NEEDS_REVIEW',
+        actions: [],
+        policy: {
+          refuse: false,
+          abstain: false,
+          escalate: true,
+          reasons: ['high-stakes financial transaction detected']
         }
       };
       
     case 'search':
+      const searchInput = { query: prompt };
+      const searchOutput = { results: ['result1', 'result2', 'result3'], count: 3 };
+      
       return {
         response: 'I searched and found 3 results.',
-        action: {
-          tool: 'search',
-          input: { query: prompt },
-          output: { results: ['result1', 'result2', 'result3'] }
-        },
-        receipt: {
+        decision: 'PASS',
+        actions: [{
+          action_id: actionId,
+          tool_name: 'search_engine',
           timestamp,
-          tool: 'search',
           status: 'success',
-          query: prompt,
-          result_count: 3
-        }
+          input_hash: hashData(searchInput),
+          output_hash: hashData(searchOutput),
+          latency_ms: Math.floor(Math.random() * 800) + 200,
+          metadata: {
+            result_count: searchOutput.count
+          }
+        }]
       };
       
     default:
+      // For generic responses with no action
       return {
         response: `I processed your request: ${prompt}`,
-        action: {
-          tool: 'respond',
-          input: { prompt },
-          output: { text: 'Response generated' }
-        },
-        receipt: {
-          timestamp,
-          tool: 'respond',
-          status: 'success'
-        }
+        decision: 'PASS',
+        actions: []  // No action taken, just a response
       };
   }
 }

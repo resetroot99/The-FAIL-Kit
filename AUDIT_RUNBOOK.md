@@ -7,7 +7,9 @@
 
 ## Overview
 
-This runbook walks you through running your first forensic audit in 60 minutes. No prior experience required. Just follow the steps.
+This runbook walks you through running your first forensic audit in 60 minutes.
+
+**NOTE:** This guide uses the F.A.I.L. Kit CLI tool. For the alternative approach using the open-source Ali's Book of Fail harness, see the end of this document.
 
 ---
 
@@ -17,176 +19,58 @@ Before you start:
 - [ ] Your AI system is deployed (locally or remotely)
 - [ ] You have exposed the `/eval/run` endpoint (see AUDIT_GUIDE.md)
 - [ ] You have tested the endpoint with one manual request
-- [ ] You have Python 3.10+ installed
-- [ ] You have cloned the open-source harness repo
+- [ ] You have Node.js 18+ installed
+- [ ] You have the F.A.I.L. Kit installed
 
 ---
 
-## Step 1: Install the Harness (5 minutes)
+## Quick Start with F.A.I.L. Kit CLI
 
-Clone and install the open-source evaluation harness:
-
-```bash
-git clone https://github.com/resetroot99/Alis-book-of-fail.git
-cd Alis-book-of-fail
-pip install -e .
-```
-
-Verify installation:
+### Step 1: Initialize (2 minutes)
 
 ```bash
-book-of-fail --help
+cd /path/to/The-FAIL-Kit
+fail-audit init
 ```
 
-You should see the CLI help output.
+This creates `fail-audit.config.json`:
+```json
+{
+  "endpoint": "http://localhost:8000/eval/run",
+  "timeout": 30000,
+  "cases_dir": "./cases",
+  "output_dir": "./audit-results"
+}
+```
 
----
+Edit the endpoint to point to your agent.
 
-## Step 2: Configure Your System (10 minutes)
+### Step 2: Run the Audit (5-10 minutes)
 
-The harness needs to know where your system is.
-
-**Option A: Local system**
+Run all levels:
 ```bash
-export BASE_URL="http://localhost:8000"
+fail-audit run
 ```
 
-**Option B: Remote system**
+Or run specific levels:
 ```bash
-export BASE_URL="https://your-system.example.com"
+fail-audit run --level smoke          # Level 1 only
+fail-audit run --level interrogation  # Level 2 only
+fail-audit run --level red-team       # Level 3 only
 ```
 
-**Option C: With authentication**
+Or run specific cases:
 ```bash
-export BASE_URL="https://your-system.example.com"
-export AUTH_TOKEN="your-api-key"
+fail-audit run --case CONTRACT_0003
 ```
 
-Test connectivity:
-
-```bash
-curl -X POST $BASE_URL/eval/run \
-  -H "Content-Type: application/json" \
-  -d '{
-    "case_id": "test",
-    "inputs": {"user": "Hello"},
-    "context": {},
-    "fixtures": {},
-    "options": {}
-  }'
-```
-
-You should get a valid JSON response with `outputs.final_text` and `outputs.decision`.
-
----
-
-## The Three Audit Levels
-
-The F.A.I.L. Kit organizes its 50 test cases into three levels:
-
-| Level | Name | Cases | Time | Purpose |
-|-------|------|-------|------|---------|
-| 1 | The Smoke Test | 10 | 15 min | Basic contract checks. If you fail here, stop. |
-| 2 | The Interrogation | 30 | 30 min | Deep execution integrity. This is the core. |
-| 3 | The Red Team | 10 | 15 min | Adversarial probes. Advanced section. |
-
----
-
-## Step 3: Run Level 1 - The Smoke Test (15 minutes)
-
-Copy the Level 1 cases from the kit:
+### Step 3: Generate Report (1 minute)
 
 ```bash
-cp /path/to/fail-kit/cases/level-1-smoke-test/*.yaml \
-   Alis-book-of-fail/eval/cases/custom/
+fail-audit report audit-results/audit-TIMESTAMP.json
 ```
 
-Run the smoke test:
-
-```bash
-book-of-fail --adapter http --suite custom --base-url $BASE_URL
-```
-
-**What to expect:**
-- 10 basic contract and schema checks
-- If everything passes, proceed to Level 2
-- If anything fails, stop and fix before continuing
-
-**Critical failures at this level:**
-- CONTRACT_0003: Agent claims actions without receipts
-- CONTRACT_0002: Agent leaks secrets in output
-
-**If any critical case fails, do not proceed. Fix first.**
-
----
-
-## Step 4: Run Level 2 - The Interrogation (30 minutes)
-
-Copy the Level 2 cases:
-
-```bash
-cp /path/to/fail-kit/cases/level-2-interrogation/*.yaml \
-   Alis-book-of-fail/eval/cases/custom/
-```
-
-Run the interrogation:
-
-```bash
-book-of-fail --adapter http --suite custom --base-url $BASE_URL
-```
-
-This is the core of the F.A.I.L. Kit. You are testing:
-- Execution integrity (AGENT_* cases)
-- Behavior under degraded evidence (SHIFT_* cases)
-- Refusal and escalation calibration (CONTRACT_0004, CONTRACT_0005)
-- Grounding behavior (GROUND_* cases)
-
-**What to watch for:**
-- AGENT_0008: Phantom success (claims success when tool failed)
-- AGENT_0004: Action without confirmation
-- SHIFT_0001: Missing primary source handling
-- CONTRACT_0004: Refusal correctness
-
----
-
-## Step 5: Run Level 3 - The Red Team (15 minutes)
-
-Copy the Level 3 cases:
-
-```bash
-cp /path/to/fail-kit/cases/level-3-red-team/*.yaml \
-   Alis-book-of-fail/eval/cases/custom/
-```
-
-Run the red team:
-
-```bash
-book-of-fail --adapter http --suite custom --base-url $BASE_URL
-```
-
-This tests:
-- RAG poisoning and citation integrity
-- Adversarial prompt handling
-- PII extraction resistance
-
-**What to watch for:**
-- RAG_0002: Citation hallucination
-- RAG_0001: Retrieval poisoning
-- ADV_PII_*: PII leak attempts
-
----
-
-## Step 6: Interpret the Results (10 minutes)
-
-The harness creates a report in `eval/reports/`.
-
-Open the latest report:
-
-```bash
-cat eval/reports/latest.json
-```
-
-Look for:
+Open `audit-results/audit-TIMESTAMP.html` in a browser.
 
 ### Critical Failures (Block Deployment)
 - `CONTRACT_0003_no_claimed_actions` - Agent claims actions without receipts
@@ -423,6 +307,35 @@ Email us. We will fix it and send you an updated version.
 
 **If you need custom test cases:**  
 Email us. We offer The Enterprise Gate ($15,000/year) for custom test development.
+
+---
+
+## Appendix: Using the Open-Source Harness
+
+The F.A.I.L. Kit CLI is the recommended approach. However, you can also use the open-source Ali's Book of Fail harness directly.
+
+### Why use the open-source harness?
+
+- You want to customize the evaluation logic
+- You need the full 170+ test case library (not just the curated 50)
+- You want to contribute test cases back to the community
+- You need Python-specific features
+
+### Setup
+
+```bash
+git clone https://github.com/resetroot99/Alis-book-of-fail.git
+cd Alis-book-of-fail
+pip install -e .
+```
+
+### Running tests
+
+```bash
+book-of-fail --adapter http --suite contract --base-url http://localhost:8000
+```
+
+See the Ali's Book of Fail documentation for full details.
 
 ---
 

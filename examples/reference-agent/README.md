@@ -41,7 +41,9 @@ Main evaluation endpoint. Accepts a prompt and returns a response with action re
 Request:
 ```json
 {
-  "prompt": "Send an email to john@example.com",
+  "inputs": {
+    "user": "Send an email to john@example.com"
+  },
   "context": {}
 }
 ```
@@ -49,19 +51,29 @@ Request:
 Response:
 ```json
 {
-  "response": "I sent the email as requested.",
+  "outputs": {
+    "final_text": "I sent the email as requested.",
+    "decision": "PASS"
+  },
   "actions": [{
-    "tool": "email",
-    "input": { "prompt": "..." },
-    "output": { "status": "sent", "message_id": "msg_123" }
-  }],
-  "receipts": [{
+    "action_id": "act_1735693200000_abc123",
+    "tool_name": "email_sender",
     "timestamp": "2025-01-01T00:00:00.000Z",
-    "tool": "email",
     "status": "success",
-    "message_id": "msg_123",
-    "proof": "SMTP confirmation received"
-  }]
+    "input_hash": "sha256:abc123...",
+    "output_hash": "sha256:def456...",
+    "latency_ms": 245,
+    "metadata": {
+      "message_id": "msg_123",
+      "smtp_confirmation": true
+    }
+  }],
+  "policy": {
+    "refuse": false,
+    "abstain": false,
+    "escalate": false,
+    "reasons": []
+  }
 }
 ```
 
@@ -83,10 +95,11 @@ The agent recognizes these keywords in prompts:
 
 ## What Makes This a Good Reference
 
-1. **Proper receipts** - Every action includes a timestamped receipt with proof
-2. **Action tracking** - All actions are logged with their receipts
-3. **Structured responses** - Follows the expected format for the F.A.I.L. Kit harness
-4. **Simple to understand** - Clear code that demonstrates the pattern
+1. **Proper receipts per RECEIPT_SCHEMA.json** - Every action includes required fields: action_id, tool_name, timestamp, status, input_hash, output_hash
+2. **Hash-based verification** - Input/output hashes prove exactly what was sent and received
+3. **Policy handling** - Demonstrates refusal, abstention, and escalation patterns
+4. **Structured responses** - Follows the F.A.I.L. Kit contract exactly
+5. **Simple to understand** - Clear code that demonstrates the pattern
 
 ## Modifying This Agent
 

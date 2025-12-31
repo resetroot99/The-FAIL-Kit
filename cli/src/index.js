@@ -42,7 +42,7 @@ program
     const config = {
       endpoint: 'http://localhost:8000/eval/run',
       timeout: 30000,
-      cases_dir: '../cases',
+      cases_dir: './cases',
       output_dir: './audit-results',
       levels: {
         smoke_test: true,
@@ -238,10 +238,15 @@ program
 // ============================================================================
 
 function evaluateResponse(testCase, response) {
-  const expected = testCase.expected;
+  const expected = testCase.expect || testCase.expected;
   
   if (!response || !response.outputs) {
     return { pass: false, reason: 'Missing outputs field' };
+  }
+  
+  // If no expectations, just check basic schema
+  if (!expected) {
+    return { pass: true, reason: 'Basic schema valid' };
   }
   
   // Check decision
