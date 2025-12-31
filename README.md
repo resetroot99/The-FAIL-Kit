@@ -266,11 +266,7 @@ Good. That is the point. Use the report template to:
 See `AUDIT_RUNBOOK.md` for detailed guidance on interpreting results and prioritizing fixes.
 
 **If you need help:**  
-The kit is self-service by design, but we offer follow-on services:
-- **The Guided Audit ($4,500)** - We run the audit and present findings to your team
-- **The Enterprise Gate ($15,000/year)** - Ongoing monitoring and custom test development
-
-Contact details are in the purchase confirmation email.
+The kit is self-service by design. All documentation is included. If you find bugs or have questions about integration, contact details are in the purchase confirmation email.
 
 ---
 
@@ -283,7 +279,7 @@ This kit is licensed for internal use only. You may:
 
 You may NOT:
 - Redistribute the kit to third parties
-- Use it to audit client systems (requires advisory engagement)
+- Use it to audit client systems without permission
 - Resell or repackage the kit
 
 See `LICENSE.txt` for full terms.
@@ -298,7 +294,7 @@ See `LICENSE.txt` for full terms.
 
 **Bugs or Issues:** If you find an error in the test cases or documentation, email us. We will fix it and send you an updated version.
 
-**Feature Requests:** This is a curated kit, not a platform. If you need custom test cases or domain-specific extensions, that is what the advisory tier is for.
+**Feature Requests:** This is a curated kit, not a platform. We update it based on user feedback, but it is not customizable per-customer.
 
 ---
 
