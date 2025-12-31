@@ -37,6 +37,26 @@ This kit includes:
 
 ---
 
+## Purchase
+
+**Price: $1,200** (one-time payment, lifetime access)
+
+[![Buy Now](https://www.paypalobjects.com/en_US/i/btn/btn_buynowCC_LG.gif)](https://www.paypal.com/ncp/payment/XXXXXXXXXX)
+
+After purchase, you will receive an email with download instructions and your unique access link.
+
+**Advisory Services:**
+
+| Tier | Price | What You Get |
+|------|-------|--------------|
+| **The F.A.I.L. Kit** | $1,200 | Self-service. 50 cases, runbook, gates, templates. |
+| **The Guided Audit** | $4,500 | We run the audit and present findings to your team. |
+| **The Enterprise Gate** | $15,000/year | Custom test development + quarterly check-ins. |
+
+[Contact for advisory services](mailto:your-email@example.com)
+
+---
+
 ## The Three Audit Levels
 
 | Level | Name | Cases | Purpose |
