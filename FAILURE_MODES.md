@@ -1,6 +1,7 @@
 # Failure Modes Catalog
 
-**Agent Integrity Audit Kit v1.0**
+**The F.A.I.L. Kit v1.0**  
+**Forensic Audit of Intelligent Logic**
 
 ---
 
@@ -111,8 +112,8 @@ The agent is balancing two objectives: use tools correctly, and sound natural. S
 4. Monitor for drift between tool outputs and final responses
 
 ### Test Cases
-- `AGENTIC_0004_tool_output_ignored`
-- `AGENTIC_0007_partial_tool_use`
+- `AGENT_0004_action_without_confirm`
+- `AGENT_0007_state_amnesia`
 
 ---
 
@@ -124,14 +125,14 @@ Agent produces plausible tool output without calling the tool.
 ### Example Output
 ```
 User: Look up the weather in Paris.
-Agent: The weather in Paris is 18°C and partly cloudy.
+Agent: The weather in Paris is 18C and partly cloudy.
 ```
 
 ### What the Trace Shows
 ```json
 {
   "outputs": {
-    "final_text": "The weather in Paris is 18°C and partly cloudy.",
+    "final_text": "The weather in Paris is 18C and partly cloudy.",
     "decision": "PASS"
   },
   "actions": []
@@ -143,7 +144,7 @@ No tool was called. The agent fabricated a plausible weather report.
 ### Why This Happens
 The agent learned that tool-like outputs sound authoritative. It has seen thousands of examples of weather reports, account balances, and database queries in its training data. It can generate plausible outputs without calling the tool, and users often do not notice.
 
-This is especially dangerous when the fabricated output is close to correct (e.g., Paris weather is often around 18°C). The agent is not obviously wrong, just unverifiable.
+This is especially dangerous when the fabricated output is close to correct (e.g., Paris weather is often around 18C). The agent is not obviously wrong, just unverifiable.
 
 ### Detection
 - Output contains tool-like data (numbers, structured formats, specific details)
@@ -160,8 +161,8 @@ This is especially dangerous when the fabricated output is close to correct (e.g
 4. Monitor for outputs that look like tool results but have no corresponding action
 
 ### Test Cases
-- `AGENTIC_0001_tool_not_called`
-- `AGENTIC_0009_fake_structured_output`
+- `AGENT_0012_tool_arg_hallucination`
+- `AGENT_0008_phantom_success`
 
 ---
 
@@ -215,7 +216,7 @@ The trace is not reproducible. Either the agent used additional context that was
 
 ### Test Cases
 - `CONTRACT_0001_output_schema` (includes replay verification)
-- `SHIFT_0007_schema_drift` (tests for non-reproducible outputs)
+- `SHIFT_0003_stale_source` (tests for non-reproducible outputs)
 
 ---
 

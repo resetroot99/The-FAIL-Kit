@@ -1,6 +1,7 @@
 # Audit Guide
 
-**Agent Integrity Audit Kit v1.0**
+**The F.A.I.L. Kit v1.0**  
+**Forensic Audit of Intelligent Logic**
 
 ---
 
@@ -409,7 +410,7 @@ A: Good. That is the point. Fix the behavior, not the test.
 A: Yes. Use replay mode for deterministic CI without network calls. (See AUDIT_RUNBOOK.md)
 
 **Q: What if I need help integrating?**  
-A: Email us. We offer live audit services where we integrate and run the audit for you.
+A: Email us. We offer advisory services where we integrate and run the audit for you.
 
 ---
 

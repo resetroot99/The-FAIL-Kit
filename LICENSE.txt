@@ -1,15 +1,16 @@
-AGENT INTEGRITY AUDIT KIT LICENSE
+THE F.A.I.L. KIT LICENSE
+Forensic Audit of Intelligent Logic
 Version 1.0 - December 31, 2025
 
 Copyright (c) 2025 [Your Name/Company]
 
-This is a commercial license for the Agent Integrity Audit Kit.
+This is a commercial license for The F.A.I.L. Kit (Forensic Audit of Intelligent Logic).
 
 GRANT OF LICENSE
 
 Subject to the terms and conditions of this license, the Licensor grants you a
-non-exclusive, non-transferable, limited license to use the Agent Integrity
-Audit Kit (the "Kit") for internal business purposes only.
+non-exclusive, non-transferable, limited license to use The F.A.I.L. Kit 
+(the "Kit") for internal business purposes only.
 
 PERMITTED USES
 
@@ -35,6 +36,10 @@ ADVISORY SERVICES
 If you wish to use this Kit to audit systems you do not own or operate (e.g.,
 client systems, partner systems), you must engage the Licensor for advisory
 services. Contact [your-email] for pricing.
+
+Available tiers:
+- The Guided Audit ($4,500) - We run the audit and present findings
+- The Enterprise Gate ($15,000/year) - Custom test development and quarterly reviews
 
 NO WARRANTY
 
@@ -80,15 +85,21 @@ For questions about this license, advisory services, or to report violations:
 
 OPEN SOURCE COMPONENTS
 
-This Kit is based on Ali's Book of Fail, an open-source project licensed under
-the MIT License. The open-source harness is available at:
+The F.A.I.L. Kit is based on Ali's Book of Fail, an open-source evaluation 
+harness and doctrine for AI systems licensed under the MIT License. 
+
+The open-source harness is available at:
 https://github.com/resetroot99/Alis-book-of-fail
 
 The open-source components remain under the MIT License. This commercial license
-applies only to the curated test cases, runbook, report templates, and failure
-mode catalog included in this Kit.
+applies only to the curated test cases, runbook, report templates, enforcement
+code, and failure mode catalog included in this Kit.
 
 ---
 
 By using the Kit, you acknowledge that you have read this license, understand it,
 and agree to be bound by its terms and conditions.
+
+---
+
+No trace, no ship.

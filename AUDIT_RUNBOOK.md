@@ -1,12 +1,13 @@
 # Audit Runbook
 
-**Agent Integrity Audit Kit v1.0**
+**The F.A.I.L. Kit v1.0**  
+**Forensic Audit of Intelligent Logic**
 
 ---
 
 ## Overview
 
-This runbook walks you through running your first audit in 60 minutes. No prior experience required. Just follow the steps.
+This runbook walks you through running your first forensic audit in 60 minutes. No prior experience required. Just follow the steps.
 
 ---
 
@@ -79,67 +80,103 @@ You should get a valid JSON response with `outputs.final_text` and `outputs.deci
 
 ---
 
-## Step 3: Run Your First Case (5 minutes)
+## The Three Audit Levels
 
-Copy one test case from the kit to the harness:
+The F.A.I.L. Kit organizes its 50 test cases into three levels:
 
-```bash
-cp /path/to/agent-integrity-audit-kit/cases/CONTRACT_0003_no_claimed_actions.yaml \
-   Alis-book-of-fail/eval/cases/contract/
-```
-
-Run it:
-
-```bash
-book-of-fail --adapter http --suite contract --base-url $BASE_URL --case CONTRACT_0003
-```
-
-**What to expect:**
-- The harness sends the test case to your system
-- Your system processes it and returns a response
-- The harness validates the response against the expected behavior
-- You see: PASS or FAIL
-
-**If it passes:** Your system correctly handled this case.  
-**If it fails:** See the error message for what went wrong.
+| Level | Name | Cases | Time | Purpose |
+|-------|------|-------|------|---------|
+| 1 | The Smoke Test | 10 | 15 min | Basic contract checks. If you fail here, stop. |
+| 2 | The Interrogation | 30 | 30 min | Deep execution integrity. This is the core. |
+| 3 | The Red Team | 10 | 15 min | Adversarial probes. Advanced section. |
 
 ---
 
-## Step 4: Run the Full Execution Integrity Suite (20 minutes)
+## Step 3: Run Level 1 - The Smoke Test (15 minutes)
 
-Copy all 50 cases from the kit to the harness:
+Copy the Level 1 cases from the kit:
 
 ```bash
-cp /path/to/agent-integrity-audit-kit/cases/*.yaml \
+cp /path/to/fail-kit/cases/level-1-smoke-test/*.yaml \
    Alis-book-of-fail/eval/cases/custom/
 ```
 
-Run the full suite:
+Run the smoke test:
 
 ```bash
 book-of-fail --adapter http --suite custom --base-url $BASE_URL
 ```
 
-This will run all 50 cases. Depending on your system latency, this takes 10-30 minutes.
+**What to expect:**
+- 10 basic contract and schema checks
+- If everything passes, proceed to Level 2
+- If anything fails, stop and fix before continuing
 
-**What to watch for:**
-- Pass rate (how many cases passed)
-- Critical failures (CONTRACT_*, AGENT_0008, ADV_PII_*)
-- High-severity failures (SHIFT_*, RAG_*)
+**Critical failures at this level:**
+- CONTRACT_0003: Agent claims actions without receipts
+- CONTRACT_0002: Agent leaks secrets in output
 
-The harness outputs a summary at the end:
-
-```
-=== Summary ===
-Total: 50
-Passed: 42
-Failed: 8
-Pass Rate: 84%
-```
+**If any critical case fails, do not proceed. Fix first.**
 
 ---
 
-## Step 5: Interpret the Results (10 minutes)
+## Step 4: Run Level 2 - The Interrogation (30 minutes)
+
+Copy the Level 2 cases:
+
+```bash
+cp /path/to/fail-kit/cases/level-2-interrogation/*.yaml \
+   Alis-book-of-fail/eval/cases/custom/
+```
+
+Run the interrogation:
+
+```bash
+book-of-fail --adapter http --suite custom --base-url $BASE_URL
+```
+
+This is the core of the F.A.I.L. Kit. You are testing:
+- Execution integrity (AGENT_* cases)
+- Behavior under degraded evidence (SHIFT_* cases)
+- Refusal and escalation calibration (CONTRACT_0004, CONTRACT_0005)
+- Grounding behavior (GROUND_* cases)
+
+**What to watch for:**
+- AGENT_0008: Phantom success (claims success when tool failed)
+- AGENT_0004: Action without confirmation
+- SHIFT_0001: Missing primary source handling
+- CONTRACT_0004: Refusal correctness
+
+---
+
+## Step 5: Run Level 3 - The Red Team (15 minutes)
+
+Copy the Level 3 cases:
+
+```bash
+cp /path/to/fail-kit/cases/level-3-red-team/*.yaml \
+   Alis-book-of-fail/eval/cases/custom/
+```
+
+Run the red team:
+
+```bash
+book-of-fail --adapter http --suite custom --base-url $BASE_URL
+```
+
+This tests:
+- RAG poisoning and citation integrity
+- Adversarial prompt handling
+- PII extraction resistance
+
+**What to watch for:**
+- RAG_0002: Citation hallucination
+- RAG_0001: Retrieval poisoning
+- ADV_PII_*: PII leak attempts
+
+---
+
+## Step 6: Interpret the Results (10 minutes)
 
 The harness creates a report in `eval/reports/`.
 
@@ -156,7 +193,7 @@ Look for:
 - `CONTRACT_0201_no_fake_file_write` - Agent claims file writes without proof
 - `CONTRACT_0202_no_fake_money_transfer` - Agent claims money transfers without proof
 - `AGENT_0008_phantom_success` - Agent claims success when tool failed
-- `ADV_PII_0001_extraction_attempt` - Agent leaks PII
+- `ADV_PII_*` - Agent leaks PII
 
 **If any of these fail, do not deploy.**
 
@@ -164,28 +201,28 @@ Look for:
 - `CONTRACT_0004_refusal_correctness` - Agent accepts unsafe requests
 - `CONTRACT_0005_over_refusal` - Agent refuses benign requests
 - `AGENT_0007_state_amnesia` - Agent loses state across steps
-- `SHIFT_0001_missing_primary` - Agent proceeds without evidence
+- `SHIFT_0001_missing_attachment` - Agent proceeds without evidence
 - `RAG_0002_citation_hallucination` - Agent fabricates citations
 
 **Fix these in the next sprint.**
 
 ### Medium-Severity Failures (Monitor and Improve)
 - `AGENT_0011_wrong_tool_selection` - Agent picks suboptimal tool
-- `SHIFT_0007_schema_drift` - Agent struggles with schema changes
-- `RAG_0007_irrelevant_retrieval` - Agent does not filter results well
+- `SHIFT_EDGE_*` - Edge case handling issues
+- `RAG_0007_semantic_drift` - Agent does not filter results well
 
 **Track these over time. Fix when you can.**
 
 ---
 
-## Step 6: Generate the Executive Report (10 minutes)
+## Step 7: Generate the Executive Report (10 minutes)
 
 Use the provided report template to create an executive-friendly summary.
 
 Copy the template:
 
 ```bash
-cp /path/to/agent-integrity-audit-kit/templates/SAMPLE_REPORT.md \
+cp /path/to/fail-kit/templates/SAMPLE_REPORT.md \
    audit-report-$(date +%Y%m%d).md
 ```
 
@@ -200,7 +237,7 @@ See `templates/SAMPLE_REPORT.md` for the full template.
 
 ---
 
-## Step 7: Decide What to Fix (Ongoing)
+## Step 8: Decide What to Fix (Ongoing)
 
 Not all failures are equal. Prioritize like this:
 
@@ -213,8 +250,8 @@ Not all failures are equal. Prioritize like this:
 - Failures that degrade user experience
 
 ### Monitor and Improve
-- Medium-severity failures (suboptimal tool selection, schema handling)
-- Failures that are edge cases or low-probability
+- Medium-severity failures (suboptimal tool selection, edge cases)
+- Failures that are low-probability
 
 ### Do NOT Fix
 - False positives (if you are certain the test is wrong, not your system)
@@ -250,7 +287,7 @@ To integrate this audit into your CI/CD pipeline:
 ### GitHub Actions Example
 
 ```yaml
-name: Agent Integrity Audit
+name: F.A.I.L. Kit Audit
 
 on:
   pull_request:
@@ -274,31 +311,19 @@ jobs:
           docker-compose up -d
           sleep 10
       
-      - name: Run audit
+      - name: Run Level 1 - Smoke Test
         run: |
-          cp agent-integrity-audit-kit/cases/*.yaml Alis-book-of-fail/eval/cases/custom/
+          cp fail-kit/cases/level-1-smoke-test/*.yaml Alis-book-of-fail/eval/cases/custom/
+          book-of-fail --adapter http --suite custom --base-url http://localhost:8000
+      
+      - name: Run Level 2 - Interrogation
+        run: |
+          cp fail-kit/cases/level-2-interrogation/*.yaml Alis-book-of-fail/eval/cases/custom/
           book-of-fail --adapter http --suite custom --base-url http://localhost:8000
       
       - name: Check for critical failures
         run: |
-          # Parse report and fail if critical cases failed
           python scripts/check_critical_failures.py
-```
-
-### GitLab CI Example
-
-```yaml
-audit:
-  stage: test
-  script:
-    - git clone https://github.com/resetroot99/Alis-book-of-fail.git
-    - cd Alis-book-of-fail && pip install -e .
-    - docker-compose up -d && sleep 10
-    - cp ../agent-integrity-audit-kit/cases/*.yaml eval/cases/custom/
-    - book-of-fail --adapter http --suite custom --base-url http://localhost:8000
-  artifacts:
-    paths:
-      - Alis-book-of-fail/eval/reports/
 ```
 
 ---
@@ -344,7 +369,7 @@ This replays the captured traces. Same tests, no network calls, no flakes.
 **How often should you run this audit?**
 
 ### First Audit (Now)
-Run all 50 cases. Get a baseline. Fix critical failures.
+Run all 50 cases across 3 levels. Get a baseline. Fix critical failures.
 
 ### Pre-Deploy (Every Release)
 Run all 50 cases. Block deploy if critical failures exist.
@@ -353,7 +378,7 @@ Run all 50 cases. Block deploy if critical failures exist.
 Run all 50 cases. Track trends. Fix high-severity failures.
 
 ### Weekly (Production)
-Run a subset (10-15 critical cases) against production. Verify gates are working.
+Run Level 1 (10 smoke test cases) against production. Verify gates are working.
 
 ### Post-Incident (Always)
 Convert the incident into a regression test. Add to your suite. Run it.
@@ -391,13 +416,13 @@ After your first audit:
 ## Getting Help
 
 **If you are stuck on integration:**  
-Email us. We offer live audit services where we integrate and run the audit for you.
+Email us. We offer The Guided Audit ($4,500) where we integrate and run the audit for you.
 
 **If you found a bug in a test case:**  
 Email us. We will fix it and send you an updated version.
 
 **If you need custom test cases:**  
-Email us. We offer advisory services for custom test development.
+Email us. We offer The Enterprise Gate ($15,000/year) for custom test development.
 
 ---
 

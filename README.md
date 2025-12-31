@@ -1,7 +1,14 @@
-# Agent Integrity Audit Kit
+# The F.A.I.L. Kit
+## Forensic Audit of Intelligent Logic
 
 **Version 1.0**  
-**License: Internal Use Only**
+**License: Commercial - Internal Use Only**
+
+---
+
+> **"Because your agent is a fluent liar and it's time for an interrogation."**
+
+Most agents pass the vibe check but fail the forensic audit. This kit is the interrogation your agent can't talk its way out of.
 
 ---
 
@@ -19,12 +26,22 @@ This kit helps you detect, classify, and block execution claims without proof.
 
 This kit includes:
 
-1. **50 Curated Test Cases** - Focused on execution integrity (not generic model benchmarks)
+1. **50 Curated Test Cases** - Organized into 3 forensic audit levels (not generic model benchmarks)
 2. **Audit Runbook** - Step-by-step process for running your first audit in 60 minutes
 3. **Report Template** - Executive-friendly format for presenting findings
 4. **Receipt Schema** - The standard for proving an action happened
 5. **Gate Enforcement Code** - TypeScript and Python implementations for blocking unproven claims
 6. **Failure Mode Catalog** - Shared vocabulary for your team
+
+---
+
+## The Three Audit Levels
+
+| Level | Name | Cases | Purpose |
+|-------|------|-------|---------|
+| 1 | The Smoke Test | 10 | Basic contract and schema checks. If they fail this, the audit stops. |
+| 2 | The Interrogation | 30 | Deep execution integrity and tool-use checks. This is the core of the kit. |
+| 3 | The Red Team | 10 | Adversarial and RAG-poisoning checks. Advanced section. |
 
 ---
 
@@ -88,7 +105,7 @@ See `AUDIT_GUIDE.md` for the full contract.
 Execute the audit using the provided CLI tool:
 
 ```bash
-book-of-fail --adapter http --suite execution-integrity --base-url http://localhost:8000
+fail-kit --adapter http --suite execution-integrity --base-url http://localhost:8000
 ```
 
 Or integrate with your CI/CD pipeline. See `AUDIT_RUNBOOK.md` for details.
@@ -132,13 +149,16 @@ You will also know which failures are critical (block deployment) and which are 
 |------|---------|
 | `README.md` | This file (overview and quick start) |
 | `AUDIT_GUIDE.md` | Integration contract and field reference |
+| `AUDIT_RUNBOOK.md` | Step-by-step audit process |
 | `FAILURE_MODES.md` | Catalog of execution integrity failures |
 | `RECEIPT_SCHEMA.json` | The standard for proving actions |
-| `TRACE_GATES.ts` | TypeScript enforcement layer |
-| `TRACE_GATES.py` | Python enforcement layer |
-| `AUDIT_RUNBOOK.md` | Step-by-step audit process |
-| `SAMPLE_REPORT.md` | Example audit report (template) |
-| `LICENSE.txt` | Internal use license |
+| `enforcement/TRACE_GATES.ts` | TypeScript enforcement layer |
+| `enforcement/TRACE_GATES.py` | Python enforcement layer |
+| `enforcement/QUICKSTART.md` | Quick start for production gates |
+| `templates/SAMPLE_REPORT.md` | Example audit report (template) |
+| `cases/INDEX.md` | Test case index organized by audit level |
+| `assets/` | Marketing and documentation images |
+| `LICENSE.txt` | Commercial use license |
 
 ---
 
@@ -245,9 +265,8 @@ See `AUDIT_RUNBOOK.md` for detailed guidance on interpreting results and priorit
 
 **If you need help:**  
 The kit is self-service by design, but we offer follow-on services:
-- **Live Audit ($3,500)** - We run the audit and present findings to your team
-- **Quarterly Advisory ($12,000/quarter)** - Ongoing monitoring and custom test development
-- **Custom Framework ($25,000+)** - Tailored evaluation system for your stack
+- **The Guided Audit ($4,500)** - We run the audit and present findings to your team
+- **The Enterprise Gate ($15,000/year)** - Ongoing monitoring and custom test development
 
 Contact details are in the purchase confirmation email.
 
@@ -290,7 +309,7 @@ The open-source project includes:
 - A 24-chapter playbook on AI failure modes
 - A working Python harness (MIT licensed)
 
-The paid kit extracts the highest-signal cases for execution integrity and packages them with the runbook, templates, and enforcement code you need to run an audit this week.
+The F.A.I.L. Kit extracts the highest-signal cases for execution integrity and packages them with the runbook, templates, and enforcement code you need to run an audit this week.
 
 **Open-source repo:** github.com/resetroot99/Alis-book-of-fail  
 **Documentation:** See repo for full doctrine and case library
@@ -302,6 +321,7 @@ The paid kit extracts the highest-signal cases for execution integrity and packa
 **v1.0 (Current)**
 - Initial release
 - 50 curated test cases (execution integrity suite)
+- 3-level audit structure (Smoke Test, Interrogation, Red Team)
 - Audit runbook and report template
 - Receipt schema and gate enforcement code
 - Failure mode catalog
