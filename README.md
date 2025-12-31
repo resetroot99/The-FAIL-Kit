@@ -29,11 +29,14 @@ This kit helps you detect, classify, and block execution claims without proof.
 This kit includes:
 
 1. **50 Curated Test Cases** - Organized into 3 forensic audit levels (not generic model benchmarks)
-2. **Audit Runbook** - Step-by-step process for running your first audit in 60 minutes
-3. **Report Template** - Executive-friendly format for presenting findings
-4. **Receipt Schema** - The standard for proving an action happened
-5. **Gate Enforcement Code** - TypeScript and Python implementations for blocking unproven claims
-6. **Failure Mode Catalog** - Shared vocabulary for your team
+2. **CLI Audit Tool** - Command-line tool for running audits, generating reports, and creating custom test cases
+3. **Custom Case Generator** - Automatically generate test cases for your specific tools and workflows
+4. **Audit Runbook** - Step-by-step process for running your first audit in 60 minutes
+5. **Integration Guides** - Add the audit endpoint to LangChain, CrewAI, AutoGPT, or custom agents
+6. **Report Template** - Executive-friendly format for presenting findings
+7. **Receipt Schema** - The standard for proving an action happened
+8. **Gate Middleware** - Drop-in middleware for Express, FastAPI, and Next.js
+9. **Failure Mode Catalog** - Shared vocabulary for your team
 
 ---
 
@@ -341,20 +344,58 @@ The F.A.I.L. Kit extracts the highest-signal cases for execution integrity and p
 **v1.0 (Current)**
 - Initial release
 - 50 curated test cases (execution integrity suite)
+- CLI audit tool with init, run, report commands
+- Custom case generator for tool-specific tests
+- Integration guides for LangChain, CrewAI, AutoGPT, custom agents
+- Drop-in middleware for Express, FastAPI, Next.js
+- Reference agent example
 - 3-level audit structure (Smoke Test, Interrogation, Red Team)
-- Audit runbook and report template
+- Audit runbook and quickstart guide
 - Receipt schema and gate enforcement code
 - Failure mode catalog
 
 ---
 
+## Quick Start
+
+### 1. Install the CLI
+
+```bash
+cd cli
+npm install
+npm link
+```
+
+### 2. Add the Audit Endpoint
+
+See `INTEGRATION.md` for your framework (LangChain, CrewAI, custom).
+
+### 3. Run Your First Audit
+
+```bash
+fail-audit init
+fail-audit run
+fail-audit report audit-results/results.json
+```
+
+### 4. Generate Custom Cases
+
+```bash
+fail-audit generate --tools tools.json
+fail-audit run --cases custom-cases
+```
+
+See `CUSTOM_CASES.md` for details.
+
+---
+
 ## Next Steps
 
-1. Read `AUDIT_GUIDE.md` to understand the integration contract
-2. Expose the `/eval/run` endpoint (takes 1 hour)
-3. Run your first audit using `AUDIT_RUNBOOK.md`
-4. Interpret results using `SAMPLE_REPORT.md`
-5. Implement gates using `TRACE_GATES.ts` or `TRACE_GATES.py`
+1. Read `INTEGRATION.md` to add the audit endpoint to your agent
+2. Read `QUICKSTART.md` for a 5-minute walkthrough
+3. Run the baseline audit (50 generic cases)
+4. Generate custom cases for your specific tools
+5. Implement gates using the middleware in `middleware/`
 
 **Do not overthink this.** The first audit will reveal what matters. Fix the critical failures. Monitor the rest. Iterate.
 

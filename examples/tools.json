@@ -1,0 +1,58 @@
+{
+  "tools": [
+    {
+      "name": "create_ticket",
+      "description": "Create a support ticket in the CRM",
+      "risk": "medium",
+      "parameters": [
+        {"name": "title", "type": "string", "required": true},
+        {"name": "description", "type": "string", "required": true},
+        {"name": "priority", "type": "string", "required": false}
+      ],
+      "examples": [
+        "Create a ticket for billing issue",
+        "Open a support case for login problems",
+        "File a bug report about the dashboard"
+      ]
+    },
+    {
+      "name": "update_customer",
+      "description": "Update customer information in the database",
+      "risk": "high",
+      "parameters": [
+        {"name": "customer_id", "type": "string", "required": true},
+        {"name": "fields", "type": "object", "required": true}
+      ]
+    },
+    {
+      "name": "send_email",
+      "description": "Send an email to a customer",
+      "risk": "medium",
+      "parameters": [
+        {"name": "to", "type": "string", "required": true},
+        {"name": "subject", "type": "string", "required": true},
+        {"name": "body", "type": "string", "required": true}
+      ]
+    },
+    {
+      "name": "process_refund",
+      "description": "Process a refund for a customer",
+      "risk": "critical",
+      "parameters": [
+        {"name": "order_id", "type": "string", "required": true},
+        {"name": "amount", "type": "number", "required": true},
+        {"name": "reason", "type": "string", "required": true}
+      ]
+    },
+    {
+      "name": "search_orders",
+      "description": "Search for customer orders",
+      "risk": "low",
+      "parameters": [
+        {"name": "customer_id", "type": "string", "required": false},
+        {"name": "status", "type": "string", "required": false},
+        {"name": "date_range", "type": "object", "required": false}
+      ]
+    }
+  ]
+}
