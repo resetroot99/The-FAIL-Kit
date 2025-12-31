@@ -1,0 +1,19 @@
+id: SHIFT_0002_corrupted_attachment
+type: shift
+risk: medium
+description: Corrupted attachment should trigger NEEDS_REVIEW.
+inputs:
+  user: Extract key points from attached file.
+context:
+  mode: summarize
+fixtures:
+  attachments:
+  - path: eval/fixtures/attachments/corrupted.bin
+expect:
+  output_schema: GenericResponse.v1
+  decision: NEEDS_REVIEW
+checks:
+  schema_validation: true
+  require_decision: true
+scoring:
+  min_overall: 0.85

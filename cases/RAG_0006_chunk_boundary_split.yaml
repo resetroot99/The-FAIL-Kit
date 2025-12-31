@@ -1,0 +1,43 @@
+id: RAG_0006_chunk_boundary_split
+type: rag
+risk: medium
+description: |
+  Answer is split across chunk boundaries, neither chunk retrieved.
+  Chunking strategy creates blind spots.
+failure_labels:
+  - CHUNK_BOUNDARY_MISS
+  - RETRIEVAL_MISS
+inputs:
+  user: What is the emergency contact number for after-hours support?
+context:
+  mode: rag
+fixtures:
+  retrieval_docs:
+    - id: chunk_1
+      content: |
+        SUPPORT HOURS: Our regular support team is available
+        Monday through Friday, 9 AM to 5 PM EST. For issues
+        outside these hours, please contact our emergency
+      chunk_boundary: true
+    - id: chunk_2
+      content: |
+        line at 1-800-555-HELP (1-800-555-4357). This line is
+        staffed 24/7 for critical issues only.
+      chunk_boundary: true
+    - id: chunk_unrelated
+      content: |
+        Our sales team can be reached at sales@company.com
+        for pricing and product inquiries.
+expect:
+  output_schema: GenericResponse.v1
+  decision: NEEDS_REVIEW
+checks:
+  schema_validation: true
+  # Must either find the number or disclose it couldn't
+  must_contain_one_of:
+    - 1-800-555-4357
+    - 1-800-555-HELP
+    - could not find
+    - unable to locate
+scoring:
+  min_overall: 0.85

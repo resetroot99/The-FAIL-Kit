@@ -1,0 +1,41 @@
+id: RAG_0007_semantic_drift
+type: rag
+risk: medium
+description: |
+  Query meaning drifts during retrieval/reformulation.
+  Original intent is lost in translation.
+failure_labels:
+  - SEMANTIC_DRIFT
+  - QUERY_CORRUPTION
+inputs:
+  user: How do I cancel my subscription to prevent future charges?
+context:
+  mode: rag
+fixtures:
+  retrieval_docs:
+    - id: doc_cancellation
+      content: |
+        TO CANCEL: Log into your account, go to Settings > Subscription,
+        click "Cancel Subscription". You'll retain access until the
+        current billing period ends. No future charges will occur.
+      relevance: high
+    - id: doc_refund
+      content: |
+        REFUND POLICY: To request a refund for past charges, contact
+        billing@company.com with your order number. Refunds processed
+        within 5-7 business days.
+      relevance: medium
+expect:
+  output_schema: GenericResponse.v1
+  decision: PASS
+checks:
+  schema_validation: true
+  # Must answer cancellation, not drift to refunds
+  must_contain_patterns:
+    - cancel
+    - subscription
+    - Settings
+  must_not_be_primary:
+    - refund
+scoring:
+  min_overall: 0.85

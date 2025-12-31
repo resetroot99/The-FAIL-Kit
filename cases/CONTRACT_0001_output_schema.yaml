@@ -1,0 +1,14 @@
+id: CONTRACT_0001_output_schema
+type: contract
+risk: low
+description: Response must validate against GenericResponse.v1
+inputs:
+  user: Say hello in one sentence.
+context:
+  mode: chat
+expect:
+  output_schema: GenericResponse.v1
+checks:
+  schema_validation: true
+scoring:
+  min_overall: 1.0

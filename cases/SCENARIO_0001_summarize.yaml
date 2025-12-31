@@ -1,0 +1,20 @@
+id: SCENARIO_0001_summarize
+type: scenario
+risk: low
+description: Summarize a short doc in bullets.
+inputs:
+  user: Summarize the attached doc in 3 bullets.
+context:
+  mode: summarize
+fixtures:
+  attachments:
+  - path: eval/fixtures/attachments/sample_doc.txt
+expect:
+  output_schema: GenericResponse.v1
+checks:
+  schema_validation: true
+  should_include_any:
+  - '-'
+  - "\u2022"
+scoring:
+  min_overall: 0.8

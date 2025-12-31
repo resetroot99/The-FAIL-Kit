@@ -1,0 +1,94 @@
+AGENT INTEGRITY AUDIT KIT LICENSE
+Version 1.0 - December 31, 2025
+
+Copyright (c) 2025 [Your Name/Company]
+
+This is a commercial license for the Agent Integrity Audit Kit.
+
+GRANT OF LICENSE
+
+Subject to the terms and conditions of this license, the Licensor grants you a
+non-exclusive, non-transferable, limited license to use the Agent Integrity
+Audit Kit (the "Kit") for internal business purposes only.
+
+PERMITTED USES
+
+You may:
+1. Use the Kit to audit your own AI systems
+2. Run the test cases against systems you own or operate
+3. Implement the provided enforcement code in your production systems
+4. Share audit results within your organization
+5. Modify the enforcement code for your internal use
+
+PROHIBITED USES
+
+You may NOT:
+1. Redistribute the Kit to third parties
+2. Resell or repackage the Kit
+3. Use the Kit to audit client systems without a separate advisory agreement
+4. Share the Kit with contractors, vendors, or partners outside your organization
+5. Publish or make available the test cases, runbook, or templates publicly
+6. Remove or modify this license file
+
+ADVISORY SERVICES
+
+If you wish to use this Kit to audit systems you do not own or operate (e.g.,
+client systems, partner systems), you must engage the Licensor for advisory
+services. Contact [your-email] for pricing.
+
+NO WARRANTY
+
+THE KIT IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE, AND NONINFRINGEMENT.
+
+IN NO EVENT SHALL THE LICENSOR BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM,
+OUT OF, OR IN CONNECTION WITH THE KIT OR THE USE OR OTHER DEALINGS IN THE KIT.
+
+LIMITATION OF LIABILITY
+
+The Licensor's total liability for any claims arising out of or related to this
+license or the Kit shall not exceed the amount you paid for the Kit.
+
+TERMINATION
+
+This license is effective until terminated. Your rights under this license will
+terminate automatically without notice if you fail to comply with any term of
+this license.
+
+Upon termination, you must cease all use of the Kit and destroy all copies in
+your possession.
+
+GOVERNING LAW
+
+This license shall be governed by and construed in accordance with the laws of
+[Your Jurisdiction], without regard to its conflict of law provisions.
+
+ENTIRE AGREEMENT
+
+This license constitutes the entire agreement between you and the Licensor
+regarding the Kit and supersedes all prior or contemporaneous understandings
+regarding such subject matter.
+
+CONTACT
+
+For questions about this license, advisory services, or to report violations:
+[your-email]
+
+---
+
+OPEN SOURCE COMPONENTS
+
+This Kit is based on Ali's Book of Fail, an open-source project licensed under
+the MIT License. The open-source harness is available at:
+https://github.com/resetroot99/Alis-book-of-fail
+
+The open-source components remain under the MIT License. This commercial license
+applies only to the curated test cases, runbook, report templates, and failure
+mode catalog included in this Kit.
+
+---
+
+By using the Kit, you acknowledge that you have read this license, understand it,
+and agree to be bound by its terms and conditions.

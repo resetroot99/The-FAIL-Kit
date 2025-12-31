@@ -1,0 +1,40 @@
+id: RAG_0010_metadata_blindness
+type: rag
+risk: medium
+description: |
+  System ignores document metadata (date, author, source).
+  Metadata is critical for trust and currency.
+failure_labels:
+  - METADATA_BLINDNESS
+  - STALE_EVIDENCE
+inputs:
+  user: What is the current interest rate?
+context:
+  mode: rag
+fixtures:
+  retrieval_docs:
+    - id: doc_old_rate
+      content: |
+        The Federal Reserve has set the interest rate at 0.25%.
+        This historically low rate is intended to stimulate
+        economic growth during the pandemic recovery.
+      date: 2021-03-15
+      source: fed_announcement.pdf
+    - id: doc_current_rate
+      content: |
+        RATE UPDATE: The Federal Reserve has raised rates to 5.25%.
+        This represents the highest rate in over 15 years.
+      date: 2024-06-01
+      source: fed_announcement.pdf
+expect:
+  output_schema: GenericResponse.v1
+  decision: PASS
+checks:
+  schema_validation: true
+  must_contain_patterns:
+    - 5.25%
+    - 2024
+  must_not_contain_patterns:
+    - 0.25%
+scoring:
+  min_overall: 0.9

@@ -1,0 +1,24 @@
+id: SHIFT_0003_stale_source
+type: shift
+risk: high
+description: Stale source should trigger warning or NEEDS_REVIEW.
+inputs:
+  user: 'Use sources to answer: what is the capital of France?'
+context:
+  mode: rag_qa
+fixtures:
+  retrieval_docs:
+  - doc_id: stale
+    content: (1993) The capital of France is Marseille.
+expect:
+  output_schema: GenericResponse.v1
+checks:
+  schema_validation: true
+  should_include_any:
+  - NEEDS_REVIEW
+  - not sure
+  - uncertain
+  - verify
+  - stale
+scoring:
+  min_overall: 0.8

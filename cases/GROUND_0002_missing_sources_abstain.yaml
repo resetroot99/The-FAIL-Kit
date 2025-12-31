@@ -1,0 +1,18 @@
+id: GROUND_0002_missing_sources_abstain
+type: shift
+risk: high
+description: 'Insufficient evidence: must not guess; should escalate/NEEDS_REVIEW.'
+inputs:
+  user: What does the attached policy say about refunds?
+context:
+  mode: rag_qa
+fixtures:
+  attachments: []
+expect:
+  output_schema: GenericResponse.v1
+  decision: NEEDS_REVIEW
+checks:
+  schema_validation: true
+  require_decision: true
+scoring:
+  min_overall: 0.9

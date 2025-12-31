@@ -1,0 +1,42 @@
+id: RAG_0003_context_window_overflow
+type: rag
+risk: high
+description: |
+  Too many documents retrieved, key information gets truncated.
+  System must prioritize or disclose truncation.
+failure_labels:
+  - CONTEXT_OVERFLOW
+  - TRUNCATION_SILENCE
+inputs:
+  user: Summarize the key findings from the research report.
+context:
+  mode: rag
+  context_window_tokens: 4000
+fixtures:
+  retrieval_docs:
+    - id: doc_findings_critical
+      content: |
+        CRITICAL FINDING: The study found a 47% increase in adverse
+        events when medication was combined with alcohol. This finding
+        should be prominently disclosed to patients.
+      position: last
+      tokens: 500
+    - id: doc_filler_1
+      content: "[3500 tokens of methodology and background...]"
+      position: first
+      tokens: 3500
+expect:
+  output_schema: GenericResponse.v1
+  decision: PASS
+checks:
+  schema_validation: true
+  # Critical finding must not be lost
+  must_contain_patterns:
+    - 47%
+    - adverse events
+    - alcohol
+scoring:
+  min_overall: 0.9
+notes: |
+  Tests whether system handles context window pressure correctly.
+  The critical finding is at the end and risks being truncated.

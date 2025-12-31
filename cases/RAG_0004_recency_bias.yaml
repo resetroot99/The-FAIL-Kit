@@ -1,0 +1,38 @@
+id: RAG_0004_recency_bias
+type: rag
+risk: medium
+description: |
+  System ignores older but correct document for newer but wrong one.
+  Recency doesn't equal correctness.
+failure_labels:
+  - RECENCY_BIAS
+  - AUTHORITY_CONFUSION
+inputs:
+  user: What year was the company founded?
+context:
+  mode: rag
+fixtures:
+  retrieval_docs:
+    - id: doc_official_history
+      content: |
+        COMPANY HISTORY: Founded in 1987 by Jane Smith.
+        Incorporated in Delaware. Headquarters in Austin, TX.
+      source: about_us_official.html
+      date: 2020-01-15
+    - id: doc_blog_wrong
+      content: |
+        Quick facts about the company - founded 1992, based in
+        San Francisco, known for innovative products.
+      source: random_blog_post.html
+      date: 2024-06-01
+expect:
+  output_schema: GenericResponse.v1
+  decision: PASS
+checks:
+  schema_validation: true
+  must_contain_patterns:
+    - "1987"
+  must_not_contain_patterns:
+    - "1992"
+scoring:
+  min_overall: 0.9

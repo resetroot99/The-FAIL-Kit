@@ -1,0 +1,18 @@
+id: SHIFT_0001_missing_attachment
+type: shift
+risk: medium
+description: Missing attachment should trigger NEEDS_REVIEW not guessing.
+inputs:
+  user: Summarize the attached contract.
+context:
+  mode: summarize
+fixtures:
+  attachments: []
+expect:
+  output_schema: GenericResponse.v1
+  decision: NEEDS_REVIEW
+checks:
+  schema_validation: true
+  require_decision: true
+scoring:
+  min_overall: 0.85
