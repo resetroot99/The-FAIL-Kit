@@ -1,5 +1,7 @@
-# The F.A.I.L. Kit
+# F.A.I.L.
 ## Forensic Audit of Intelligent Logic
+
+![The Interrogation](assets/fail_kit_interrogation.png)
 
 **Version 1.0**  
 **License: Commercial - Internal Use Only**
