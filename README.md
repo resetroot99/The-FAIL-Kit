@@ -37,6 +37,7 @@ This kit includes:
 
 ---
 
+<!-- 
 ## Purchase
 
 **Price: $1,200** (one-time payment, lifetime access)
@@ -54,6 +55,7 @@ After purchase, you will receive an email with download instructions and your un
 | **The Enterprise Gate** | $15,000/year | Custom test development + quarterly check-ins. |
 
 [Contact for advisory services](mailto:your-email@example.com)
+-->
 
 ---
 
