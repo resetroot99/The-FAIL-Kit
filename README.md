@@ -22,6 +22,8 @@ Your agent says it sent the email. Updated the database. Transferred the money. 
 
 This kit helps you detect, classify, and block execution claims without proof.
 
+![Audit Flow](assets/audit_flow_diagram.png)
+
 ---
 
 ## What You Get
@@ -69,6 +71,8 @@ After purchase, you will receive an email with download instructions and your un
 | 1 | The Smoke Test | 10 | Basic contract and schema checks. If they fail this, the audit stops. |
 | 2 | The Interrogation | 30 | Deep execution integrity and tool-use checks. This is the core of the kit. |
 | 3 | The Red Team | 10 | Adversarial and RAG-poisoning checks. Advanced section. |
+
+![Three Level Audit](assets/three_level_audit.png)
 
 ---
 

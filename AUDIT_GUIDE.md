@@ -116,10 +116,11 @@ Add them when you are ready. The gates only check what you provide.
 ---
 
 ## Actions Field (Critical for Execution Integrity)
-
 If your agent uses tools, you MUST include the `actions[]` field.
 
-**Each action must include:**
+![Receipt Structure](assets/receipt_structure.png)
+
+**Each action must include:****
 ```json
 {
   "tool": "email_sender",

@@ -10,6 +10,8 @@ The 50 baseline cases test generic integrity (receipts, failures, escalation). C
 
 ## Quick Start
 
+![Custom Case Generation Flow](assets/custom_case_generation_flow.png)
+
 ### Step 1: Define Your Tools
 
 Create a `tools.json` file:

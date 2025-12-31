@@ -11,6 +11,8 @@ This document catalogs the five primary failure modes for AI agents that claim t
 
 If your agent exhibits any of these behaviors, you have a liability, not a feature.
 
+![The 5 Failure Modes](assets/failure_modes_catalog.png)
+
 ---
 
 ## Failure Mode 1: Claimed Action Without Receipt
