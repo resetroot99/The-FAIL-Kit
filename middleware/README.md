@@ -20,16 +20,15 @@ npm install @fail-kit/middleware-express
 
 ```javascript
 const express = require('express');
-const { failGates } = require('@fail-kit/middleware-express');
+const { applyGates } = require('@fail-kit/middleware-express');
 
 const app = express();
-
 app.use(express.json());
-app.use('/agent', failGates());
 
 app.post('/agent/chat', async (req, res) => {
-  const response = await yourAgent.process(req.body);
-  res.json(response); // Gates applied automatically
+  const rawResponse = await yourAgent.process(req.body);
+  const gatedResponse = applyGates(rawResponse);
+  res.json(gatedResponse);
 });
 ```
 

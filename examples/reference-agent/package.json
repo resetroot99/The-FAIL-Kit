@@ -1,0 +1,15 @@
+{
+  "name": "fail-kit-reference-agent",
+  "version": "1.0.0",
+  "description": "Reference agent implementation for testing the F.A.I.L. Kit",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": ["ai", "agent", "testing"],
+  "author": "F.A.I.L. Kit",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
