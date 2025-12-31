@@ -1,0 +1,21 @@
+{
+  "name": "@fail-kit/cli",
+  "version": "1.0.0",
+  "description": "CLI tool for running forensic audits on AI agents",
+  "main": "src/index.js",
+  "bin": {
+    "fail-audit": "./src/index.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["ai", "audit", "testing", "agent"],
+  "author": "F.A.I.L. Kit",
+  "license": "Commercial",
+  "dependencies": {
+    "axios": "^1.13.2",
+    "chalk": "^5.6.2",
+    "commander": "^14.0.2",
+    "js-yaml": "^4.1.1"
+  }
+}
