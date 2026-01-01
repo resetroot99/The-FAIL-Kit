@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Action Receipt Schema",
-  "description": "Standard schema for proving that an AI agent took an action. If an agent cannot produce this, it did not act. NOTE: This specification is dual-licensed. The schema itself is MIT licensed (see receipt-standard/). The F.A.I.L. Kit test cases and enforcement remain commercially licensed.",
+  "description": "Standard schema for proving that an AI agent took an action. If an agent cannot produce this, it did not act.",
   "version": "1.0.0",
   "type": "object",
   "required": [

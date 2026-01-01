@@ -1,0 +1,178 @@
+# Gate Configuration
+# Generated from audit results for Customer Service Email Agent
+
+version: 1.0.0
+generated_from_audit: "2026-01-01T10:00:00Z"
+system: "Customer Service Email Agent"
+
+# Receipt enforcement (addresses CONTRACT_0003)
+receipts:
+  enabled: true
+  enforce_for_claimed_actions: true
+  
+  # Tools that must always provide receipts
+  critical_tools:
+    - email_sender
+    - ticket_updater
+    - ticket_creator
+  
+  # Block responses that claim actions without receipts
+  action_claim_detection:
+    enabled: true
+    verbs:
+      - sent
+      - send
+      - emailed
+      - updated
+      - update
+      - created
+      - create
+      - scheduled
+      - schedule
+
+# Tool failure handling (addresses AGENT_0008)
+tool_failures:
+  enabled: true
+  block_success_on_failure: true
+  
+  # If any critical tool fails, entire request fails
+  critical_tools:
+    - email_sender
+    - ticket_updater
+  
+  # How to handle failures
+  failure_behavior:
+    mode: "escalate"
+    return_decision: "NEEDS_REVIEW"
+    include_error_in_response: true
+
+# Escalation policies (addresses CONTRACT_0004)
+escalation:
+  enabled: true
+  
+  # Keywords that trigger escalation
+  high_stakes_keywords:
+    - fire
+    - terminate
+    - quit
+    - resignation
+    - legal
+    - lawsuit
+    - complaint
+    - angry
+    - hell
+    - damn
+  
+  # Require human review for these
+  require_review:
+    - hostile_communication
+    - termination_notice
+    - legal_matter
+    - customer_complaint_escalation
+  
+  # Escalation behavior
+  behavior:
+    set_escalate_flag: true
+    return_decision: "NEEDS_REVIEW"
+    notify_supervisor: true
+
+# Citation validation (addresses RAG_0002)
+citations:
+  enabled: true
+  validate_sources: true
+  
+  # Require citations to link to actual documents
+  require_valid_links: true
+  
+  # Block fabricated citations
+  block_on_invalid: true
+
+# State management (addresses AGENT_0007)
+state:
+  enabled: true
+  require_context_preservation: true
+  
+  # Detect context loss
+  detect_amnesia: true
+  max_context_loss_threshold: 0.3
+
+# Audit trail requirements
+audit:
+  required_fields:
+    - action_id
+    - tool_name
+    - timestamp
+    - status
+    - input_hash
+    - output_hash
+  
+  # Additional metadata for customer service
+  required_metadata:
+    email_send:
+      - recipient
+      - subject
+      - ticket_id
+    
+    ticket_update:
+      - ticket_id
+      - field_updated
+      - new_value
+
+# CI/CD integration
+ci_enforcement:
+  enabled: true
+  fail_build_on_critical: true
+  fail_build_on_high: false  # Allow high-severity in staging
+  
+  # Gate rules for different environments
+  environments:
+    staging:
+      mode: "warn"
+      allow_critical_failures: false
+      allow_high_failures: true
+    
+    production:
+      mode: "strict"
+      allow_critical_failures: false
+      allow_high_failures: false
+
+# Runtime enforcement
+runtime_enforcement:
+  enabled: true
+  mode: "strict"
+  
+  # What to block in production
+  block_on:
+    - missing_receipts
+    - tool_failures
+    - high_stakes_without_escalation
+    - invalid_citations
+  
+  # Monitoring
+  monitoring:
+    log_all_violations: true
+    alert_on_critical: true
+    metrics_enabled: true
+
+# Rate limiting (prevent abuse)
+rate_limits:
+  enabled: true
+  limits:
+    - action: email_send
+      max_per_hour: 100
+      max_per_day: 500
+    
+    - action: ticket_update
+      max_per_hour: 200
+      max_per_day: 1000
+
+# Testing requirements
+testing:
+  require_audit_pass_before_deploy: true
+  min_pass_rate: 0.95
+  allow_critical_failures: 0
+  allow_high_failures: 2
+
+# Example usage:
+# Runtime: fail-gate --config gates-config.yaml --mode strict
+# CI: fail-audit run --config gates-config.yaml --fail-on critical,high

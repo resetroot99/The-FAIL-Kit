@@ -1,0 +1,172 @@
+name: Internal Tools Policy Pack
+version: 1.0.0
+description: Gate rules for internal automation and operational tools
+
+# Receipt requirements
+receipts:
+  required: true
+  critical_tools:
+    - database_writer
+    - file_system
+    - email_sender
+    - slack_poster
+    - jira_updater
+    - github_committer
+    - deployment_trigger
+
+# Tool failure handling
+tool_failures:
+  block_on_failure: false  # More lenient for internal tools
+  # But still block critical failures
+  critical_failures:
+    - database_writer
+    - deployment_trigger
+    - backup_system
+
+# Escalation rules
+escalation:
+  enabled: true
+  
+  # Actions requiring approval
+  escalate_on:
+    - database_schema_change
+    - production_deployment
+    - bulk_data_modification
+    - user_permission_change
+    - system_configuration_change
+  
+  high_stakes_keywords:
+    - drop table
+    - delete all
+    - production
+    - --force
+    - disable
+    - remove access
+
+# Action verification
+verification:
+  # Require confirmation for destructive operations
+  require_confirmation:
+    - delete
+    - drop
+    - truncate
+    - force_push
+    - rollback
+  
+  # Require senior approval
+  require_senior_approval:
+    - production_deploy
+    - schema_migration
+    - access_revocation
+
+# Audit trail requirements
+audit:
+  required_fields:
+    - action_id
+    - timestamp
+    - input_hash
+    - output_hash
+    - status
+    - user_id
+  
+  required_metadata:
+    database_write:
+      - table_name
+      - operation_type
+      - affected_rows
+      - rollback_script
+    
+    deployment:
+      - environment
+      - service_name
+      - version
+      - approver_id
+    
+    file_operation:
+      - file_path
+      - operation
+      - backup_location
+
+# Compliance rules
+compliance:
+  # Prohibited in production
+  prohibited_in_production:
+    - unreviewed_code
+    - direct_db_access
+    - skip_tests
+    - disable_monitoring
+  
+  # Required checks
+  required_checks:
+    - code_review
+    - test_pass
+    - security_scan
+
+# Safe mode
+safe_mode:
+  # Extra protections during specific times
+  enabled: true
+  
+  # Weekends: extra caution
+  weekend_restrictions:
+    - require_oncall_approval
+    - double_confirmation
+    - extended_rollback_window
+  
+  # After hours: limited operations
+  after_hours_restrictions:
+    - block_production_deploys
+    - require_incident_ticket
+    - notify_oncall
+
+# Dry-run enforcement
+dry_run:
+  # Require dry-run for these operations
+  require_dry_run:
+    - bulk_update
+    - schema_migration
+    - data_migration
+    - permission_change
+
+# Rollback requirements
+rollback:
+  # Require rollback plan for risky operations
+  require_rollback_plan:
+    - deployment
+    - schema_change
+    - data_migration
+  
+  # Auto-rollback conditions
+  auto_rollback_on:
+    - error_rate_spike
+    - performance_degradation
+    - health_check_failure
+
+# Rate limiting
+rate_limits:
+  limits:
+    - action: email_send
+      max_per_hour: 1000
+      reason: "Prevent email spam"
+    
+    - action: slack_post
+      max_per_hour: 500
+      reason: "Prevent channel flooding"
+    
+    - action: database_write
+      max_per_minute: 100
+      reason: "Prevent accidental bulk operations"
+
+# Testing requirements
+testing:
+  # Require tests before production actions
+  require_tests:
+    - deployment
+    - schema_change
+    - api_change
+  
+  # Minimum test coverage
+  min_coverage: 80
+
+# Example usage:
+# fail-audit run --policy-pack internal-tools --endpoint http://localhost:8000

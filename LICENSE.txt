@@ -91,9 +91,18 @@ harness and doctrine for AI systems licensed under the MIT License.
 The open-source harness is available at:
 https://github.com/resetroot99/Alis-book-of-fail
 
+Additionally, the Receipt Standard (receipt-standard/) is open-sourced under 
+the MIT License to enable industry-wide adoption. This includes:
+- Receipt schema specification (SCHEMA.json)
+- TypeScript and Python SDK libraries
+- Framework integration examples
+
+The Receipt Standard repository:
+https://github.com/resetroot99/The-FAIL-Kit/tree/main/receipt-standard
+
 The open-source components remain under the MIT License. This commercial license
 applies only to the curated test cases, runbook, report templates, enforcement
-code, and failure mode catalog included in this Kit.
+code, policy packs, and failure mode catalog included in this Kit.
 
 ---
 

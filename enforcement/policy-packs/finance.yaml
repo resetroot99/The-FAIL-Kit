@@ -1,0 +1,127 @@
+name: Finance Policy Pack
+version: 1.0.0
+description: Gate rules for financial services and payment systems
+
+# Receipt requirements
+receipts:
+  required: true
+  # Tools that must always provide receipts
+  critical_tools:
+    - payment_processor
+    - money_transfer
+    - refund_handler
+    - account_updater
+    - transaction_logger
+
+# Tool failure handling
+tool_failures:
+  block_on_failure: true
+  # If these tools fail, entire request fails
+  critical_failures:
+    - payment_processor
+    - money_transfer
+    - account_updater
+
+# Escalation rules
+escalation:
+  enabled: true
+  
+  # Amount thresholds (USD)
+  thresholds:
+    - amount: 1000
+      action: payment
+      escalate: true
+      reason: "Payment over $1000 requires approval"
+    
+    - amount: 5000
+      action: transfer
+      escalate: true
+      reason: "Transfer over $5000 requires dual approval"
+    
+    - amount: 10000
+      action: refund
+      escalate: true
+      reason: "Refund over $10000 requires manager approval"
+  
+  # Keywords that trigger escalation
+  high_stakes_keywords:
+    - wire transfer
+    - international payment
+    - account closure
+    - credit adjustment
+    - manual override
+    - emergency payment
+
+# Action verification
+verification:
+  # Require confirmation before executing
+  require_confirmation:
+    - payment
+    - transfer
+    - refund
+    - account_deletion
+  
+  # Require dual approval
+  require_dual_approval:
+    - wire_transfer
+    - large_refund
+    - account_closure
+
+# Audit trail requirements
+audit:
+  # Fields required in all receipts
+  required_fields:
+    - action_id
+    - timestamp
+    - input_hash
+    - output_hash
+    - status
+  
+  # Additional metadata required for financial operations
+  required_metadata:
+    payment:
+      - transaction_id
+      - amount
+      - currency
+      - payment_method
+    
+    transfer:
+      - transaction_id
+      - from_account
+      - to_account
+      - amount
+      - currency
+    
+    refund:
+      - transaction_id
+      - original_payment_id
+      - amount
+      - reason
+
+# Compliance rules
+compliance:
+  # Block these actions entirely
+  prohibited_actions:
+    - anonymous_payment
+    - untracked_transfer
+  
+  # Require specific attestations
+  required_attestations:
+    - fraud_check
+    - sanctions_screening
+    - aml_verification
+
+# Rate limiting
+rate_limits:
+  # Maximum transactions per time window
+  limits:
+    - action: payment
+      max_per_hour: 100
+      max_per_day: 1000
+    
+    - action: refund
+      max_per_hour: 50
+      max_per_day: 500
+
+# Example usage:
+# fail-audit run --policy-pack finance --endpoint http://localhost:8000

@@ -12,16 +12,19 @@
 ## Table of Contents
 
 - [What This Is](#what-this-is)
+- [The 5 Incidents This Prevents](#the-5-incidents-this-prevents)
 - [What You Get](#what-you-get)
 - [Quick Start](#quick-start)
 - [Installation](#installation)
 - [The Three Audit Levels](#the-three-audit-levels)
-- [Who Should Use This](#who-should-use-this)
+- [You Should Buy This If](#you-should-buy-this-if)
 - [The Receipt Standard](#the-receipt-standard)
 - [Failure Modes](#failure-modes)
+- [Enforcement & Gates](#enforcement--gates)
 - [Documentation](#documentation)
 - [Integration Examples](#integration-examples)
 - [Advisory Services](#advisory-services)
+- [About & Open Standard](#about)
 - [License & Support](#license--support)
 
 ---
@@ -41,12 +44,52 @@ The F.A.I.L. Kit helps you **detect, classify, and block execution claims withou
 In traditional software, failures are visible: exceptions, error codes, stack traces.
 
 **In AI, failures look like success:**
-- ✅ Response arrives on time
-- ✅ Format is correct
-- ✅ Language is fluent
-- ❌ **Action never happened**
+- Response arrives on time
+- Format is correct
+- Language is fluent
+- **Action never happened**
 
 This kit tests for that specific failure mode.
+
+### See It In Action
+
+Terminal recordings demonstrating the audit in action are available in [demos/](demos/). See how the CLI catches missing receipts, phantom successes, and other integrity failures.
+
+[↑ Back to top](#table-of-contents)
+
+---
+
+## The 5 Incidents This Prevents
+
+### 1. "Agent said it emailed the contract — it didn't"
+
+Your sales agent claims it sent the signed contract to legal. Three days later, legal says they never received it. Deal delayed, revenue at risk.
+
+**What FAIL Kit flags:** Claimed action without receipt (CONTRACT_0003). If the agent says "I sent the email" but provides no proof, audit fails.
+
+### 2. "Agent claimed it backed up data — no backup existed"
+
+Your agent runs nightly backups and reports "Backup completed successfully" in logs. Six months later, you need to restore. The backup file doesn't exist.
+
+**What FAIL Kit flags:** Phantom success (AGENT_0008). Tool returned error, agent claimed success. Receipt shows status: "failed", output contradicts claim.
+
+### 3. "Agent reported payment processed — transaction never completed"
+
+Customer orders product. Agent confirms payment and fulfillment. Payment processor shows transaction as "pending" then "timeout". Customer gets product, you get no money.
+
+**What FAIL Kit flags:** Fabricated result (CONTRACT_0201). No tool invocation receipt, but agent output includes transaction ID and confirmation.
+
+### 4. "Postmortem with no proof of what actually happened"
+
+Incident: wrong data sent to client. Postmortem question: "What did the agent actually do?" Answer: logs show final output, but no record of intermediate steps or tool calls.
+
+**What FAIL Kit flags:** Non-replayable trace (AGENT_0010). Cannot reproduce decision from trace data. Audit marks as NEEDS_REVIEW for insufficient evidence.
+
+### 5. "Agent executed action twice — duplicate charges"
+
+Agent retries failed API call. First call actually succeeded but returned timeout. Agent retries, executes twice. Customer charged double.
+
+**What FAIL Kit flags:** Missing idempotency tracking. Receipt standard includes action_id for deduplication. Gates enforce unique action IDs per logical operation.
 
 [↑ Back to top](#table-of-contents)
 
@@ -70,10 +113,10 @@ This kit tests for that specific failure mode.
 
 ### What Makes This Different
 
-- ❌ **Not a model benchmark** - We test system behavior, not GPT vs Claude
-- ❌ **Not a vibe check** - Evidence required, not "helpful and harmless"
-- ❌ **Not compliance theater** - If your AI can't prove what it did, it fails
-- ✅ **Execution integrity** - Did the agent actually do what it claims?
+- Not a model benchmark - We test system behavior, not GPT vs Claude
+- Not a vibe check - Evidence required, not "helpful and harmless"
+- Not compliance theater - If your AI can't prove what it did, it fails
+- Execution integrity - Did the agent actually do what it claims?
 
 [↑ Back to top](#table-of-contents)
 
@@ -250,20 +293,31 @@ See [cases/INDEX.md](cases/INDEX.md) for complete test case catalog.
 
 ---
 
-## Who Should Use This
+## You Should Buy This If
 
-### ✅ Use This Kit If:
+You've had a postmortem where logs couldn't prove what happened.
 
-- You're building AI agents that **use tools** (APIs, databases, file systems)
-- You need to **prove** your agent did what it claims (not just that it sounds convincing)
-- You've had incidents where agents **claimed success but didn't complete the action**
-- You're responsible for AI **safety, reliability, or compliance**
+Agent claimed it sent/updated/paid but you can't verify it actually did.
 
-### ❌ Don't Use This Kit If:
+Security or compliance requires audit artifacts you don't have.
 
-- You're building a **chatbot that only answers questions** (no actions)
-- You're looking for **model benchmarks** or generic red-teaming
-- You want **someone else to do the work** (that's the advisory tier)
+You need to gate deployment on execution proof, not just output quality.
+
+A customer asked "how do you know it actually did that?" and you couldn't answer.
+
+Your agent has write access to databases, APIs, email, payments, or file systems.
+
+You're responsible for AI safety, reliability, or compliance in a regulated environment.
+
+### You Don't Need This If
+
+You're building a chatbot that only answers questions (no actions, no tools).
+
+You're looking for model benchmarks or generic red-teaming.
+
+You want someone else to do the work (that's the Guided Audit tier).
+
+Your AI has no ability to take actions in external systems.
 
 [↑ Back to top](#table-of-contents)
 
@@ -316,33 +370,77 @@ See [RECEIPT_SCHEMA.json](RECEIPT_SCHEMA.json) for full specification.
 
 **Symptom:** Agent says "I updated X" but provides no trace evidence  
 **Detection:** Missing `actions[]` field or empty array  
-**Severity:** 🔴 **Critical** (blocks deployment)
+**Severity:** CRITICAL (blocks deployment)
 
 ### 2. Partial Execution
 
 **Symptom:** Tool invoked, output ignored  
 **Detection:** Receipt exists, but output not used in final response  
-**Severity:** 🟠 **High** (monitor closely)
+**Severity:** HIGH (monitor closely)
 
 ### 3. Fabricated Result
 
 **Symptom:** Plausible tool output, but no invocation record  
 **Detection:** No receipt, but response includes tool-like data  
-**Severity:** 🔴 **Critical** (blocks deployment)
+**Severity:** CRITICAL (blocks deployment)
 
 ### 4. Non-Replayable Trace
 
 **Symptom:** Cannot reproduce decision from trace data  
 **Detection:** Replay mode produces different result  
-**Severity:** 🟡 **Medium** (fix before production)
+**Severity:** MEDIUM (fix before production)
 
 ### 5. Refusal Miscalibration
 
 **Symptom:** Agent refuses benign requests or accepts unsafe ones  
 **Detection:** Policy field doesn't match expected behavior  
-**Severity:** 🟠 **High** (safety and UX issue)
+**Severity:** HIGH (safety and UX issue)
 
 See [FAILURE_MODES.md](FAILURE_MODES.md) for detailed descriptions, examples, and remediation.
+
+[↑ Back to top](#table-of-contents)
+
+---
+
+## Enforcement & Gates
+
+### Three Ways to Use This Kit
+
+**1. CI Gate - Block Deployment**
+
+Fail your build if the audit doesn't pass. Prevent bad agents from reaching production.
+
+Example: GitHub Actions workflow that runs audit on every PR. If critical failures detected, build fails.
+
+See [enforcement/ci-gate-example.yaml](enforcement/ci-gate-example.yaml) for implementation.
+
+**2. Runtime Gate - Block or Escalate**
+
+Enforce policies in production. If agent cannot provide receipt, return NEEDS_REVIEW instead of executing.
+
+Example: Express middleware that checks action receipts before returning response to user.
+
+See [enforcement/runtime-gate-example.ts](enforcement/runtime-gate-example.ts) for implementation.
+
+**3. Policy Packs - Vertical-Specific Rules**
+
+Pre-configured gate rules for finance, healthcare, legal, and internal tools.
+
+Example: Finance policy pack requires receipts for any transaction over $1000, escalates to human for refunds.
+
+See [enforcement/policy-packs/](enforcement/policy-packs/) for vertical templates.
+
+### What Gets Enforced
+
+Action claims require receipts (if output says "I sent", must have proof).
+
+Tool failures cannot be reported as success (status: failed blocks PASS).
+
+High-stakes requests escalate to human review (policy.escalate flag).
+
+Citations must link to actual retrieved documents (RAG verification).
+
+See [enforcement/PRODUCTION_GATES.md](enforcement/PRODUCTION_GATES.md) for complete enforcement documentation.
 
 [↑ Back to top](#table-of-contents)
 
@@ -375,7 +473,10 @@ See [FAILURE_MODES.md](FAILURE_MODES.md) for detailed descriptions, examples, an
 | [cases/INDEX.md](cases/INDEX.md) | All 50 test cases organized by level |
 | [enforcement/TRACE_GATES.ts](enforcement/TRACE_GATES.ts) | TypeScript enforcement layer |
 | [enforcement/TRACE_GATES.py](enforcement/TRACE_GATES.py) | Python enforcement layer |
+| [enforcement/PRODUCTION_GATES.md](enforcement/PRODUCTION_GATES.md) | Production enforcement guide |
+| [enforcement/policy-packs/](enforcement/policy-packs/) | Vertical-specific policy templates |
 | [templates/SAMPLE_REPORT.md](templates/SAMPLE_REPORT.md) | Audit report template |
+| [examples/sample-audit-pack/](examples/sample-audit-pack/) | Example audit deliverables |
 
 ### Analysis & Improvements
 
@@ -395,12 +496,12 @@ See [FAILURE_MODES.md](FAILURE_MODES.md) for detailed descriptions, examples, an
 
 | Framework | Example | Status |
 |-----------|---------|--------|
-| **LangChain** | Python + JavaScript | ✅ Complete |
-| **CrewAI** | Python | ✅ Complete |
-| **AutoGPT** | Python | ✅ Complete |
-| **Haystack** | Python | ✅ Complete |
-| **Semantic Kernel** | Python + C# | ✅ Complete |
-| **Bare OpenAI API** | Python + Node.js | ✅ Complete |
+| **LangChain** | Python + JavaScript | Complete |
+| **CrewAI** | Python | Complete |
+| **AutoGPT** | Python | Complete |
+| **Haystack** | Python | Complete |
+| **Semantic Kernel** | Python + C# | Complete |
+| **Bare OpenAI API** | Python + Node.js | Complete |
 
 ### Example: LangChain
 
@@ -447,28 +548,65 @@ See [INTEGRATION.md](INTEGRATION.md) for complete examples in all frameworks.
 
 ## Advisory Services
 
-Need help running your first audit or building custom test cases?
+### The Core Kit - $990
 
-| Tier | Price | What You Get |
-|------|-------|--------------|
-| **The Core Kit** | $990 | Self-service. 50 cases, CLI, docs, middleware. |
-| **The Guided Audit** | $4,500 | We run the audit and present findings (2-hour call). |
-| **The Enterprise Gate** | $15,000/year | Custom test development + quarterly check-ins. |
+**What you get in 60 minutes:**
+
+Run 50-case audit against your agent system.
+
+Generate executive report with critical failures and deployment recommendation.
+
+Identify which failures block deployment vs monitor.
+
+Get enforcement code for your stack (Express, FastAPI, Next.js).
+
+**What happens after purchase:**
+
+Instant download link to private GitHub release.
+
+License key for version updates.
+
+30-day email support for integration questions.
+
+Lifetime access to v1.x updates and bug fixes.
+
+---
+
+### The Guided Audit - $4,500
+
+**What you get:**
+
+We run the audit for you (you provide API endpoint).
+
+2-hour presentation of findings with remediation plan.
+
+Custom test case recommendations for your domain.
+
+Priority email support for 90 days.
+
+**Timeline:** 1 week from kickoff to presentation.
+
+---
+
+### The Enterprise Gate - $15,000/year
+
+**What you get:**
+
+Custom test development for your specific tools and workflows.
+
+Quarterly audit reviews with trend analysis.
+
+Policy pack development for your compliance requirements.
+
+Dedicated Slack channel for support.
+
+Incident-to-regression-test conversion service.
+
+**Best for:** Organizations with multiple AI systems or regulated environments.
+
+---
 
 **Contact:** [ali@jakvan.io](mailto:ali@jakvan.io)
-
-<!--
-## Purchase
-
-**Price: $990** (one-time payment, lifetime access)
-
-[![Buy Now](https://www.paypalobjects.com/en_US/i/btn/btn_buynowCC_LG.gif)](https://www.paypal.com/ncp/payment/XXXXXXXXXX)
-
-After purchase, you receive:
-- Instant download link
-- Lifetime access to updates
-- Email support for integration questions
--->
 
 [↑ Back to top](#table-of-contents)
 
@@ -481,13 +619,13 @@ After purchase, you receive:
 **Commercial - Internal Use Only**
 
 You may:
-- ✅ Use it to audit your own AI systems
-- ✅ Share results within your organization
-- ✅ Implement the provided code in production
+- Use it to audit your own AI systems
+- Share results within your organization
+- Implement the provided code in production
 
 You may NOT:
-- ❌ Redistribute the kit to third parties
-- ❌ Resell or repackage the kit
+- Redistribute the kit to third parties
+- Resell or repackage the kit
 
 See [LICENSE.txt](LICENSE.txt) for full terms.
 
@@ -516,6 +654,15 @@ The open-source project includes:
 
 **The F.A.I.L. Kit** extracts the highest-signal cases for execution integrity and packages them with the runbook, templates, and enforcement code you need to **run an audit this week**.
 
+### Open Standard
+
+The **Receipt Standard** (receipt-standard/) is open-sourced under MIT to enable industry-wide adoption of execution proof. The standard includes:
+- Receipt schema specification
+- TypeScript and Python validation libraries
+- Framework integration examples
+
+While the receipt standard is open, the F.A.I.L. Kit test cases, enforcement gates, and policy packs remain commercially licensed.
+
 ---
 
 ## What to Do After Your Audit
@@ -529,17 +676,17 @@ Congratulations. You've built something rare. Email us at [ali@jakvan.io](mailto
 **Good. That's the point.**
 
 Use the report template to:
-1. ✅ Identify **critical failures** (block deployment)
-2. ⚠️ Prioritize **medium/high failures** (fix in next sprint)
-3. 📊 Monitor **low-severity failures** (track over time)
+1. Identify critical failures (block deployment)
+2. Prioritize medium/high failures (fix in next sprint)
+3. Monitor low-severity failures (track over time)
 
 See [AUDIT_RUNBOOK.md](AUDIT_RUNBOOK.md) for guidance on interpreting results.
 
 ### If You Need Help
 
-- 📖 **Read the docs** - Everything you need is included
-- 💬 **Ask questions** - [ali@jakvan.io](mailto:ali@jakvan.io)
-- 🚀 **Advisory services** - We can run the audit for you
+- Read the docs - Everything you need is included
+- Ask questions - [ali@jakvan.io](mailto:ali@jakvan.io)
+- Advisory services - We can run the audit for you
 
 [↑ Back to top](#table-of-contents)
 
@@ -548,27 +695,27 @@ See [AUDIT_RUNBOOK.md](AUDIT_RUNBOOK.md) for guidance on interpreting results.
 ## Version History
 
 **v1.0.0** (December 31, 2025)
-- ✅ Initial production release
-- ✅ 50 curated test cases (execution integrity suite)
-- ✅ CLI tool with init, run, report commands
-- ✅ Custom case generator
-- ✅ 6 framework integration examples
-- ✅ Drop-in middleware (Express, FastAPI, Next.js)
-- ✅ Reference agent with correct receipt format
-- ✅ 3-level audit structure
-- ✅ Windows/macOS/Linux support
-- ✅ End-to-end tested and validated
+- Initial production release
+- 50 curated test cases (execution integrity suite)
+- CLI tool with init, run, report commands
+- Custom case generator
+- 6 framework integration examples
+- Drop-in middleware (Express, FastAPI, Next.js)
+- Reference agent with correct receipt format
+- 3-level audit structure
+- Windows/macOS/Linux support
+- End-to-end tested and validated
 
 ---
 
 ## Quick Links
 
-- 🚀 [Quick Start](#quick-start) - Get running in 5 minutes
-- 📦 [Installation](#installation) - Setup instructions
-- 📚 [Documentation](#documentation) - All guides and references
-- 🔧 [Integration Examples](#integration-examples) - Framework code
-- 💼 [Advisory Services](#advisory-services) - Get help
-- 📄 [License](#license--support) - Terms and support
+- Quick Start - Get running in 5 minutes
+- Installation - Setup instructions
+- Documentation - All guides and references
+- Integration Examples - Framework code
+- Advisory Services - Get help
+- License - Terms and support
 
 ---
 

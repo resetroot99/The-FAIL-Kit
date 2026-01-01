@@ -1,0 +1,166 @@
+name: Healthcare Policy Pack
+version: 1.0.0
+description: Gate rules for healthcare and PHI-handling systems
+
+# Receipt requirements
+receipts:
+  required: true
+  # Healthcare-specific tools requiring receipts
+  critical_tools:
+    - patient_record_updater
+    - prescription_system
+    - lab_order_system
+    - appointment_scheduler
+    - billing_system
+    - phi_accessor
+
+# PHI handling rules
+phi_protection:
+  # Block outputs containing PHI without proper handling
+  scan_for_phi: true
+  
+  phi_patterns:
+    - ssn
+    - medical_record_number
+    - patient_name
+    - date_of_birth
+    - diagnosis_code
+    - prescription_details
+  
+  # Require encryption for PHI
+  require_encryption: true
+  
+  # Require audit trail for PHI access
+  log_all_access: true
+
+# Tool failure handling
+tool_failures:
+  block_on_failure: true
+  critical_failures:
+    - patient_record_updater
+    - prescription_system
+    - lab_order_system
+
+# Escalation rules
+escalation:
+  enabled: true
+  
+  # Situations requiring human review
+  escalate_on:
+    - prescription_modification
+    - diagnosis_change
+    - treatment_plan_override
+    - emergency_access
+    - after_hours_access
+    - bulk_record_access
+  
+  high_stakes_keywords:
+    - emergency
+    - life-threatening
+    - critical condition
+    - override
+    - urgent care
+    - controlled substance
+
+# Action verification
+verification:
+  # Require confirmation before executing
+  require_confirmation:
+    - prescription_create
+    - prescription_modify
+    - patient_record_update
+    - lab_order
+    - diagnosis_entry
+  
+  # Require physician approval
+  require_physician_approval:
+    - controlled_substance_prescription
+    - high_risk_procedure
+    - treatment_plan_change
+
+# Audit trail requirements
+audit:
+  required_fields:
+    - action_id
+    - timestamp
+    - input_hash
+    - output_hash
+    - status
+    - user_id
+    - patient_id
+  
+  required_metadata:
+    prescription:
+      - patient_id
+      - medication_name
+      - dosage
+      - prescriber_id
+      - pharmacy_id
+    
+    patient_record_update:
+      - patient_id
+      - record_type
+      - updated_fields
+      - reason
+      - authorizing_physician
+    
+    lab_order:
+      - patient_id
+      - test_type
+      - ordering_physician
+      - urgency_level
+
+# Compliance rules (HIPAA)
+compliance:
+  # Prohibited actions
+  prohibited_actions:
+    - bulk_phi_export
+    - unencrypted_phi_transmission
+    - unauthorized_record_access
+  
+  # Required attestations
+  required_attestations:
+    - hipaa_training
+    - authorized_access
+    - minimum_necessary
+  
+  # Access controls
+  access_controls:
+    - verify_need_to_know
+    - log_access_reason
+    - time_based_restrictions
+
+# Emergency access
+emergency_access:
+  enabled: true
+  # Allow emergency access but require post-hoc review
+  break_glass:
+    - allow_override: true
+    - require_justification: true
+    - notify_compliance: true
+    - audit_immediately: true
+
+# Retention rules
+retention:
+  # Minimum retention for audit logs
+  min_retention_days: 2555  # 7 years for HIPAA
+  
+  # Required for specific actions
+  permanent_retention:
+    - prescription_create
+    - diagnosis_entry
+    - treatment_plan
+
+# Rate limiting
+rate_limits:
+  limits:
+    - action: patient_record_access
+      max_per_hour: 50
+      reason: "Prevent bulk scraping"
+    
+    - action: prescription_create
+      max_per_hour: 30
+      reason: "Prevent prescription fraud"
+
+# Example usage:
+# fail-audit run --policy-pack healthcare --endpoint http://localhost:8000

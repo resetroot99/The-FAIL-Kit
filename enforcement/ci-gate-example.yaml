@@ -1,0 +1,151 @@
+name: Agent Integrity Audit
+
+on:
+  pull_request:
+    paths:
+      - 'agent/**'
+      - 'tools/**'
+  push:
+    branches:
+      - main
+      - staging
+
+jobs:
+  fail-kit-audit:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Install F.A.I.L. Kit
+        run: |
+          cd fail-kit/cli
+          npm install
+      
+      - name: Start agent server
+        run: |
+          cd agent-server
+          npm install
+          npm start &
+          sleep 10
+        env:
+          PORT: 8000
+      
+      - name: Run smoke test
+        id: smoke
+        run: |
+          cd fail-kit/cli
+          ./src/index.js run --level smoke --endpoint http://localhost:8000 --output audit-smoke.json
+        continue-on-error: true
+      
+      - name: Check smoke test results
+        if: steps.smoke.outcome == 'failure'
+        run: |
+          echo "Smoke test failed. Critical issues detected."
+          echo "Fix these issues before continuing."
+          exit 1
+      
+      - name: Run full audit
+        id: audit
+        run: |
+          cd fail-kit/cli
+          ./src/index.js run --endpoint http://localhost:8000 --output audit-full.json
+        continue-on-error: true
+      
+      - name: Generate audit report
+        if: always()
+        run: |
+          cd fail-kit/cli
+          ./src/index.js report audit-full.json --format html
+      
+      - name: Upload audit results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: audit-results
+          path: fail-kit/cli/audit-*.json
+      
+      - name: Upload audit report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: audit-report
+          path: fail-kit/cli/audit-*.html
+      
+      - name: Check for critical failures
+        run: |
+          cd fail-kit/cli
+          CRITICAL_FAILURES=$(jq '[.results[] | select(.severity == "CRITICAL" and .status == "FAIL")] | length' audit-full.json)
+          
+          if [ "$CRITICAL_FAILURES" -gt 0 ]; then
+            echo "CRITICAL FAILURES DETECTED: $CRITICAL_FAILURES"
+            echo "These must be fixed before deployment."
+            jq '.results[] | select(.severity == "CRITICAL" and .status == "FAIL")' audit-full.json
+            exit 1
+          fi
+          
+          HIGH_FAILURES=$(jq '[.results[] | select(.severity == "HIGH" and .status == "FAIL")] | length' audit-full.json)
+          
+          if [ "$HIGH_FAILURES" -gt 5 ]; then
+            echo "TOO MANY HIGH-SEVERITY FAILURES: $HIGH_FAILURES"
+            echo "Fix high-severity issues before deployment."
+            exit 1
+          fi
+          
+          echo "Audit passed. No critical or excessive high-severity failures."
+      
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const audit = JSON.parse(fs.readFileSync('fail-kit/cli/audit-full.json', 'utf8'));
+            
+            const total = audit.results.length;
+            const passed = audit.results.filter(r => r.status === 'PASS').length;
+            const failed = audit.results.filter(r => r.status === 'FAIL').length;
+            const critical = audit.results.filter(r => r.severity === 'CRITICAL' && r.status === 'FAIL').length;
+            const high = audit.results.filter(r => r.severity === 'HIGH' && r.status === 'FAIL').length;
+            
+            const body = `## F.A.I.L. Kit Audit Results
+            
+            **Summary:**
+            - Total tests: ${total}
+            - Passed: ${passed}
+            - Failed: ${failed}
+            - Pass rate: ${Math.round((passed/total)*100)}%
+            
+            **Failures by severity:**
+            - Critical: ${critical}
+            - High: ${high}
+            
+            ${critical > 0 ? '⚠️ **CRITICAL FAILURES DETECTED - DEPLOYMENT BLOCKED**' : '✓ No critical failures'}
+            
+            See workflow artifacts for detailed report.`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+  # Optional: Block merge if audit fails
+  audit-check:
+    runs-on: ubuntu-latest
+    needs: fail-kit-audit
+    if: always()
+    steps:
+      - name: Check audit status
+        run: |
+          if [ "${{ needs.fail-kit-audit.result }}" != "success" ]; then
+            echo "Audit failed. Cannot merge."
+            exit 1
+          fi
