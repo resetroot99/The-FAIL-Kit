@@ -29,11 +29,11 @@
   "license": "Commercial",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/fail-kit/fail-kit.git"
+    "url": "git+https://github.com/resetroot99/The-FAIL-Kit.git"
   },
-  "homepage": "https://fail-kit.dev",
+  "homepage": "https://github.com/resetroot99/The-FAIL-Kit#readme",
   "bugs": {
-    "url": "https://github.com/fail-kit/fail-kit/issues"
+    "url": "https://github.com/resetroot99/The-FAIL-Kit/issues"
   },
   "engines": {
     "node": ">=16.0.0"
