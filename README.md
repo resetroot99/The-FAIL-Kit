@@ -124,7 +124,76 @@ Agent retries failed API call. First call actually succeeded but returned timeou
 
 ## Quick Start
 
-### 1. Install (5 minutes)
+### 1. Install the CLI
+
+```bash
+# Install globally from npm
+npm install -g @fail-kit/cli
+
+# Verify installation
+fail-audit --version
+```
+
+### 2. Add to Your App (5 lines of code)
+
+**Next.js:**
+```bash
+npm install @fail-kit/middleware-nextjs
+```
+
+```typescript
+// app/api/eval/run/route.ts
+import { failAuditRoute } from "@fail-kit/middleware-nextjs";
+
+export const POST = failAuditRoute(async (prompt, context) => {
+  const result = await yourAgent.process(prompt);
+  return { response: result.text, actions: result.actions, receipts: result.receipts };
+});
+```
+
+**Express:**
+```bash
+npm install @fail-kit/middleware-express
+```
+
+```javascript
+const { failAuditMiddleware } = require("@fail-kit/middleware-express");
+
+app.use("/eval", failAuditMiddleware({
+  handler: async (prompt, context) => {
+    const result = await yourAgent.process(prompt);
+    return { response: result.text, actions: result.actions, receipts: result.receipts };
+  }
+}));
+```
+
+**FastAPI:**
+```bash
+pip install fail-kit
+```
+
+```python
+from fail_kit import fail_audit
+
+@app.post("/eval/run")
+@fail_audit(auto_receipts=True)
+async def evaluate(prompt: str, context: dict):
+    result = await your_agent_function(prompt, context)
+    return {"response": result["text"], "actions": result["actions"], "receipts": result["receipts"]}
+```
+
+See [Easy Integration Guide](docs/EASY_INTEGRATION.md) for complete documentation.
+
+### 3. Run the Audit
+
+```bash
+fail-audit init
+fail-audit run
+```
+
+---
+
+### Alternative: Clone and Run Locally
 
 ```bash
 # Clone the repository
@@ -140,7 +209,7 @@ cd examples/reference-agent && npm install && cd ../..
 
 See [INSTALL.md](INSTALL.md) for detailed instructions.
 
-### 2. Test with Reference Agent (2 minutes)
+### Test with Reference Agent (2 minutes)
 
 ```bash
 # Start the reference agent
@@ -215,8 +284,8 @@ See [QUICKSTART.md](QUICKSTART.md) for a complete 5-minute walkthrough.
 
 ### Prerequisites
 
-- **Node.js 18+** (for CLI and Express middleware)
-- **Python 3.9+** (optional, for Python enforcement gates)
+- **Node.js 16+** (for CLI and Express/Next.js middleware)
+- **Python 3.9+** (optional, for FastAPI middleware)
 
 ### Platform Support
 
@@ -227,19 +296,35 @@ See [QUICKSTART.md](QUICKSTART.md) for a complete 5-minute walkthrough.
 ### Quick Install
 
 ```bash
-# Option 1: Run from source
-cd cli/
-npm install
-./src/index.js --help
+# Install CLI from npm (recommended)
+npm install -g @fail-kit/cli
 
-# Option 2: Global install
-cd cli/
+# Verify installation
+fail-audit --version
+fail-audit doctor
+```
+
+### Middleware Packages
+
+```bash
+# For Next.js apps
+npm install @fail-kit/middleware-nextjs
+
+# For Express apps
+npm install @fail-kit/middleware-express
+
+# For FastAPI apps
+pip install fail-kit
+```
+
+### Alternative: Run from Source
+
+```bash
+git clone https://github.com/resetroot99/The-FAIL-Kit.git
+cd The-FAIL-Kit/cli
 npm install
 npm link
 fail-audit --help
-
-# Option 3: Manual setup
-# See INSTALL.md for step-by-step instructions
 ```
 
 See [INSTALL.md](INSTALL.md) for detailed installation instructions including Windows-specific guidance.

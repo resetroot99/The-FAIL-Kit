@@ -52,7 +52,7 @@ program
     // Check if config exists
     if (configExists()) {
       if (!options.yes) {
-        console.log(chalk.yellow('⚠ Configuration file already exists at:'), configPath);
+      console.log(chalk.yellow('⚠ Configuration file already exists at:'), configPath);
         console.log(chalk.dim('Use --yes to overwrite, or delete it first.\n'));
         process.exit(1);
       }
@@ -70,6 +70,23 @@ program
       try {
         // Dynamic import for inquirer (ES module)
         const inquirer = require('inquirer');
+        
+        // First, ask about framework
+        const frameworkAnswer = await inquirer.prompt([
+          {
+            type: 'list',
+            name: 'framework',
+            message: 'Which framework are you using?',
+            choices: [
+              { name: 'Next.js', value: 'nextjs' },
+              { name: 'Express', value: 'express' },
+              { name: 'FastAPI (Python)', value: 'fastapi' },
+              { name: 'Other / Manual setup', value: 'other' }
+            ]
+          }
+        ]);
+        
+        const framework = frameworkAnswer.framework;
         
         const answers = await inquirer.prompt([
           {
@@ -123,10 +140,14 @@ program
           }
         ]);
         
+        // Store framework choice
+        answers.framework = framework;
+        
         config.endpoint = answers.endpoint;
         config.timeout = answers.timeout;
         config.cases_dir = answers.cases_dir;
         config.output_dir = answers.output_dir;
+        config.framework = answers.framework;
         config.levels = {
           smoke_test: answers.levels.includes('smoke_test'),
           interrogation: answers.levels.includes('interrogation'),
@@ -136,6 +157,9 @@ program
         if (answers.testConnection) {
           options.test = true;
         }
+        
+        // Store framework for later
+        config._framework = answers.framework;
       } catch (error) {
         // inquirer not available or error, fall back to defaults
         if (error.code !== 'MODULE_NOT_FOUND') {
@@ -152,6 +176,10 @@ program
       process.exit(1);
     }
     
+    // Extract framework before writing (don't persist internal field)
+    const framework = config._framework;
+    delete config._framework;
+    
     // Write config
     writeConfig(config, configPath);
     
@@ -163,6 +191,69 @@ program
     console.log(chalk.dim('  Cases:'), config.cases_dir);
     console.log(chalk.dim('  Output:'), config.output_dir);
     console.log('');
+    
+    // Show framework-specific integration instructions
+    if (framework && framework !== 'other') {
+      console.log(chalk.bold.cyan('┌─────────────────────────────────────────┐'));
+      console.log(chalk.bold.cyan('│  Integration Instructions               │'));
+      console.log(chalk.bold.cyan('└─────────────────────────────────────────┘\n'));
+      
+      if (framework === 'nextjs') {
+        console.log(chalk.bold('1. Install the middleware:'));
+        console.log(chalk.cyan('   npm install @fail-kit/middleware-nextjs\n'));
+        console.log(chalk.bold('2. Create app/api/eval/run/route.ts:'));
+        console.log(chalk.dim(`
+   import { failAuditRoute } from "@fail-kit/middleware-nextjs";
+   import { yourAgent } from "@/lib/your-agent";
+
+   export const POST = failAuditRoute(async (prompt, context) => {
+     const result = await yourAgent.process(prompt);
+     return {
+       response: result.text,
+       actions: result.actions,
+       receipts: result.receipts
+     };
+   });
+`));
+      } else if (framework === 'express') {
+        console.log(chalk.bold('1. Install the middleware:'));
+        console.log(chalk.cyan('   npm install @fail-kit/middleware-express\n'));
+        console.log(chalk.bold('2. Add to your Express app:'));
+        console.log(chalk.dim(`
+   const { failAuditMiddleware } = require("@fail-kit/middleware-express");
+
+   app.use("/eval", failAuditMiddleware({
+     handler: async (prompt, context) => {
+       const result = await yourAgent.process(prompt);
+       return {
+         response: result.text,
+         actions: result.actions,
+         receipts: result.receipts
+       };
+     }
+   }));
+`));
+      } else if (framework === 'fastapi') {
+        console.log(chalk.bold('1. Install the package:'));
+        console.log(chalk.cyan('   pip install fail-kit\n'));
+        console.log(chalk.bold('2. Add the decorator:'));
+        console.log(chalk.dim(`
+   from fail_kit import fail_audit
+
+   @app.post("/eval/run")
+   @fail_audit(auto_receipts=True)
+   async def evaluate(prompt: str, context: dict):
+       result = await your_agent_function(prompt, context)
+       return {
+           "response": result["text"],
+           "actions": result["actions"],
+           "receipts": result["receipts"]
+       }
+`));
+      }
+      
+      console.log(chalk.dim('Full documentation: https://github.com/resetroot99/The-FAIL-Kit/blob/main/docs/EASY_INTEGRATION.md\n'));
+    }
     
     // Test connection if requested
     if (options.test) {
@@ -176,6 +267,65 @@ program
       } catch (error) {
         console.log(chalk.yellow('⚠ Could not reach endpoint:'), error.message);
         console.log(chalk.dim('Make sure your agent server is running.\n'));
+      }
+    }
+    
+    // Show framework-specific integration instructions
+    const framework = config.framework || 'other';
+    if (framework !== 'other') {
+      console.log(chalk.bold.cyan('Integration Instructions:\n'));
+      
+      if (framework === 'nextjs') {
+        console.log(chalk.green('1. Install the middleware:'));
+        console.log(chalk.bold('   npm install @fail-kit/middleware-nextjs\n'));
+        console.log(chalk.green('2. Create app/api/eval/run/route.ts:'));
+        console.log(chalk.dim(`
+   import { failAuditRoute } from "@fail-kit/middleware-nextjs";
+   
+   export const POST = failAuditRoute(async (prompt, context) => {
+     const result = await yourAgent.process(prompt);
+     return {
+       response: result.text,
+       actions: result.actions,
+       receipts: result.receipts
+     };
+   });
+`));
+      } else if (framework === 'express') {
+        console.log(chalk.green('1. Install the middleware:'));
+        console.log(chalk.bold('   npm install @fail-kit/middleware-express\n'));
+        console.log(chalk.green('2. Add to your Express app:'));
+        console.log(chalk.dim(`
+   const { failAuditMiddleware } = require("@fail-kit/middleware-express");
+   
+   app.use("/eval", failAuditMiddleware({
+     handler: async (prompt, context) => {
+       const result = await yourAgent.process(prompt);
+       return {
+         response: result.text,
+         actions: result.actions,
+         receipts: result.receipts
+       };
+     }
+   }));
+`));
+      } else if (framework === 'fastapi') {
+        console.log(chalk.green('1. Install the package:'));
+        console.log(chalk.bold('   pip install fail-kit\n'));
+        console.log(chalk.green('2. Add the decorator:'));
+        console.log(chalk.dim(`
+   from fail_kit import fail_audit
+   
+   @app.post("/eval/run")
+   @fail_audit(auto_receipts=True)
+   async def evaluate(prompt: str, context: dict):
+       result = await your_agent_function(prompt, context)
+       return {
+           "response": result["text"],
+           "actions": result["actions"],
+           "receipts": result["receipts"]
+       }
+`));
       }
     }
     
@@ -313,8 +463,8 @@ program
           failed++;
           if (!options.quiet && !ciMode) {
             console.log(chalk.red('FAIL'), chalk.dim(`(${duration_ms}ms)`));
-            if (result.reason) {
-              console.log(chalk.dim('  Reason:'), result.reason);
+          if (result.reason) {
+            console.log(chalk.dim('  Reason:'), result.reason);
             }
           }
         }
@@ -329,7 +479,7 @@ program
         });
         if (!options.quiet && !ciMode) {
           console.log(chalk.red('ERROR'), chalk.dim(`(${duration_ms}ms)`));
-          console.log(chalk.dim('  Error:'), error.message);
+        console.log(chalk.dim('  Error:'), error.message);
         }
       }
     }
@@ -368,16 +518,16 @@ program
     // Summary
     if (!ciMode) {
       console.log(chalk.bold('\n' + '═'.repeat(50)));
-      console.log(chalk.bold('Audit Complete\n'));
+    console.log(chalk.bold('Audit Complete\n'));
       console.log(chalk.dim('Total:'), results.length, chalk.dim(`(${(totalDuration / 1000).toFixed(1)}s)`));
-      console.log(chalk.green('Passed:'), passed);
-      console.log(chalk.red('Failed:'), failed);
+    console.log(chalk.green('Passed:'), passed);
+    console.log(chalk.red('Failed:'), failed);
       console.log(chalk.dim('\nReport saved to:'), outputPath);
       
       if (format !== 'html') {
         console.log(chalk.dim('Generate HTML report:'), chalk.bold(`fail-audit report ${path.basename(outputPath)}`));
       }
-      console.log('');
+    console.log('');
     } else {
       // CI mode: output summary to stdout
       const { generateOneLiner } = require('./reporters/markdown');
@@ -420,7 +570,7 @@ program
     
     console.log(chalk.green('✓ Report generated:'), outputPath);
     if (format === 'html') {
-      console.log(chalk.dim('Open in browser to view.\n'));
+    console.log(chalk.dim('Open in browser to view.\n'));
     } else {
       console.log('');
     }

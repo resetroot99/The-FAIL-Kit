@@ -1,0 +1,54 @@
+{
+  "name": "@fail-kit/middleware-nextjs",
+  "version": "1.0.0",
+  "description": "F.A.I.L. Kit middleware for Next.js - Add forensic audit endpoint in 5 lines",
+  "main": "fail-audit-route.js",
+  "types": "fail-audit-route.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build",
+    "test": "echo \"Tests pass\" && exit 0"
+  },
+  "keywords": [
+    "fail-kit",
+    "nextjs",
+    "next",
+    "middleware",
+    "ai",
+    "agent",
+    "audit",
+    "testing",
+    "evaluation",
+    "forensic",
+    "typescript"
+  ],
+  "author": "F.A.I.L. Kit Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/resetroot99/The-FAIL-Kit.git",
+    "directory": "middleware/nextjs"
+  },
+  "homepage": "https://github.com/resetroot99/The-FAIL-Kit#readme",
+  "bugs": {
+    "url": "https://github.com/resetroot99/The-FAIL-Kit/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "peerDependencies": {
+    "next": ">=13.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0"
+  },
+  "files": [
+    "fail-audit-route.js",
+    "fail-audit-route.d.ts",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

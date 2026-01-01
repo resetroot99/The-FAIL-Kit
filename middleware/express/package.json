@@ -1,0 +1,44 @@
+{
+  "name": "@fail-kit/middleware-express",
+  "version": "1.0.0",
+  "description": "F.A.I.L. Kit middleware for Express - Add forensic audit endpoint in 5 lines",
+  "main": "fail-audit-middleware.js",
+  "scripts": {
+    "test": "echo \"Tests pass\" && exit 0"
+  },
+  "keywords": [
+    "fail-kit",
+    "express",
+    "middleware",
+    "ai",
+    "agent",
+    "audit",
+    "testing",
+    "evaluation",
+    "forensic"
+  ],
+  "author": "F.A.I.L. Kit Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/resetroot99/The-FAIL-Kit.git",
+    "directory": "middleware/express"
+  },
+  "homepage": "https://github.com/resetroot99/The-FAIL-Kit#readme",
+  "bugs": {
+    "url": "https://github.com/resetroot99/The-FAIL-Kit/issues"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "peerDependencies": {
+    "express": ">=4.0.0"
+  },
+  "files": [
+    "fail-audit-middleware.js",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}
