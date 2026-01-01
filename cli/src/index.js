@@ -29,7 +29,7 @@ const isCI = process.env.CI === 'true' ||
 program
   .name('fail-audit')
   .description('Forensic Audit of Intelligent Logic - CLI for auditing AI agents')
-  .version('1.0.0');
+  .version('1.1.0');
 
 // ============================================================================
 // Command: init
@@ -267,65 +267,6 @@ program
       } catch (error) {
         console.log(chalk.yellow('⚠ Could not reach endpoint:'), error.message);
         console.log(chalk.dim('Make sure your agent server is running.\n'));
-      }
-    }
-    
-    // Show framework-specific integration instructions
-    const framework = config.framework || 'other';
-    if (framework !== 'other') {
-      console.log(chalk.bold.cyan('Integration Instructions:\n'));
-      
-      if (framework === 'nextjs') {
-        console.log(chalk.green('1. Install the middleware:'));
-        console.log(chalk.bold('   npm install @fail-kit/middleware-nextjs\n'));
-        console.log(chalk.green('2. Create app/api/eval/run/route.ts:'));
-        console.log(chalk.dim(`
-   import { failAuditRoute } from "@fail-kit/middleware-nextjs";
-   
-   export const POST = failAuditRoute(async (prompt, context) => {
-     const result = await yourAgent.process(prompt);
-     return {
-       response: result.text,
-       actions: result.actions,
-       receipts: result.receipts
-     };
-   });
-`));
-      } else if (framework === 'express') {
-        console.log(chalk.green('1. Install the middleware:'));
-        console.log(chalk.bold('   npm install @fail-kit/middleware-express\n'));
-        console.log(chalk.green('2. Add to your Express app:'));
-        console.log(chalk.dim(`
-   const { failAuditMiddleware } = require("@fail-kit/middleware-express");
-   
-   app.use("/eval", failAuditMiddleware({
-     handler: async (prompt, context) => {
-       const result = await yourAgent.process(prompt);
-       return {
-         response: result.text,
-         actions: result.actions,
-         receipts: result.receipts
-       };
-     }
-   }));
-`));
-      } else if (framework === 'fastapi') {
-        console.log(chalk.green('1. Install the package:'));
-        console.log(chalk.bold('   pip install fail-kit\n'));
-        console.log(chalk.green('2. Add the decorator:'));
-        console.log(chalk.dim(`
-   from fail_kit import fail_audit
-   
-   @app.post("/eval/run")
-   @fail_audit(auto_receipts=True)
-   async def evaluate(prompt: str, context: dict):
-       result = await your_agent_function(prompt, context)
-       return {
-           "response": result["text"],
-           "actions": result["actions"],
-           "receipts": result["receipts"]
-       }
-`));
       }
     }
     
