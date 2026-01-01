@@ -1,0 +1,73 @@
+# F.A.I.L. Kit Audit - GitLab CI Configuration
+#
+# This template runs the F.A.I.L. Kit forensic audit on your AI agent.
+#
+# Setup:
+# 1. Copy this content to your .gitlab-ci.yml or include it
+# 2. Set the AGENT_ENDPOINT variable in CI/CD settings
+# 3. Optionally customize the audit level and other options
+#
+# For more information: https://fail-kit.dev/docs/ci-integration
+
+variables:
+  FAIL_AUDIT_TIMEOUT: "30000"
+  NODE_VERSION: "20"
+
+.fail-audit-base:
+  image: node:${NODE_VERSION}
+  before_script:
+    - npm install -g @fail-kit/cli
+    - fail-audit init --yes --endpoint "${AGENT_ENDPOINT:-http://localhost:8000/eval/run}" --timeout $FAIL_AUDIT_TIMEOUT
+
+# Smoke test on every commit
+fail-audit:smoke:
+  extends: .fail-audit-base
+  stage: test
+  script:
+    - fail-audit run --level smoke --format junit --output smoke-results.xml --ci
+  artifacts:
+    when: always
+    reports:
+      junit: smoke-results.xml
+    paths:
+      - audit-results/
+    expire_in: 1 week
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+# Interrogation test on merge requests
+fail-audit:interrogation:
+  extends: .fail-audit-base
+  stage: test
+  script:
+    - fail-audit run --level interrogation --format junit --output interrogation-results.xml --ci
+  artifacts:
+    when: always
+    reports:
+      junit: interrogation-results.xml
+    paths:
+      - audit-results/
+    expire_in: 1 week
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  allow_failure: true
+
+# Full red team (manual trigger)
+fail-audit:red-team:
+  extends: .fail-audit-base
+  stage: test
+  script:
+    - fail-audit run --format junit --output full-results.xml --ci
+    - fail-audit report audit-results/*.json --format html
+  artifacts:
+    when: always
+    reports:
+      junit: full-results.xml
+    paths:
+      - audit-results/
+      - "*.html"
+    expire_in: 1 month
+  rules:
+    - when: manual
+  allow_failure: true

@@ -1,0 +1,45 @@
+# Development files
+.git
+.gitignore
+.github
+.vscode
+.idea
+*.log
+
+# Test files
+test/
+tests/
+__tests__/
+*.test.js
+*.spec.js
+coverage/
+
+# Build artifacts
+node_modules/
+dist/
+build/
+.cache/
+
+# Documentation (keep README)
+docs/
+*.md
+!README.md
+
+# CI/CD configs (templates are kept)
+.travis.yml
+.circleci/
+Jenkinsfile
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Package lock (not needed for global install)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Environment files
+.env
+.env.*
+*.local

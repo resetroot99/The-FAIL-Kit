@@ -1,26 +1,60 @@
 {
   "name": "@fail-kit/cli",
   "version": "1.0.0",
-  "description": "CLI tool for running forensic audits on AI agents",
+  "description": "Forensic Audit of Intelligent Logic - CLI for auditing AI agents",
   "main": "src/index.js",
   "bin": {
     "fail-audit": "./src/index.js"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node src/index.js",
+    "test": "node src/index.js --help",
+    "doctor": "node src/index.js doctor",
+    "prepublishOnly": "npm test"
   },
   "keywords": [
     "ai",
+    "agent",
     "audit",
     "testing",
-    "agent"
+    "evaluation",
+    "llm",
+    "forensic",
+    "observability",
+    "receipt",
+    "validation",
+    "cli"
   ],
-  "author": "F.A.I.L. Kit",
+  "author": "F.A.I.L. Kit Team",
   "license": "Commercial",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fail-kit/fail-kit.git"
+  },
+  "homepage": "https://fail-kit.dev",
+  "bugs": {
+    "url": "https://github.com/fail-kit/fail-kit/issues"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "files": [
+    "src/**/*.js",
+    "templates/**/*.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "dependencies": {
     "axios": "^1.13.2",
     "chalk": "^4.1.2",
     "commander": "^14.0.2",
+    "inquirer": "^8.2.6",
     "js-yaml": "^4.1.1"
-  }
+  },
+  "devDependencies": {},
+  "preferGlobal": true
 }

@@ -1,123 +1,175 @@
 # F.A.I.L. Kit CLI
 
-Command-line tool for running forensic audits on AI agents.
+> **Forensic Audit of Intelligent Logic**
+
+The F.A.I.L. Kit CLI is a developer-first tool for running forensic audits on AI agents. It tests whether your agent actually does what it claims — no trace, no ship.
 
 ## Installation
 
 ```bash
+# Install globally via npm
 npm install -g @fail-kit/cli
-```
 
-Or use directly from the kit:
-
-```bash
-cd cli
-npm link
+# Verify installation
+fail-audit --version
 ```
 
 ## Quick Start
 
-### 1. Initialize
-
 ```bash
+# Initialize configuration
 fail-audit init
-```
 
-This creates a `fail-audit.config.json` file with default settings.
+# Run diagnostics to check setup
+fail-audit doctor
 
-### 2. Configure
-
-Edit `fail-audit.config.json`:
-
-```json
-{
-  "endpoint": "http://localhost:8000/eval/run",
-  "timeout": 30000,
-  "cases_dir": "../cases",
-  "output_dir": "./audit-results"
-}
-```
-
-### 3. Run
-
-```bash
+# Run the full audit
 fail-audit run
+
+# Generate an HTML report
+fail-audit report audit-results/audit-2025-01-01.json
 ```
-
-Run specific levels:
-
-```bash
-fail-audit run --level smoke
-fail-audit run --level interrogation
-fail-audit run --level red-team
-```
-
-Run a specific case:
-
-```bash
-fail-audit run --case CONTRACT_0003
-```
-
-### 4. Generate Report
-
-```bash
-fail-audit report audit-results/audit-2025-12-31.json
-```
-
-This generates an HTML report you can open in your browser.
 
 ## Commands
 
 ### `fail-audit init`
 
-Initialize a new audit configuration file.
+Initialize a new audit configuration with an interactive wizard.
 
-### `fail-audit run [options]`
+```bash
+fail-audit init                    # Interactive setup
+fail-audit init --yes              # Use defaults (CI mode)
+fail-audit init --endpoint <url>   # Set endpoint directly
+fail-audit init --test             # Test endpoint after setup
+```
+
+### `fail-audit run`
 
 Run the forensic audit against your agent.
 
-**Options:**
-- `-e, --endpoint <url>` - Override the endpoint URL
-- `-l, --level <level>` - Run specific level: smoke, interrogation, or red-team
-- `-c, --case <id>` - Run a specific test case by ID
+```bash
+fail-audit run                     # Run all tests
+fail-audit run --level smoke       # Run smoke tests only
+fail-audit run --level interrogation   # Run behavioral tests
+fail-audit run --level red-team    # Run adversarial tests
+fail-audit run --case CONTRACT_0001    # Run specific test
+fail-audit run --format html       # Output as HTML
+fail-audit run --format junit      # Output as JUnit XML
+fail-audit run --ci                # CI mode (no colors)
+```
 
-### `fail-audit report <results-file>`
+### `fail-audit report`
 
-Generate an HTML report from audit results.
+Generate reports from audit results.
 
-## Audit Levels
+```bash
+fail-audit report results.json                    # Generate HTML report
+fail-audit report results.json --format markdown  # Generate Markdown
+fail-audit report results.json --format junit     # Generate JUnit XML
+fail-audit report results.json --output report.html
+```
 
-| Level | Cases | Purpose |
-|-------|-------|---------|
-| **smoke** | 10 | Basic contract and schema checks |
-| **interrogation** | 30 | Deep execution integrity checks |
-| **red-team** | 10 | Adversarial and RAG-poisoning checks |
+### `fail-audit doctor`
 
-## Exit Codes
+Diagnose common setup issues.
 
-- `0` - All tests passed
-- `1` - One or more tests failed
+```bash
+fail-audit doctor              # Run all checks
+fail-audit doctor --skip-network   # Skip connectivity check
+```
 
-Use this in CI/CD to block deployments on failure.
+### `fail-audit generate`
 
-## Example CI/CD Integration
+Generate custom test cases from your tool definitions.
+
+```bash
+fail-audit generate --tools tools.json
+fail-audit generate --tools tools.json --output ./my-cases
+```
+
+## Configuration
+
+The CLI uses `fail-audit.config.json` in your project root:
+
+```json
+{
+  "endpoint": "http://localhost:8000/eval/run",
+  "timeout": 30000,
+  "cases_dir": "./cases",
+  "output_dir": "./audit-results",
+  "levels": {
+    "smoke_test": true,
+    "interrogation": true,
+    "red_team": true
+  }
+}
+```
+
+### Environment Variables
+
+Override config values with environment variables:
+
+| Variable | Config Key | Description |
+|----------|-----------|-------------|
+| `FAIL_AUDIT_ENDPOINT` | `endpoint` | Agent endpoint URL |
+| `FAIL_AUDIT_TIMEOUT` | `timeout` | Request timeout (ms) |
+| `FAIL_AUDIT_CASES_DIR` | `cases_dir` | Test cases directory |
+| `FAIL_AUDIT_OUTPUT_DIR` | `output_dir` | Results output directory |
+
+## CI/CD Integration
 
 ### GitHub Actions
 
-```yaml
-- name: Run F.A.I.L. Audit
-  run: |
-    fail-audit init
-    fail-audit run --endpoint ${{ secrets.AGENT_ENDPOINT }}
+Copy the template to your repository:
+
+```bash
+mkdir -p .github/workflows
+cp node_modules/@fail-kit/cli/templates/github-action.yml .github/workflows/fail-audit.yml
 ```
+
+Set `AGENT_ENDPOINT` as a repository secret.
 
 ### GitLab CI
 
+Include the template in your `.gitlab-ci.yml`:
+
 ```yaml
-audit:
-  script:
-    - fail-audit init
-    - fail-audit run --endpoint $AGENT_ENDPOINT
+include:
+  - local: 'node_modules/@fail-kit/cli/templates/gitlab-ci.yml'
+
+variables:
+  AGENT_ENDPOINT: "https://your-agent.example.com/eval/run"
 ```
 
-## No trace, no ship.
+## Output Formats
+
+| Format | Extension | Use Case |
+|--------|----------|----------|
+| `json` | `.json` | Raw data, further processing |
+| `html` | `.html` | Shareable visual reports |
+| `junit` | `.xml` | CI/CD test reporting |
+| `markdown` | `.md` | PR comments, documentation |
+
+## Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| `0` | All tests passed |
+| `1` | One or more tests failed |
+
+## Audit Levels
+
+- **Smoke Test**: Basic contract validation, benign inputs
+- **Interrogation**: Behavioral testing, edge cases, action verification
+- **Red Team**: Adversarial attacks, injection attempts, policy bypass
+
+## Links
+
+- [Documentation](https://fail-kit.dev/docs)
+- [Failure Modes Catalog](https://fail-kit.dev/docs/failure-modes)
+- [Receipt Standard](https://fail-kit.dev/docs/receipt-standard)
+- [GitHub](https://github.com/fail-kit/fail-kit)
+
+---
+
+**No trace, no ship.**

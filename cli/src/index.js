@@ -14,7 +14,17 @@ const path = require('path');
 const yaml = require('js-yaml');
 const axios = require('axios');
 
+const { loadConfig, writeConfig, configExists, DEFAULT_CONFIG, validateConfig } = require('./config');
+const { runDiagnostics, formatDiagnostics } = require('./diagnostics');
+const { generateReport, getExtension } = require('./reporters');
+
 const program = new Command();
+
+// Detect CI environment
+const isCI = process.env.CI === 'true' || 
+             process.env.GITHUB_ACTIONS === 'true' || 
+             process.env.GITLAB_CI === 'true' ||
+             process.env.JENKINS_URL !== undefined;
 
 program
   .name('fail-audit')
@@ -28,34 +38,150 @@ program
 program
   .command('init')
   .description('Initialize a new audit configuration')
-  .action(() => {
-    console.log(chalk.bold.cyan('\nF.A.I.L. Kit - Forensic Audit Initialization\n'));
+  .option('-y, --yes', 'Skip prompts and use defaults')
+  .option('-e, --endpoint <url>', 'Set endpoint URL')
+  .option('-t, --timeout <ms>', 'Set timeout in milliseconds')
+  .option('--test', 'Test endpoint connectivity after setup')
+  .action(async (options) => {
+    console.log(chalk.bold.cyan('\n┌─────────────────────────────────────────┐'));
+    console.log(chalk.bold.cyan('│  F.A.I.L. Kit - Configuration Wizard   │'));
+    console.log(chalk.bold.cyan('└─────────────────────────────────────────┘\n'));
     
     const configPath = path.join(process.cwd(), 'fail-audit.config.json');
     
-    if (fs.existsSync(configPath)) {
-      console.log(chalk.yellow('⚠ Configuration file already exists at:'), configPath);
-      console.log(chalk.dim('Delete it first if you want to reinitialize.\n'));
+    // Check if config exists
+    if (configExists()) {
+      if (!options.yes) {
+        console.log(chalk.yellow('⚠ Configuration file already exists at:'), configPath);
+        console.log(chalk.dim('Use --yes to overwrite, or delete it first.\n'));
+        process.exit(1);
+      }
+      console.log(chalk.yellow('⚠ Overwriting existing configuration\n'));
+    }
+    
+    let config = { ...DEFAULT_CONFIG };
+    
+    // Apply CLI options if provided
+    if (options.endpoint) config.endpoint = options.endpoint;
+    if (options.timeout) config.timeout = parseInt(options.timeout, 10);
+    
+    // Interactive prompts if not in --yes mode and not in CI
+    if (!options.yes && !isCI) {
+      try {
+        // Dynamic import for inquirer (ES module)
+        const inquirer = require('inquirer');
+        
+        const answers = await inquirer.prompt([
+          {
+            type: 'input',
+            name: 'endpoint',
+            message: 'Agent endpoint URL:',
+            default: config.endpoint,
+            validate: (input) => {
+              try {
+                new URL(input);
+                return true;
+              } catch {
+                return 'Please enter a valid URL';
+              }
+            }
+          },
+          {
+            type: 'number',
+            name: 'timeout',
+            message: 'Request timeout (ms):',
+            default: config.timeout / 1000,
+            filter: (input) => input * 1000
+          },
+          {
+            type: 'input',
+            name: 'cases_dir',
+            message: 'Test cases directory:',
+            default: config.cases_dir
+          },
+          {
+            type: 'input',
+            name: 'output_dir',
+            message: 'Output directory for results:',
+            default: config.output_dir
+          },
+          {
+            type: 'checkbox',
+            name: 'levels',
+            message: 'Audit levels to enable:',
+            choices: [
+              { name: 'Smoke Test (basic validation)', value: 'smoke_test', checked: true },
+              { name: 'Interrogation (behavioral testing)', value: 'interrogation', checked: true },
+              { name: 'Red Team (adversarial testing)', value: 'red_team', checked: true }
+            ]
+          },
+          {
+            type: 'confirm',
+            name: 'testConnection',
+            message: 'Test endpoint connectivity now?',
+            default: false
+          }
+        ]);
+        
+        config.endpoint = answers.endpoint;
+        config.timeout = answers.timeout;
+        config.cases_dir = answers.cases_dir;
+        config.output_dir = answers.output_dir;
+        config.levels = {
+          smoke_test: answers.levels.includes('smoke_test'),
+          interrogation: answers.levels.includes('interrogation'),
+          red_team: answers.levels.includes('red_team')
+        };
+        
+        if (answers.testConnection) {
+          options.test = true;
+        }
+      } catch (error) {
+        // inquirer not available or error, fall back to defaults
+        if (error.code !== 'MODULE_NOT_FOUND') {
+          console.log(chalk.yellow('Interactive mode unavailable, using defaults.'));
+        }
+      }
+    }
+    
+    // Validate config
+    const validation = validateConfig(config);
+    if (!validation.valid) {
+      console.log(chalk.red('✗ Invalid configuration:'));
+      validation.errors.forEach(e => console.log(chalk.red(`  - ${e}`)));
       process.exit(1);
     }
     
-    const config = {
-      endpoint: 'http://localhost:8000/eval/run',
-      timeout: 30000,
-      cases_dir: './cases',
-      output_dir: './audit-results',
-      levels: {
-        smoke_test: true,
-        interrogation: true,
-        red_team: true
-      }
-    };
-    
-    fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+    // Write config
+    writeConfig(config, configPath);
     
     console.log(chalk.green('✓ Created configuration file:'), configPath);
-    console.log(chalk.dim('\nEdit this file to configure your audit endpoint and options.'));
-    console.log(chalk.dim('Then run:'), chalk.bold('fail-audit run\n'));
+    console.log('');
+    console.log(chalk.dim('Configuration:'));
+    console.log(chalk.dim('  Endpoint:'), config.endpoint);
+    console.log(chalk.dim('  Timeout:'), config.timeout + 'ms');
+    console.log(chalk.dim('  Cases:'), config.cases_dir);
+    console.log(chalk.dim('  Output:'), config.output_dir);
+    console.log('');
+    
+    // Test connection if requested
+    if (options.test) {
+      console.log(chalk.dim('Testing endpoint connectivity...'));
+      try {
+        await axios.post(config.endpoint, { inputs: { user: 'health check' } }, {
+          timeout: 5000,
+          validateStatus: () => true
+        });
+        console.log(chalk.green('✓ Endpoint reachable\n'));
+      } catch (error) {
+        console.log(chalk.yellow('⚠ Could not reach endpoint:'), error.message);
+        console.log(chalk.dim('Make sure your agent server is running.\n'));
+      }
+    }
+    
+    console.log(chalk.dim('Next steps:'));
+    console.log(chalk.bold('  fail-audit doctor'), chalk.dim('- Check your setup'));
+    console.log(chalk.bold('  fail-audit run'), chalk.dim('- Run the audit\n'));
   });
 
 // ============================================================================
@@ -68,40 +194,53 @@ program
   .option('-e, --endpoint <url>', 'Override the endpoint URL')
   .option('-l, --level <level>', 'Run specific level: smoke, interrogation, or red-team')
   .option('-c, --case <id>', 'Run a specific test case by ID')
+  .option('-f, --format <format>', 'Output format: json, html, junit, markdown', 'json')
+  .option('-o, --output <file>', 'Output file path (auto-generated if not specified)')
+  .option('--ci', 'CI mode: no colors, machine-readable output')
+  .option('--quiet', 'Suppress progress output, only show summary')
   .action(async (options) => {
-    console.log(chalk.bold.cyan('\nF.A.I.L. Kit - Running Forensic Audit\n'));
+    const ciMode = options.ci || isCI;
+    const log = ciMode ? () => {} : console.log;
     
-    const configPath = path.join(process.cwd(), 'fail-audit.config.json');
+    log(chalk.bold.cyan('\n┌─────────────────────────────────────────┐'));
+    log(chalk.bold.cyan('│  F.A.I.L. Kit - Forensic Audit          │'));
+    log(chalk.bold.cyan('└─────────────────────────────────────────┘\n'));
     
-    if (!fs.existsSync(configPath)) {
-      console.log(chalk.red('✗ No configuration file found.'));
-      console.log(chalk.dim('Run:'), chalk.bold('fail-audit init'), chalk.dim('first.\n'));
+    // Load config
+    const { config, error, validation } = loadConfig(options);
+    
+    if (error) {
+      console.error(ciMode ? `Error: ${error}` : chalk.red(`✗ ${error}`));
       process.exit(1);
     }
     
-    const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    if (!validation.valid) {
+      console.error(ciMode ? 'Invalid configuration' : chalk.red('✗ Invalid configuration'));
+      validation.errors.forEach(e => console.error(ciMode ? `  ${e}` : chalk.red(`  - ${e}`)));
+      process.exit(1);
+    }
+    
     const endpoint = options.endpoint || config.endpoint;
     
-    console.log(chalk.dim('Endpoint:'), endpoint);
-    console.log(chalk.dim('Timeout:'), config.timeout + 'ms\n');
+    log(chalk.dim('Endpoint:'), endpoint);
+    log(chalk.dim('Timeout:'), config.timeout + 'ms\n');
     
     // Load test cases
     const casesDir = path.resolve(process.cwd(), config.cases_dir);
     
     if (!fs.existsSync(casesDir)) {
-      console.log(chalk.red('✗ Cases directory not found:'), casesDir);
-      console.log(chalk.dim('Make sure the F.A.I.L. Kit cases are accessible.\n'));
+      console.error(ciMode ? `Cases directory not found: ${casesDir}` : chalk.red('✗ Cases directory not found:'), casesDir);
       process.exit(1);
     }
     
     const caseFiles = fs.readdirSync(casesDir).filter(f => f.endsWith('.yaml'));
     
     if (caseFiles.length === 0) {
-      console.log(chalk.red('✗ No test cases found in:'), casesDir);
+      console.error(ciMode ? `No test cases found in: ${casesDir}` : chalk.red('✗ No test cases found in:'), casesDir);
       process.exit(1);
     }
     
-    console.log(chalk.dim('Found'), chalk.bold(caseFiles.length), chalk.dim('test cases\n'));
+    log(chalk.dim('Found'), chalk.bold(caseFiles.length), chalk.dim('test cases\n'));
     
     // Filter cases by level or specific case
     let casesToRun = caseFiles;
@@ -109,7 +248,7 @@ program
     if (options.case) {
       casesToRun = caseFiles.filter(f => f.includes(options.case));
       if (casesToRun.length === 0) {
-        console.log(chalk.red('✗ No case found matching:'), options.case);
+        console.error(ciMode ? `No case found matching: ${options.case}` : chalk.red('✗ No case found matching:'), options.case);
         process.exit(1);
       }
     } else if (options.level) {
@@ -121,26 +260,32 @@ program
       
       const patterns = levelMap[options.level];
       if (!patterns) {
-        console.log(chalk.red('✗ Invalid level:'), options.level);
-        console.log(chalk.dim('Valid levels: smoke, interrogation, red-team\n'));
+        console.error(ciMode ? `Invalid level: ${options.level}` : chalk.red('✗ Invalid level:'), options.level);
+        console.error(ciMode ? 'Valid levels: smoke, interrogation, red-team' : chalk.dim('Valid levels: smoke, interrogation, red-team\n'));
         process.exit(1);
       }
       
       casesToRun = caseFiles.filter(f => patterns.some(p => f.includes(p)));
     }
     
-    console.log(chalk.bold('Running'), chalk.bold.cyan(casesToRun.length), chalk.bold('cases...\n'));
+    log(chalk.bold('Running'), chalk.bold.cyan(casesToRun.length), chalk.bold('cases...\n'));
     
     // Run cases
     const results = [];
     let passed = 0;
     let failed = 0;
+    const startTime = Date.now();
     
     for (const caseFile of casesToRun) {
       const casePath = path.join(casesDir, caseFile);
       const testCase = yaml.load(fs.readFileSync(casePath, 'utf8'));
+      const caseId = testCase.id || caseFile.replace('.yaml', '');
       
-      process.stdout.write(chalk.dim(`[${results.length + 1}/${casesToRun.length}] ${testCase.id || caseFile}... `));
+      if (!options.quiet && !ciMode) {
+        process.stdout.write(chalk.dim(`[${results.length + 1}/${casesToRun.length}] ${caseId}... `));
+      }
+      
+      const caseStart = Date.now();
       
       try {
         const response = await axios.post(endpoint, {
@@ -150,57 +295,95 @@ program
         });
         
         const result = evaluateResponse(testCase, response.data);
-        results.push({ case: testCase.id || caseFile, ...result });
+        const duration_ms = Date.now() - caseStart;
+        
+        results.push({ 
+          case: caseId, 
+          ...result,
+          duration_ms,
+          outputs: response.data.outputs
+        });
         
         if (result.pass) {
           passed++;
-          console.log(chalk.green('PASS'));
+          if (!options.quiet && !ciMode) {
+            console.log(chalk.green('PASS'), chalk.dim(`(${duration_ms}ms)`));
+          }
         } else {
           failed++;
-          console.log(chalk.red('FAIL'));
-          if (result.reason) {
-            console.log(chalk.dim('  Reason:'), result.reason);
+          if (!options.quiet && !ciMode) {
+            console.log(chalk.red('FAIL'), chalk.dim(`(${duration_ms}ms)`));
+            if (result.reason) {
+              console.log(chalk.dim('  Reason:'), result.reason);
+            }
           }
         }
       } catch (error) {
         failed++;
+        const duration_ms = Date.now() - caseStart;
         results.push({
-          case: testCase.id || caseFile,
+          case: caseId,
           pass: false,
-          error: error.message
+          error: error.message,
+          duration_ms
         });
-        console.log(chalk.red('ERROR'));
-        console.log(chalk.dim('  Error:'), error.message);
+        if (!options.quiet && !ciMode) {
+          console.log(chalk.red('ERROR'), chalk.dim(`(${duration_ms}ms)`));
+          console.log(chalk.dim('  Error:'), error.message);
+        }
       }
     }
     
-    // Save results
+    const totalDuration = Date.now() - startTime;
+    
+    // Build results object
+    const auditResults = {
+      timestamp: new Date().toISOString(),
+      endpoint,
+      total: results.length,
+      passed,
+      failed,
+      duration_ms: totalDuration,
+      results
+    };
+    
+    // Determine output path
+    const format = options.format.toLowerCase();
+    const extension = getExtension(format);
+    
     const outputDir = path.resolve(process.cwd(), config.output_dir);
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true });
     }
     
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const resultsPath = path.join(outputDir, `audit-${timestamp}.json`);
+    const outputPath = options.output 
+      ? path.resolve(process.cwd(), options.output)
+      : path.join(outputDir, `audit-${timestamp}${extension}`);
     
-    fs.writeFileSync(resultsPath, JSON.stringify({
-      timestamp: new Date().toISOString(),
-      endpoint,
-      total: results.length,
-      passed,
-      failed,
-      results
-    }, null, 2));
+    // Generate and save report
+    const report = generateReport(auditResults, format);
+    fs.writeFileSync(outputPath, report);
     
     // Summary
-    console.log(chalk.bold('\n' + '='.repeat(50)));
-    console.log(chalk.bold('Audit Complete\n'));
-    console.log(chalk.dim('Total:'), results.length);
-    console.log(chalk.green('Passed:'), passed);
-    console.log(chalk.red('Failed:'), failed);
-    console.log(chalk.dim('\nResults saved to:'), resultsPath);
-    console.log(chalk.dim('Generate report with:'), chalk.bold('fail-audit report ' + path.basename(resultsPath)));
-    console.log('');
+    if (!ciMode) {
+      console.log(chalk.bold('\n' + '═'.repeat(50)));
+      console.log(chalk.bold('Audit Complete\n'));
+      console.log(chalk.dim('Total:'), results.length, chalk.dim(`(${(totalDuration / 1000).toFixed(1)}s)`));
+      console.log(chalk.green('Passed:'), passed);
+      console.log(chalk.red('Failed:'), failed);
+      console.log(chalk.dim('\nReport saved to:'), outputPath);
+      
+      if (format !== 'html') {
+        console.log(chalk.dim('Generate HTML report:'), chalk.bold(`fail-audit report ${path.basename(outputPath)}`));
+      }
+      console.log('');
+    } else {
+      // CI mode: output summary to stdout
+      const { generateOneLiner } = require('./reporters/markdown');
+      console.log(generateOneLiner(auditResults));
+      console.log(`Report: ${outputPath}`);
+    }
     
     process.exit(failed > 0 ? 1 : 0);
   });
@@ -211,8 +394,10 @@ program
 
 program
   .command('report <results-file>')
-  .description('Generate an HTML report from audit results')
-  .action((resultsFile) => {
+  .description('Generate a report from audit results')
+  .option('-f, --format <format>', 'Output format: html, markdown, junit', 'html')
+  .option('-o, --output <file>', 'Output file path')
+  .action((resultsFile, options) => {
     console.log(chalk.bold.cyan('\nF.A.I.L. Kit - Generating Report\n'));
     
     const resultsPath = path.resolve(process.cwd(), resultsFile);
@@ -223,202 +408,40 @@ program
     }
     
     const results = JSON.parse(fs.readFileSync(resultsPath, 'utf8'));
+    const format = options.format.toLowerCase();
+    const extension = getExtension(format);
     
-    const reportHtml = generateHtmlReport(results);
-    const reportPath = resultsPath.replace('.json', '.html');
+    const report = generateReport(results, format);
+    const outputPath = options.output 
+      ? path.resolve(process.cwd(), options.output)
+      : resultsPath.replace(/\.[^.]+$/, extension);
     
-    fs.writeFileSync(reportPath, reportHtml);
+    fs.writeFileSync(outputPath, report);
     
-    console.log(chalk.green('✓ Report generated:'), reportPath);
-    console.log(chalk.dim('Open in browser to view.\n'));
+    console.log(chalk.green('✓ Report generated:'), outputPath);
+    if (format === 'html') {
+      console.log(chalk.dim('Open in browser to view.\n'));
+    } else {
+      console.log('');
+    }
   });
 
 // ============================================================================
-// Helper Functions
+// Command: doctor
 // ============================================================================
 
-function evaluateResponse(testCase, response) {
-  const expected = testCase.expect || testCase.expected;
-  
-  if (!response || !response.outputs) {
-    return { pass: false, reason: 'Missing outputs field' };
-  }
-  
-  // If no expectations, just check basic schema
-  if (!expected) {
-    return { pass: true, reason: 'Basic schema valid' };
-  }
-  
-  // Check decision
-  if (expected.decision && response.outputs.decision !== expected.decision) {
-    return {
-      pass: false,
-      reason: `Expected decision '${expected.decision}', got '${response.outputs.decision}'`
-    };
-  }
-  
-  // Check actions
-  if (expected.actions_required !== undefined) {
-    const hasActions = response.actions && response.actions.length > 0;
-    if (expected.actions_required && !hasActions) {
-      return { pass: false, reason: 'Expected action receipts, got none' };
-    }
-    if (!expected.actions_required && hasActions) {
-      return { pass: false, reason: 'Expected no actions, but got receipts' };
-    }
-  }
-  
-  // Check policy
-  if (expected.policy) {
-    if (!response.policy) {
-      return { pass: false, reason: 'Expected policy field, got none' };
-    }
+program
+  .command('doctor')
+  .description('Diagnose common setup issues')
+  .option('--skip-network', 'Skip network connectivity checks')
+  .action(async (options) => {
+    const checks = await runDiagnostics({ skipNetwork: options.skipNetwork });
+    const { output, failures } = formatDiagnostics(checks, chalk);
     
-    for (const [key, value] of Object.entries(expected.policy)) {
-      if (response.policy[key] !== value) {
-        return {
-          pass: false,
-          reason: `Expected policy.${key}=${value}, got ${response.policy[key]}`
-        };
-      }
-    }
-  }
-  
-  return { pass: true };
-}
-
-function generateHtmlReport(results) {
-  const passRate = ((results.passed / results.total) * 100).toFixed(1);
-  const failures = results.results.filter(r => !r.pass);
-  
-  const severityMap = {
-    'CONTRACT_0003': 'Critical',
-    'CONTRACT_02': 'Critical',
-    'AGENT_0008': 'Critical',
-    'AGENT_': 'High',
-    'ADV_': 'High',
-    'RAG_': 'Medium',
-    'SHIFT_': 'Medium'
-  };
-  
-  const getSeverity = (caseId) => {
-    for (const [pattern, severity] of Object.entries(severityMap)) {
-      if (caseId.includes(pattern)) return severity;
-    }
-    return 'Low';
-  };
-  
-  const severityCounts = { Critical: 0, High: 0, Medium: 0, Low: 0 };
-  failures.forEach(f => {
-    const severity = getSeverity(f.case);
-    severityCounts[severity]++;
+    console.log(output);
+    
+    process.exit(failures > 0 ? 1 : 0);
   });
-  
-  return `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>F.A.I.L. Kit Audit Report</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0a0a; color: #e0e0e0; padding: 40px 20px; }
-    .container { max-width: 1200px; margin: 0 auto; }
-    h1 { font-size: 36px; margin-bottom: 10px; color: #00ff88; }
-    .subtitle { color: #888; margin-bottom: 40px; }
-    .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 40px; }
-    .card { background: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 20px; }
-    .card-title { font-size: 14px; color: #888; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
-    .card-value { font-size: 32px; font-weight: bold; }
-    .pass { color: #00ff88; }
-    .fail { color: #ff4444; }
-    .severity-critical { color: #ff4444; }
-    .severity-high { color: #ff8800; }
-    .severity-medium { color: #ffcc00; }
-    .severity-low { color: #888; }
-    .failures { margin-top: 40px; }
-    .failure-item { background: #1a1a1a; border-left: 4px solid #ff4444; padding: 20px; margin-bottom: 20px; border-radius: 4px; }
-    .failure-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-    .failure-case { font-weight: bold; font-size: 16px; }
-    .failure-reason { color: #ccc; margin-top: 10px; }
-    .badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
-    .badge-critical { background: #ff4444; color: #000; }
-    .badge-high { background: #ff8800; color: #000; }
-    .badge-medium { background: #ffcc00; color: #000; }
-    .badge-low { background: #555; color: #fff; }
-    footer { margin-top: 60px; text-align: center; color: #555; font-size: 14px; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>F.A.I.L. Kit Audit Report</h1>
-    <div class="subtitle">Forensic Audit of Intelligent Logic</div>
-    
-    <div class="summary">
-      <div class="card">
-        <div class="card-title">Total Cases</div>
-        <div class="card-value">${results.total}</div>
-      </div>
-      <div class="card">
-        <div class="card-title">Passed</div>
-        <div class="card-value pass">${results.passed}</div>
-      </div>
-      <div class="card">
-        <div class="card-title">Failed</div>
-        <div class="card-value fail">${results.failed}</div>
-      </div>
-      <div class="card">
-        <div class="card-title">Pass Rate</div>
-        <div class="card-value">${passRate}%</div>
-      </div>
-    </div>
-    
-    <div class="summary">
-      <div class="card">
-        <div class="card-title">Critical</div>
-        <div class="card-value severity-critical">${severityCounts.Critical}</div>
-      </div>
-      <div class="card">
-        <div class="card-title">High</div>
-        <div class="card-value severity-high">${severityCounts.High}</div>
-      </div>
-      <div class="card">
-        <div class="card-title">Medium</div>
-        <div class="card-value severity-medium">${severityCounts.Medium}</div>
-      </div>
-      <div class="card">
-        <div class="card-title">Low</div>
-        <div class="card-value severity-low">${severityCounts.Low}</div>
-      </div>
-    </div>
-    
-    ${failures.length > 0 ? `
-    <div class="failures">
-      <h2 style="margin-bottom: 20px;">Failures</h2>
-      ${failures.map(f => {
-        const severity = getSeverity(f.case);
-        return `
-        <div class="failure-item">
-          <div class="failure-header">
-            <div class="failure-case">${f.case}</div>
-            <span class="badge badge-${severity.toLowerCase()}">${severity}</span>
-          </div>
-          <div class="failure-reason">${f.reason || f.error || 'Unknown failure'}</div>
-        </div>
-        `;
-      }).join('')}
-    </div>
-    ` : '<div style="text-align: center; padding: 60px 0; color: #00ff88; font-size: 24px;">All tests passed!</div>'}
-    
-    <footer>
-      Generated on ${new Date(results.timestamp).toLocaleString()}<br>
-      Endpoint: ${results.endpoint}<br>
-      <br>
-      <strong>No trace, no ship.</strong>
-    </footer>
-  </div>
-</body>
-</html>`;
-}
 
 // ============================================================================
 // Command: generate
@@ -471,11 +494,6 @@ program
       const toolName = tool.name;
       const description = tool.description || 'No description';
       const riskLevel = tool.risk || 'medium';
-      
-      // Generate 3 test cases per tool:
-      // 1. Basic action with receipt requirement
-      // 2. Action failure handling
-      // 3. High-stakes escalation (if applicable)
       
       // Case 1: Basic action
       const case1 = {
@@ -589,6 +607,79 @@ program
     console.log(chalk.dim('\nTo run these cases:'));
     console.log(chalk.bold(`  fail-audit run --cases ${outputDir}\n`));
   });
+
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+function evaluateResponse(testCase, response) {
+  const expected = testCase.expect || testCase.expected;
+  
+  if (!response || !response.outputs) {
+    return { pass: false, reason: 'Missing outputs field', expected, actual: response };
+  }
+  
+  // If no expectations, just check basic schema
+  if (!expected) {
+    return { pass: true, reason: 'Basic schema valid' };
+  }
+  
+  // Check decision
+  if (expected.decision && response.outputs.decision !== expected.decision) {
+    return {
+      pass: false,
+      reason: `Expected decision '${expected.decision}', got '${response.outputs.decision}'`,
+      expected: { decision: expected.decision },
+      actual: { decision: response.outputs.decision }
+    };
+  }
+  
+  // Check actions
+  if (expected.actions_required !== undefined) {
+    const hasActions = response.actions && response.actions.length > 0;
+    if (expected.actions_required && !hasActions) {
+      return { 
+        pass: false, 
+        reason: 'Expected action receipts, got none',
+        expected: { actions_required: true },
+        actual: { actions: response.actions || [] }
+      };
+    }
+    if (!expected.actions_required && hasActions) {
+      return { 
+        pass: false, 
+        reason: 'Expected no actions, but got receipts',
+        expected: { actions_required: false },
+        actual: { actions: response.actions }
+      };
+    }
+  }
+  
+  // Check policy
+  if (expected.policy) {
+    if (!response.policy) {
+      return { 
+        pass: false, 
+        reason: 'Expected policy field, got none',
+        expected: { policy: expected.policy },
+        actual: { policy: null }
+      };
+    }
+    
+    for (const [key, value] of Object.entries(expected.policy)) {
+      if (response.policy[key] !== value) {
+        return {
+          pass: false,
+          reason: `Expected policy.${key}=${value}, got ${response.policy[key]}`,
+          expected: { [`policy.${key}`]: value },
+          actual: { [`policy.${key}`]: response.policy[key] }
+        };
+      }
+    }
+  }
+  
+  return { pass: true };
+}
 
 // ============================================================================
 // Run
