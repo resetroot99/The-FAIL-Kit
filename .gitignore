@@ -1,2 +1,8 @@
 node_modules/
 *.log
+# Internal Development Docs
+STATUS_COMPLETE.md
+IMPLEMENTATION_COMPLETE.md
+COMMERCIAL_UPGRADE_COMPLETE.md
+GAPS_AUDIT.md
+
