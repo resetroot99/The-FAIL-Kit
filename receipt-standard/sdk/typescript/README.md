@@ -4,8 +4,17 @@ Validate and generate receipts for AI agent actions.
 
 ## Installation
 
+**Note: Package not yet published to npm. For now, copy `index.ts` directly into your project or install from source.**
+
+When published:
 ```bash
 npm install @fail-kit/receipt-standard
+```
+
+For now (local install):
+```bash
+# Copy index.ts to your project
+cp receipt-standard/sdk/typescript/index.ts ./src/receipt-standard.ts
 ```
 
 ## Usage

@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_backend"
+
+[project]
+name = "fail-kit-receipt-standard"
+version = "1.0.0"
+description = "Receipt Standard SDK for validating and generating AI agent action receipts"
+readme = "README.md"
+authors = [{name = "Ali Jakvan", email = "ali@jakvan.io"}]
+license = {text = "MIT"}
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+keywords = ["ai", "agent", "receipt", "audit", "tracing", "execution", "integrity"]
+requires-python = ">=3.9"
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/resetroot99/The-FAIL-Kit/tree/main/receipt-standard"
+Repository = "https://github.com/resetroot99/The-FAIL-Kit"
+Issues = "https://github.com/resetroot99/The-FAIL-Kit/issues"
+
+[tool.setuptools]
+py-modules = ["receipt_standard"]

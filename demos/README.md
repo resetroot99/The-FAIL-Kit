@@ -2,12 +2,24 @@
 
 Visual demonstrations of the F.A.I.L. Kit in action.
 
+## Status
+
+**VHS tape files ready. GIFs not yet generated.**
+
+To generate demo GIFs, you need:
+1. VHS installed (see below)
+2. Reference agent running
+3. Run `vhs` on each `.tape` file
+
 ## What's Here
 
-Terminal recordings showing:
-1. **phantom-action.gif** - Agent claiming action without receipt (FAIL)
-2. **partial-evidence.gif** - Incomplete receipts triggering NEEDS_REVIEW
-3. **all-passing.gif** - Clean audit with all gates passing
+Terminal recording scripts (VHS tape files):
+1. **phantom-action.tape** - Agent claiming action without receipt (FAIL)
+2. **all-passing.tape** - Clean audit with all gates passing
+
+These will generate:
+- `phantom-action.gif`
+- `all-passing.gif`
 
 These demos show real CLI output catching execution integrity failures.
 

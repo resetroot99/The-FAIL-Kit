@@ -25,8 +25,8 @@ Production-ready gate configuration based on audit findings. Includes:
 - Escalation policies
 - Compliance requirements
 
-### 4. sample-report.pdf
-Professional PDF export of full audit report. Includes:
+### 4. sample-report-full.md
+Professional markdown report ready for PDF export. Includes:
 - Executive summary
 - Detailed test results
 - Failure mode analysis
@@ -34,7 +34,14 @@ Professional PDF export of full audit report. Includes:
 - Risk matrix
 - Deployment decision tree
 
-(Note: PDF generation requires additional tooling. See README in cli/ for instructions.)
+**Note:** PDF generation requires additional tooling (pandoc, wkhtmltopdf, or similar). The markdown file is provided as the source. To generate PDF:
+
+```bash
+# Using pandoc
+pandoc sample-report-full.md -o sample-report.pdf
+
+# Or using any markdown-to-PDF tool
+```
 
 ## How to Use These Files
 
@@ -53,7 +60,7 @@ Use `gates-config.yaml` to:
 
 ### For Executives
 
-Review `executive-summary.md` or `sample-report.pdf` for:
+Review `executive-summary.md` or generate PDF from `sample-report-full.md` for:
 - High-level status
 - Deployment recommendation
 - Business risk assessment
@@ -61,7 +68,7 @@ Review `executive-summary.md` or `sample-report.pdf` for:
 
 ### For Compliance
 
-Review `sample-report.pdf` for:
+Review full report (generate PDF from `sample-report-full.md`) for:
 - Audit trail completeness
 - Evidence of controls
 - Gap analysis

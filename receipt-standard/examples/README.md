@@ -6,10 +6,6 @@ Integration examples for popular AI agent frameworks.
 
 See [langchain-receipt-example.py](langchain-receipt-example.py)
 
-## CrewAI (Python)
-
-See [crewai-receipt-example.py](crewai-receipt-example.py)
-
 ## Express.js (Node)
 
 See [express-receipt-example.js](express-receipt-example.js)

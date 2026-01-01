@@ -4,8 +4,17 @@ Validate and generate receipts for AI agent actions.
 
 ## Installation
 
+**Note: Package not yet published to PyPI. For now, copy `receipt_standard.py` directly into your project or install from source.**
+
+When published:
 ```bash
 pip install fail-kit-receipt-standard
+```
+
+For now (local install):
+```bash
+# Copy receipt_standard.py to your project
+cp receipt-standard/sdk/python/receipt_standard.py ./
 ```
 
 ## Usage

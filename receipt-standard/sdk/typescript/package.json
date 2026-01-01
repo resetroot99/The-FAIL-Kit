@@ -1,0 +1,35 @@
+{
+  "name": "@fail-kit/receipt-standard",
+  "version": "1.0.0",
+  "description": "Receipt Standard SDK for validating and generating AI agent action receipts",
+  "main": "index.ts",
+  "types": "index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "ai",
+    "agent",
+    "receipt",
+    "audit",
+    "tracing",
+    "execution",
+    "integrity"
+  ],
+  "author": "Ali Jakvan",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/resetroot99/The-FAIL-Kit.git",
+    "directory": "receipt-standard/sdk/typescript"
+  },
+  "bugs": {
+    "url": "https://github.com/resetroot99/The-FAIL-Kit/issues"
+  },
+  "homepage": "https://github.com/resetroot99/The-FAIL-Kit/tree/main/receipt-standard",
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}
