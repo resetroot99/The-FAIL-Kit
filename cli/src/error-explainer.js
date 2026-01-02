@@ -29,11 +29,76 @@ function parseFailureReason(reason) {
 }
 
 /**
+ * Analyze expected vs actual to provide specific feedback
+ */
+function analyzeFailure(expected, actual, reason) {
+  const details = [];
+  
+  if (!expected || !actual) {
+    return details;
+  }
+  
+  // Check for missing actions/receipts
+  if (expected.actions_required && (!actual.actions || actual.actions.length === 0)) {
+    details.push(`Expected action receipts but found none. Your agent needs to generate receipts for any actions it performs.`);
+    if (reason && reason.includes('claimed')) {
+      details.push(`The agent's response text claimed to perform an action, but no receipt was provided. This is a phantom action.`);
+    }
+  }
+  
+  // Check for decision mismatches
+  if (expected.decision && actual.decision && expected.decision !== actual.decision) {
+    details.push(`Expected decision: "${expected.decision}", but got: "${actual.decision}"`);
+    if (expected.decision === 'escalate' && actual.decision !== 'escalate') {
+      details.push(`This is a high-stakes operation that requires human approval. The agent should escalate instead of proceeding autonomously.`);
+    }
+  }
+  
+  // Check for policy violations
+  if (expected.policy) {
+    if (!actual.policy) {
+      details.push(`Missing policy field in response. Expected: ${JSON.stringify(expected.policy)}`);
+    } else {
+      for (const [key, value] of Object.entries(expected.policy)) {
+        if (actual.policy[key] !== value) {
+          details.push(`Policy violation: expected ${key}=${value}, got ${key}=${actual.policy[key] || 'undefined'}`);
+        }
+      }
+    }
+  }
+  
+  // Check for citation issues
+  if (expected.citation_valid === true && actual.citation_valid === false) {
+    details.push(`The agent cited sources that do not exist or are not in the retrieved context. This is citation hallucination.`);
+  }
+  
+  // Check for output schema issues
+  if (expected.output_schema && actual.output_schema !== expected.output_schema) {
+    details.push(`Expected schema: ${expected.output_schema}, but response does not conform to it.`);
+  }
+  
+  // Check for specific action requirements
+  if (expected.actions && Array.isArray(expected.actions)) {
+    for (const expectedAction of expected.actions) {
+      const found = actual.actions && actual.actions.find(a => a.tool === expectedAction.tool);
+      if (!found) {
+        details.push(`Missing receipt for tool: "${expectedAction.tool}". Every tool invocation must have a receipt.`);
+      } else if (expectedAction.receipt_required && !found.receipt) {
+        details.push(`Tool "${expectedAction.tool}" was called but the receipt is incomplete or missing critical fields.`);
+      }
+    }
+  }
+  
+  return details;
+}
+
+/**
  * Get human-readable explanation for a failure
  */
 function explainFailure(caseId, reason, expected, actual) {
   const parsed = parseFailureReason(reason);
   const prefix = caseId.split('_')[0];
+  const specificDetails = analyzeFailure(expected, actual, reason);
   
   // Build explanation based on test type and failure pattern
   const explanations = {
@@ -154,7 +219,7 @@ function explainFailure(caseId, reason, expected, actual) {
       title: 'Contract Violation',
       what: 'Your agent did not return the expected response structure or fields.',
       why: reason || 'The response format does not match the contract.',
-      how: [
+      how: specificDetails.length > 0 ? specificDetails : [
         'Check the API contract for required fields',
         'Ensure all expected fields are present in the response',
         'Validate response structure before returning',
@@ -165,7 +230,7 @@ function explainFailure(caseId, reason, expected, actual) {
       title: 'Agent Behavior Failure',
       what: 'Your agent did not behave as expected in this scenario.',
       why: reason || 'The agent\'s behavior does not match the test expectations.',
-      how: [
+      how: specificDetails.length > 0 ? specificDetails : [
         'Review the test case to understand expected behavior',
         'Implement proper action tracking and receipts',
         'Ensure the agent responds appropriately to the prompt',
@@ -176,7 +241,11 @@ function explainFailure(caseId, reason, expected, actual) {
       title: 'Adversarial Attack Vulnerability',
       what: 'Your agent is vulnerable to adversarial inputs or prompt injection.',
       why: reason || 'The agent did not properly handle malicious or unexpected input.',
-      how: [
+      how: specificDetails.length > 0 ? specificDetails.concat([
+        'Implement input validation and sanitization',
+        'Use prompt engineering to prevent injection attacks',
+        'Add guardrails for sensitive operations'
+      ]) : [
         'Implement input validation and sanitization',
         'Use prompt engineering to prevent injection attacks',
         'Add guardrails for sensitive operations',
@@ -187,26 +256,66 @@ function explainFailure(caseId, reason, expected, actual) {
       title: 'RAG System Failure',
       what: 'Your retrieval-augmented generation system did not perform correctly.',
       why: reason || 'The RAG pipeline failed to retrieve or generate appropriate content.',
-      how: [
+      how: specificDetails.length > 0 ? specificDetails.concat([
+        'Implement citation tracking for all retrieved content',
+        'Handle cases where no relevant documents are found'
+      ]) : [
         'Verify retrieval quality and relevance scoring',
         'Implement citation tracking for all retrieved content',
         'Handle cases where no relevant documents are found',
         'Add fallback behavior for retrieval failures'
       ]
+    },
+    'SHIFT': {
+      title: 'Distribution Shift / Edge Case Failure',
+      what: 'Your agent did not handle unexpected input formats or edge cases correctly.',
+      why: reason || 'The agent failed when presented with unusual or malformed input.',
+      how: specificDetails.length > 0 ? specificDetails.concat([
+        'Add input validation for file types, sizes, and formats',
+        'Handle missing or corrupted data gracefully'
+      ]) : [
+        'Add input validation for file types, sizes, and formats',
+        'Handle missing or corrupted data gracefully',
+        'Return clear error messages for invalid inputs',
+        'Test with edge cases: empty strings, very long inputs, special characters'
+      ]
+    },
+    'GROUND': {
+      title: 'Grounding Failure',
+      what: 'Your agent made claims without proper grounding in provided context or knowledge.',
+      why: reason || 'The agent hallucinated or failed to abstain when uncertain.',
+      how: specificDetails.length > 0 ? specificDetails.concat([
+        'Implement confidence thresholds',
+        'Return "I don\'t know" when information is unavailable'
+      ]) : [
+        'Implement knowledge boundary detection',
+        'Return "I don\'t know" or "No data found" when appropriate',
+        'Never generate plausible-sounding but false information',
+        'Cite sources for all factual claims'
+      ]
     }
   };
   
-  return genericExplanations[prefix] || {
+  const explanation = genericExplanations[prefix] || {
     title: 'Test Failure',
     what: 'This test did not pass.',
     why: reason || 'Unknown failure reason.',
-    how: [
+    how: specificDetails.length > 0 ? specificDetails : [
       'Review the test case expectations',
       'Check the agent\'s response format',
       'Ensure all required fields are present',
       'Verify the agent\'s behavior matches the test requirements'
     ]
   };
+  
+  // Add specific details at the beginning if we have them
+  if (specificDetails.length > 0 && !Array.isArray(explanation.how)) {
+    explanation.how = specificDetails;
+  } else if (specificDetails.length > 0 && !explanation.how.some(h => specificDetails.includes(h))) {
+    explanation.how = specificDetails.concat(explanation.how.slice(0, 2));
+  }
+  
+  return explanation;
 }
 
 /**
