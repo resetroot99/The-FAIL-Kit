@@ -6,6 +6,20 @@
 const { generateErrorExplanation } = require('../error-explainer');
 
 /**
+ * Category metadata for display
+ */
+const CATEGORY_META = {
+  CONTRACT: { icon: '📋', name: 'Contract', color: '#6366f1' },
+  AGENT: { icon: '🤖', name: 'Agent', color: '#f97316' },
+  ADV: { icon: '⚔️', name: 'Adversarial', color: '#ef4444' },
+  RAG: { icon: '📚', name: 'RAG', color: '#8b5cf6' },
+  SHIFT: { icon: '🔄', name: 'Distribution Shift', color: '#14b8a6' },
+  GROUND: { icon: '🎯', name: 'Grounding', color: '#3b82f6' },
+  AUTO: { icon: '⚡', name: 'Auto-Generated', color: '#10b981' },
+  CUSTOM: { icon: '🔧', name: 'Custom', color: '#f59e0b' }
+};
+
+/**
  * Severity classification for test cases
  */
 const SEVERITY_MAP = {
@@ -118,6 +132,56 @@ function generateSeverityBars(severityCounts) {
       </div>
     `;
   }).join('');
+}
+
+/**
+ * Generate mini bar chart for category card
+ */
+function generateMiniBar(passed, failed) {
+  const total = passed + failed;
+  if (total === 0) return '';
+  
+  const passPercent = (passed / total) * 100;
+  const failPercent = (failed / total) * 100;
+  
+  return `
+    <div class="category-bar">
+      <div class="category-bar-pass" style="width: ${passPercent}%"></div>
+      <div class="category-bar-fail" style="width: ${failPercent}%"></div>
+    </div>
+  `;
+}
+
+/**
+ * Syntax highlight JSON for display
+ */
+function syntaxHighlightJson(json) {
+  if (typeof json !== 'string') {
+    json = JSON.stringify(json, null, 2);
+  }
+  // Escape HTML first
+  json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  // Apply syntax highlighting
+  return json.replace(
+    /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+    (match) => {
+      let cls = 'json-number';
+      if (/^"/.test(match)) {
+        if (/:$/.test(match)) {
+          cls = 'json-key';
+          match = match.replace(/:$/, '');
+          return `<span class="${cls}">${match}</span>:`;
+        } else {
+          cls = 'json-string';
+        }
+      } else if (/true|false/.test(match)) {
+        cls = 'json-boolean';
+      } else if (/null/.test(match)) {
+        cls = 'json-null';
+      }
+      return `<span class="${cls}">${match}</span>`;
+    }
+  );
 }
 
 /**
@@ -343,10 +407,10 @@ function generateHtmlReport(results) {
       color: var(--text-secondary);
     }
     
-    /* Categories */
+    /* Categories - Enhanced Summary View */
     .categories-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 16px;
       margin-bottom: 48px;
     }
@@ -357,17 +421,43 @@ function generateHtmlReport(results) {
       border-radius: 12px;
       padding: 20px;
       text-align: center;
-      transition: border-color 0.2s;
+      transition: all 0.2s;
     }
     
     .category-card:hover {
       border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+    
+    .category-icon {
+      font-size: 28px;
+      margin-bottom: 8px;
     }
     
     .category-name {
       font-size: 14px;
       font-weight: 600;
       margin-bottom: 12px;
+      color: var(--text-secondary);
+    }
+    
+    .category-bar {
+      height: 6px;
+      background: var(--bg-tertiary);
+      border-radius: 3px;
+      overflow: hidden;
+      display: flex;
+      margin-bottom: 12px;
+    }
+    
+    .category-bar-pass {
+      background: var(--accent);
+      height: 100%;
+    }
+    
+    .category-bar-fail {
+      background: var(--danger);
+      height: 100%;
     }
     
     .category-stats {
@@ -377,6 +467,17 @@ function generateHtmlReport(results) {
       font-family: 'JetBrains Mono', monospace;
       font-size: 14px;
     }
+    
+    .category-rate {
+      font-size: 24px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 4px;
+    }
+    
+    .category-rate.pass-rate-high { color: var(--accent); }
+    .category-rate.pass-rate-mid { color: var(--caution); }
+    .category-rate.pass-rate-low { color: var(--danger); }
     
     /* Failures Section */
     .section-title {
@@ -583,6 +684,121 @@ function generateHtmlReport(results) {
       text-decoration: underline;
     }
     
+    /* Payload Sections (Request/Response) */
+    .payload-section {
+      margin-top: 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    
+    .payload-section summary {
+      padding: 12px 16px;
+      background: var(--bg-tertiary);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      user-select: none;
+    }
+    
+    .payload-section summary:hover {
+      background: var(--border);
+    }
+    
+    .payload-section summary::marker {
+      color: var(--accent);
+    }
+    
+    .payload-section[open] summary {
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .payload-content {
+      padding: 16px;
+      background: #0d0d0d;
+      overflow-x: auto;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    
+    .payload-content pre {
+      margin: 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    
+    /* JSON Syntax Highlighting */
+    .json-string { color: #ce9178; }
+    .json-number { color: #b5cea8; }
+    .json-boolean { color: #569cd6; }
+    .json-null { color: #569cd6; }
+    .json-key { color: #9cdcfe; }
+    
+    /* Share Button */
+    .share-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: var(--accent);
+      color: var(--bg-primary);
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .share-btn:hover {
+      background: var(--accent-dim);
+      transform: translateY(-1px);
+    }
+    
+    .share-btn:active {
+      transform: translateY(0);
+    }
+    
+    .share-btn.copied {
+      background: #22c55e;
+    }
+    
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--accent);
+      color: var(--text-primary);
+      padding: 16px 24px;
+      border-radius: 12px;
+      font-size: 14px;
+      box-shadow: 0 8px 32px rgba(0, 255, 136, 0.2);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.3s ease;
+      z-index: 1000;
+    }
+    
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    .header-actions {
+      display: flex;
+      align-items: flex-start;
+      gap: 24px;
+    }
+    
     /* All Passed State */
     .all-passed {
       text-align: center;
@@ -649,10 +865,20 @@ function generateHtmlReport(results) {
           <div class="tagline">Forensic Audit of Intelligent Logic</div>
         </div>
       </div>
-      <div class="meta">
-        <div><span class="meta-value">${timestamp}</span></div>
-        <div>Duration: <span class="meta-value">${duration}</span></div>
-        <div>Endpoint: <span class="meta-value">${results.endpoint || 'N/A'}</span></div>
+      <div class="header-actions">
+        <div class="meta">
+          <div><span class="meta-value">${timestamp}</span></div>
+          <div>Duration: <span class="meta-value">${duration}</span></div>
+          <div>Endpoint: <span class="meta-value">${results.endpoint || 'N/A'}</span></div>
+        </div>
+        <button class="share-btn" onclick="shareReport()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+            <polyline points="16,6 12,2 8,6"/>
+            <line x1="12" y1="2" x2="12" y2="15"/>
+          </svg>
+          Share Report
+        </button>
       </div>
     </header>
     
@@ -685,15 +911,24 @@ function generateHtmlReport(results) {
     </div>
     
     <div class="categories-grid">
-      ${Object.entries(categories).map(([name, data]) => `
-        <div class="category-card">
-          <div class="category-name">${name}</div>
-          <div class="category-stats">
-            <span class="stat-pass">${data.passed}✓</span>
-            <span class="stat-fail">${data.failed}✗</span>
+      ${Object.entries(categories).map(([name, data]) => {
+        const meta = CATEGORY_META[name] || { icon: '📦', name: name, color: '#666' };
+        const total = data.passed + data.failed;
+        const passRate = total > 0 ? Math.round((data.passed / total) * 100) : 0;
+        const rateClass = passRate >= 80 ? 'pass-rate-high' : passRate >= 50 ? 'pass-rate-mid' : 'pass-rate-low';
+        return `
+          <div class="category-card" style="border-top: 3px solid ${meta.color}">
+            <div class="category-icon">${meta.icon}</div>
+            <div class="category-name">${meta.name}</div>
+            <div class="category-rate ${rateClass}">${passRate}%</div>
+            ${generateMiniBar(data.passed, data.failed)}
+            <div class="category-stats">
+              <span class="stat-pass">${data.passed} ✓</span>
+              <span class="stat-fail">${data.failed} ✗</span>
+            </div>
           </div>
-        </div>
-      `).join('')}
+        `;
+      }).join('')}
     </div>
     
     ${failures.length > 0 ? `
@@ -738,6 +973,24 @@ function generateHtmlReport(results) {
                   </div>
                 ` : ''}
                 
+                ${f.request ? `
+                  <details class="payload-section">
+                    <summary>📤 Request Payload</summary>
+                    <div class="payload-content">
+                      <pre>${syntaxHighlightJson(f.request)}</pre>
+                    </div>
+                  </details>
+                ` : ''}
+                
+                ${f.response ? `
+                  <details class="payload-section">
+                    <summary>📥 Response Payload</summary>
+                    <div class="payload-content">
+                      <pre>${syntaxHighlightJson(f.response)}</pre>
+                    </div>
+                  </details>
+                ` : ''}
+                
                 <div class="remediation">
                   <div class="remediation-title">Suggested Fix</div>
                   <div class="remediation-text">${remediation}</div>
@@ -762,6 +1015,94 @@ function generateHtmlReport(results) {
       <p>Generated by F.A.I.L. Kit &mdash; <strong>No trace, no ship.</strong></p>
     </footer>
   </div>
+  
+  <div id="toast" class="toast"></div>
+  
+  <script>
+    // Report data for sharing
+    const reportData = ${JSON.stringify({
+      timestamp: results.timestamp,
+      endpoint: results.endpoint,
+      total: results.total,
+      passed: results.passed,
+      failed: results.failed,
+      duration_ms: results.duration_ms,
+      failures: failures.map(f => ({
+        case: f.case,
+        reason: f.reason || f.error,
+        expected: f.expected,
+        actual: f.actual
+      }))
+    })};
+    
+    // LZ-String compression (minimal implementation)
+    const LZString = {
+      compressToEncodedURIComponent: function(input) {
+        if (input == null) return "";
+        return btoa(encodeURIComponent(input).replace(/%([0-9A-F]{2})/g, (_, p1) => 
+          String.fromCharCode('0x' + p1)
+        )).replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');
+      }
+    };
+    
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+    
+    function shareReport() {
+      const btn = document.querySelector('.share-btn');
+      try {
+        // Compress report data
+        const compressed = LZString.compressToEncodedURIComponent(JSON.stringify(reportData));
+        
+        // For now, just copy the full HTML as a data URL
+        // A proper implementation would use a sharing service
+        const dataUrl = window.location.href;
+        
+        // Copy current page URL or generate a blob URL
+        const blob = new Blob([document.documentElement.outerHTML], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        
+        // Try to save as file
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'fail-kit-report-' + new Date().toISOString().split('T')[0] + '.html';
+        
+        // Copy compressed data to clipboard as fallback
+        const shareText = 'F.A.I.L. Kit Report: ' + reportData.passed + '/' + reportData.total + ' passed';
+        
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(shareText + '\\n\\nReport data (base64):\\n' + compressed.substring(0, 500) + '...');
+          btn.classList.add('copied');
+          btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20,6 9,17 4,12"/></svg> Copied!';
+          showToast('Report summary copied to clipboard! Download the HTML file to share the full report.');
+          
+          // Trigger download
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          
+          setTimeout(() => {
+            btn.classList.remove('copied');
+            btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16,6 12,2 8,6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Share Report';
+          }, 2000);
+        } else {
+          // Fallback: just download
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          showToast('Report downloaded! Share the HTML file with your team.');
+        }
+      } catch (err) {
+        showToast('Could not share report: ' + err.message);
+      }
+    }
+  </script>
 </body>
 </html>`;
 }
