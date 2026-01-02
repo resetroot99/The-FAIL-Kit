@@ -1,0 +1,18 @@
+{
+  "name": "fail-kit-express-example",
+  "version": "1.0.0",
+  "description": "Example Express app with F.A.I.L. Kit integration",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "audit": "fail-audit run --format html",
+    "audit:scan": "fail-audit scan && fail-audit run --format html"
+  },
+  "dependencies": {
+    "@fail-kit/middleware-express": "^1.0.0",
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "@fail-kit/cli": "^1.2.0"
+  }
+}

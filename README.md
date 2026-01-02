@@ -1,6 +1,9 @@
 # F.A.I.L. Kit
 ## Forensic Audit of Intelligent Logic
 
+[![npm version](https://img.shields.io/npm/v/@fail-kit/cli.svg)](https://www.npmjs.com/package/@fail-kit/cli)
+[![npm downloads](https://img.shields.io/npm/dm/@fail-kit/cli.svg)](https://www.npmjs.com/package/@fail-kit/cli)
+
 ![The Interrogation](assets/fail_kit_interrogation.png)
 
 **Version 1.0** | [Quick Start](#quick-start) | [Installation](#installation) | [Documentation](#documentation) | [Support](#support)
@@ -102,9 +105,9 @@ Agent retries failed API call. First call actually succeeded but returned timeou
 | Component | Description |
 |-----------|-------------|
 | **50 Curated Test Cases** | 3-level forensic audit (not generic benchmarks) |
-| **CLI Tool** | `fail-audit` command for running audits & reports |
+| **CLI Tool** | `fail-audit` command with auto-scan, run, and HTML reports |
 | **Receipt Schema** | Standard for proving actions happened |
-| **Gate Middleware** | Express, FastAPI, Next.js enforcement |
+| **Middleware Packages** | `@fail-kit/middleware-express`, `@fail-kit/middleware-nextjs` |
 | **Integration Guides** | LangChain, CrewAI, AutoGPT, Semantic Kernel, OpenAI |
 | **Reference Agent** | Working example with correct receipts |
 | **Audit Runbook** | 60-minute first audit walkthrough |
@@ -187,9 +190,22 @@ See [Easy Integration Guide](docs/EASY_INTEGRATION.md) for complete documentatio
 ### 3. Run the Audit
 
 ```bash
-fail-audit init
-fail-audit run
+# Initialize configuration
+fail-audit init --framework express --install
+
+# Auto-generate test cases from your codebase
+fail-audit scan
+
+# Run the audit
+fail-audit run --format html
 ```
+
+The `scan` command automatically:
+- Scans your codebase for agent functions and endpoints
+- Detects tool calls and LLM invocations
+- Generates test cases for receipt validation, error handling, and hallucination detection
+
+**Zero manual test writing required.**
 
 ---
 
@@ -778,6 +794,15 @@ See [AUDIT_RUNBOOK.md](AUDIT_RUNBOOK.md) for guidance on interpreting results.
 ---
 
 ## Version History
+
+**v1.2.0** (January 2, 2026)
+- **Automatic test case generation** - `fail-audit scan` command
+- Codebase scanner detects endpoints, agent functions, tool calls, LLM invocations
+- Auto-generates receipt, error handling, hallucination, and integrity tests
+- **Zero-config middleware** - `@fail-kit/middleware-express`, `@fail-kit/middleware-nextjs`
+- Enhanced HTML reports with error explanations and suggested fixes
+- `--install` flag for automatic middleware installation
+- Smart defaults: auto-scan if no test cases exist
 
 **v1.0.0** (December 31, 2025)
 - Initial production release

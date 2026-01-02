@@ -44,6 +44,8 @@ program
   .option('-e, --endpoint <url>', 'Set endpoint URL')
   .option('-t, --timeout <ms>', 'Set timeout in milliseconds')
   .option('--test', 'Test endpoint connectivity after setup')
+  .option('--install', 'Auto-install middleware for your framework')
+  .option('-f, --framework <framework>', 'Framework: nextjs, express, fastapi, other')
   .action(async (options) => {
     console.log(chalk.bold.cyan('\n┌─────────────────────────────────────────┐'));
     console.log(chalk.bold.cyan('│  F.A.I.L. Kit - Configuration Wizard   │'));
@@ -62,6 +64,7 @@ program
     }
     
     let config = { ...DEFAULT_CONFIG };
+    let framework = options.framework || null;
     
     // Apply CLI options if provided
     if (options.endpoint) config.endpoint = options.endpoint;
@@ -74,21 +77,23 @@ program
         const inquirer = require('inquirer');
         
         // First, ask about framework
-        const frameworkAnswer = await inquirer.prompt([
-          {
-            type: 'list',
-            name: 'framework',
-            message: 'Which framework are you using?',
-            choices: [
-              { name: 'Next.js', value: 'nextjs' },
-              { name: 'Express', value: 'express' },
-              { name: 'FastAPI (Python)', value: 'fastapi' },
-              { name: 'Other / Manual setup', value: 'other' }
-            ]
-          }
-        ]);
-        
-        const framework = frameworkAnswer.framework;
+        // Only ask about framework if not provided via CLI
+        if (!framework) {
+          const frameworkAnswer = await inquirer.prompt([
+            {
+              type: 'list',
+              name: 'framework',
+              message: 'Which framework are you using?',
+              choices: [
+                { name: 'Next.js', value: 'nextjs' },
+                { name: 'Express', value: 'express' },
+                { name: 'FastAPI (Python)', value: 'fastapi' },
+                { name: 'Other / Manual setup', value: 'other' }
+              ]
+            }
+          ]);
+          framework = frameworkAnswer.framework;
+        }
         
         const answers = await inquirer.prompt([
           {
@@ -179,8 +184,10 @@ program
     }
     
     // Extract framework before writing (don't persist internal field)
-    const framework = config._framework;
-    delete config._framework;
+    if (config._framework) {
+      framework = config._framework;
+      delete config._framework;
+    }
     
     // Write config
     writeConfig(config, configPath);
@@ -255,6 +262,32 @@ program
       }
       
       console.log(chalk.dim('Full documentation: https://github.com/resetroot99/The-FAIL-Kit/blob/main/docs/EASY_INTEGRATION.md\n'));
+      
+      // Auto-install middleware if requested
+      if (options.install) {
+        const { execSync } = require('child_process');
+        let installCmd = null;
+        
+        if (framework === 'nextjs') {
+          installCmd = 'npm install @fail-kit/middleware-nextjs';
+        } else if (framework === 'express') {
+          installCmd = 'npm install @fail-kit/middleware-express';
+        } else if (framework === 'fastapi') {
+          installCmd = 'pip install fail-kit';
+        }
+        
+        if (installCmd) {
+          console.log(chalk.bold('Installing middleware...\n'));
+          try {
+            execSync(installCmd, { stdio: 'inherit', cwd: process.cwd() });
+            console.log(chalk.green('\n✓ Middleware installed successfully!\n'));
+          } catch (error) {
+            console.log(chalk.yellow('\n⚠ Could not install middleware automatically.'));
+            console.log(chalk.dim('Run the install command manually:\n'));
+            console.log(chalk.cyan(`  ${installCmd}\n`));
+          }
+        }
+      }
     }
     
     // Test connection if requested
@@ -273,6 +306,7 @@ program
     }
     
     console.log(chalk.dim('Next steps:'));
+    console.log(chalk.bold('  fail-audit scan'), chalk.dim('- Auto-generate test cases from your codebase'));
     console.log(chalk.bold('  fail-audit doctor'), chalk.dim('- Check your setup'));
     console.log(chalk.bold('  fail-audit run'), chalk.dim('- Run the audit\n'));
   });

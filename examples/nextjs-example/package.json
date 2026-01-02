@@ -1,0 +1,24 @@
+{
+  "name": "fail-kit-nextjs-example",
+  "version": "1.0.0",
+  "description": "Example Next.js app with F.A.I.L. Kit integration",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "audit": "fail-audit run --format html",
+    "audit:scan": "fail-audit scan && fail-audit run --format html"
+  },
+  "dependencies": {
+    "@fail-kit/middleware-nextjs": "^1.0.0",
+    "next": "^14.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@fail-kit/cli": "^1.2.0",
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.2.0",
+    "typescript": "^5.0.0"
+  }
+}

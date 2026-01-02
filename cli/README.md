@@ -1,5 +1,8 @@
 # F.A.I.L. Kit CLI
 
+[![npm version](https://img.shields.io/npm/v/@fail-kit/cli.svg)](https://www.npmjs.com/package/@fail-kit/cli)
+[![npm downloads](https://img.shields.io/npm/dm/@fail-kit/cli.svg)](https://www.npmjs.com/package/@fail-kit/cli)
+
 > **Forensic Audit of Intelligent Logic**
 
 The F.A.I.L. Kit CLI is a developer-first tool for running forensic audits on AI agents. It tests whether your agent actually does what it claims — no trace, no ship.
@@ -17,18 +20,31 @@ fail-audit --version
 ## Quick Start
 
 ```bash
-# Initialize configuration
+# Initialize configuration (interactive)
 fail-audit init
 
-# Run diagnostics to check setup
-fail-audit doctor
+# Auto-generate test cases from your codebase
+fail-audit scan
 
-# Run the full audit
-fail-audit run
-
-# Generate an HTML report
-fail-audit report audit-results/audit-2025-01-01.json
+# Run the audit
+fail-audit run --format html
 ```
+
+**Zero manual test writing required.** The `scan` command automatically analyzes your codebase and generates test cases.
+
+## Middleware Packages
+
+For easy integration with your framework:
+
+```bash
+# Next.js
+npm install @fail-kit/middleware-nextjs
+
+# Express
+npm install @fail-kit/middleware-express
+```
+
+See [Easy Integration Guide](https://github.com/resetroot99/The-FAIL-Kit/blob/main/docs/EASY_INTEGRATION.md) for setup instructions.
 
 ## Commands
 
@@ -37,11 +53,31 @@ fail-audit report audit-results/audit-2025-01-01.json
 Initialize a new audit configuration with an interactive wizard.
 
 ```bash
-fail-audit init                    # Interactive setup
-fail-audit init --yes              # Use defaults (CI mode)
-fail-audit init --endpoint <url>   # Set endpoint directly
-fail-audit init --test             # Test endpoint after setup
+fail-audit init                         # Interactive setup
+fail-audit init --yes                   # Use defaults (CI mode)
+fail-audit init --framework express     # Specify framework
+fail-audit init --install               # Auto-install middleware
+fail-audit init --endpoint <url>        # Set endpoint directly
+fail-audit init --test                  # Test endpoint after setup
 ```
+
+### `fail-audit scan`
+
+**NEW:** Scan your codebase and auto-generate test cases.
+
+```bash
+fail-audit scan                    # Scan current directory
+fail-audit scan --path ./src       # Scan specific directory
+fail-audit scan --dry-run          # Preview without saving
+fail-audit scan --verbose          # Show detailed results
+fail-audit scan --run              # Scan and immediately run audit
+```
+
+The scanner detects:
+- API endpoints (Next.js, Express, FastAPI)
+- Agent functions (query, generate, process, estimate)
+- Tool calls (database, HTTP, file, email)
+- LLM invocations (OpenAI, Anthropic, etc.)
 
 ### `fail-audit run`
 
@@ -57,6 +93,8 @@ fail-audit run --format html       # Output as HTML
 fail-audit run --format junit      # Output as JUnit XML
 fail-audit run --ci                # CI mode (no colors)
 ```
+
+**Smart defaults:** If no test cases exist, `run` automatically invokes `scan` first.
 
 ### `fail-audit report`
 
@@ -120,25 +158,27 @@ Override config values with environment variables:
 
 ### GitHub Actions
 
-Copy the template to your repository:
+```yaml
+- name: Install F.A.I.L. Kit
+  run: npm install -g @fail-kit/cli
 
-```bash
-mkdir -p .github/workflows
-cp node_modules/@fail-kit/cli/templates/github-action.yml .github/workflows/fail-audit.yml
+- name: Run audit
+  run: fail-audit scan && fail-audit run --ci --format junit
 ```
 
-Set `AGENT_ENDPOINT` as a repository secret.
+See [CI/CD Guide](https://github.com/resetroot99/The-FAIL-Kit/blob/main/docs/CI_CD_GUIDE.md) for complete examples.
 
 ### GitLab CI
 
-Include the template in your `.gitlab-ci.yml`:
-
 ```yaml
-include:
-  - local: 'node_modules/@fail-kit/cli/templates/gitlab-ci.yml'
-
-variables:
-  AGENT_ENDPOINT: "https://your-agent.example.com/eval/run"
+fail-audit:
+  script:
+    - npm install -g @fail-kit/cli
+    - fail-audit scan
+    - fail-audit run --ci --format junit
+  artifacts:
+    reports:
+      junit: audit-results/*.xml
 ```
 
 ## Output Formats
@@ -163,12 +203,21 @@ variables:
 - **Interrogation**: Behavioral testing, edge cases, action verification
 - **Red Team**: Adversarial attacks, injection attempts, policy bypass
 
+## Examples
+
+Complete working examples are available:
+
+- [Express Example](https://github.com/resetroot99/The-FAIL-Kit/tree/main/examples/express-example)
+- [Next.js Example](https://github.com/resetroot99/The-FAIL-Kit/tree/main/examples/nextjs-example)
+- [FastAPI Example](https://github.com/resetroot99/The-FAIL-Kit/tree/main/examples/fastapi-example)
+
 ## Links
 
 - [Documentation](https://github.com/resetroot99/The-FAIL-Kit#readme)
+- [Easy Integration Guide](https://github.com/resetroot99/The-FAIL-Kit/blob/main/docs/EASY_INTEGRATION.md)
+- [CI/CD Guide](https://github.com/resetroot99/The-FAIL-Kit/blob/main/docs/CI_CD_GUIDE.md)
 - [Failure Modes Catalog](https://github.com/resetroot99/The-FAIL-Kit/blob/main/FAILURE_MODES.md)
 - [Receipt Standard](https://github.com/resetroot99/The-FAIL-Kit/tree/main/receipt-standard)
-- [GitHub](https://github.com/fail-kit/fail-kit)
 
 ---
 
