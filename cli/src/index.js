@@ -31,7 +31,7 @@ const isCI = process.env.CI === 'true' ||
 program
   .name('fail-audit')
   .description('Forensic Audit of Intelligent Logic - CLI for auditing AI agents')
-  .version('1.4.2');
+  .version(require('../package.json').version);
 
 // ============================================================================
 // Command: init
