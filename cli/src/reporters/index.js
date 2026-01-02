@@ -6,6 +6,7 @@
 const { generateHtmlReport, getSeverity, getDocLink, getRemediation } = require('./html');
 const { generateJunitReport, generateMinimalJunitReport } = require('./junit');
 const { generateMarkdownReport, generateCompactMarkdownReport, generateOneLiner } = require('./markdown');
+const { generateDashboard } = require('./dashboard');
 
 /**
  * Generate report in specified format
@@ -18,6 +19,9 @@ function generateReport(results, format, options = {}) {
   switch (format.toLowerCase()) {
     case 'html':
       return generateHtmlReport(results);
+    
+    case 'dashboard':
+      return generateDashboard(results);
     
     case 'junit':
     case 'xml':
@@ -47,6 +51,7 @@ function generateReport(results, format, options = {}) {
 function getExtension(format) {
   const extensions = {
     html: '.html',
+    dashboard: '.html',
     junit: '.xml',
     xml: '.xml',
     markdown: '.md',
@@ -66,6 +71,8 @@ module.exports = {
   getSeverity,
   getDocLink,
   getRemediation,
+  // Dashboard export
+  generateDashboard,
   // JUnit exports
   generateJunitReport,
   generateMinimalJunitReport,
