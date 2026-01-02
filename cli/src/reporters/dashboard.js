@@ -3,6 +3,54 @@
  * Enterprise-style observability dashboard for audit results
  */
 
+const { generateErrorExplanation } = require('../error-explainer');
+
+/**
+ * Get severity level for a case ID
+ */
+function getSeverity(caseId) {
+  if (caseId.includes('CONTRACT_0003') || caseId.includes('CONTRACT_02') || caseId.includes('AGENT_0008')) {
+    return 'critical';
+  }
+  if (caseId.startsWith('ADV_') || caseId.startsWith('AGENT_')) {
+    return 'high';
+  }
+  if (caseId.startsWith('RAG_') || caseId.startsWith('SHIFT_')) {
+    return 'medium';
+  }
+  return 'low';
+}
+
+/**
+ * Syntax highlight JSON
+ */
+function syntaxHighlightJson(json) {
+  if (typeof json !== 'string') {
+    json = JSON.stringify(json, null, 2);
+  }
+  json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return json.replace(
+    /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+    (match) => {
+      let cls = 'json-number';
+      if (/^"/.test(match)) {
+        if (/:$/.test(match)) {
+          cls = 'json-key';
+          match = match.replace(/:$/, '');
+          return `<span class="${cls}">${match}</span>:`;
+        } else {
+          cls = 'json-string';
+        }
+      } else if (/true|false/.test(match)) {
+        cls = 'json-boolean';
+      } else if (/null/.test(match)) {
+        cls = 'json-null';
+      }
+      return `<span class="${cls}">${match}</span>`;
+    }
+  );
+}
+
 /**
  * Generate interactive dashboard HTML
  */
@@ -28,18 +76,22 @@ function generateDashboard(results) {
     categories[prefix].push(r);
   });
   
-  // Create timeline events
-  const events = results.results.map((r, idx) => ({
-    id: `evt-${idx}`,
-    timestamp: new Date(Date.parse(results.timestamp) + idx * 100).toISOString(),
+  // Serialize full results data for JavaScript
+  const resultsData = JSON.stringify(results.results.map((r, idx) => ({
+    id: `test-${idx}`,
     case: r.case,
-    status: r.pass ? 'pass' : 'fail',
+    pass: r.pass,
+    reason: r.reason || r.error,
+    expected: r.expected,
+    actual: r.actual,
+    duration_ms: r.duration_ms || 0,
     severity: getSeverity(r.case),
     category: r.case.split('_')[0],
-    duration: r.duration_ms || 0,
-    reason: r.reason || r.error,
+    request: r.request,
+    response: r.response,
+    outputs: r.outputs,
     source_location: r.source_location || (r.response && r.response.source_location)
-  }));
+  })));
   
   return `<!DOCTYPE html>
 <html lang="en">
@@ -126,6 +178,8 @@ function generateDashboard(results) {
       border-radius: 6px;
       transition: all 0.2s;
       position: relative;
+      background: none;
+      border: none;
     }
     
     .nav-tab.active {
@@ -160,6 +214,8 @@ function generateDashboard(results) {
       color: var(--text-secondary);
       cursor: pointer;
       transition: all 0.2s;
+      background: none;
+      border: none;
     }
     
     .nav-icon:hover {
@@ -176,8 +232,16 @@ function generateDashboard(results) {
     
     .dashboard-grid {
       display: grid;
-      grid-template-columns: 1fr 400px;
+      grid-template-columns: 1fr 450px;
       gap: 16px;
+    }
+    
+    .view-section {
+      display: none;
+    }
+    
+    .view-section.active {
+      display: block;
     }
     
     /* Card Base */
@@ -350,6 +414,7 @@ function generateDashboard(results) {
       display: flex;
       gap: 8px;
       margin-top: 12px;
+      flex-wrap: wrap;
     }
     
     .filter-btn {
@@ -394,6 +459,10 @@ function generateDashboard(results) {
       border-left-color: var(--accent);
     }
     
+    .forensic-item.expanded {
+      background: rgba(34, 211, 238, 0.05);
+    }
+    
     .forensic-item-header {
       display: flex;
       align-items: center;
@@ -425,6 +494,72 @@ function generateDashboard(results) {
       font-size: 11px;
       color: var(--text-muted);
       font-family: 'JetBrains Mono', monospace;
+    }
+    
+    .forensic-item-details {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      display: none;
+      font-size: 12px;
+    }
+    
+    .forensic-item.expanded .forensic-item-details {
+      display: block;
+    }
+    
+    .detail-section {
+      margin-bottom: 12px;
+    }
+    
+    .detail-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+    
+    .detail-content {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      line-height: 1.6;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    
+    .detail-content pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    
+    .json-string { color: #ce9178; }
+    .json-number { color: #b5cea8; }
+    .json-boolean { color: #569cd6; }
+    .json-null { color: #569cd6; }
+    .json-key { color: #9cdcfe; }
+    
+    .source-location-box {
+      background: rgba(99, 102, 241, 0.1);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: 4px;
+      padding: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+    }
+    
+    .source-location-box div {
+      margin-bottom: 4px;
+    }
+    
+    .source-location-box div:last-child {
+      margin-bottom: 0;
     }
     
     /* Metrics Row */
@@ -489,7 +624,7 @@ function generateDashboard(results) {
       font-size: 12px;
       pointer-events: none;
       z-index: 1000;
-      max-width: 300px;
+      max-width: 350px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
       display: none;
     }
@@ -502,6 +637,7 @@ function generateDashboard(results) {
       font-weight: 600;
       margin-bottom: 8px;
       font-family: 'JetBrains Mono', monospace;
+      color: var(--accent);
     }
     
     .tooltip-content {
@@ -538,6 +674,79 @@ function generateDashboard(results) {
     ::-webkit-scrollbar-thumb:hover {
       background: rgba(255, 255, 255, 0.2);
     }
+    
+    /* Export Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .modal.show {
+      display: flex;
+    }
+    
+    .modal-content {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 400px;
+      width: 90%;
+    }
+    
+    .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+    
+    .modal-body {
+      margin-bottom: 20px;
+    }
+    
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+    
+    .btn {
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+    }
+    
+    .btn-primary {
+      background: var(--accent);
+      color: var(--bg-primary);
+    }
+    
+    .btn-primary:hover {
+      background: #06b6d4;
+    }
+    
+    .btn-secondary {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+    
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
   </style>
 </head>
 <body>
@@ -548,146 +757,244 @@ function generateDashboard(results) {
         <span class="app-badge">FORENSIC</span>
       </div>
       <div class="nav-tabs">
-        <div class="nav-tab active">Dashboard</div>
-        <div class="nav-tab">Timeline</div>
-        <div class="nav-tab">Forensics</div>
-        <div class="nav-tab">Reports</div>
+        <button class="nav-tab active" data-view="dashboard">Dashboard</button>
+        <button class="nav-tab" data-view="timeline">Timeline</button>
+        <button class="nav-tab" data-view="forensics">Forensics</button>
+        <button class="nav-tab" data-view="reports">Reports</button>
       </div>
     </div>
     <div class="nav-right">
-      <div class="nav-icon" title="Export">
+      <button class="nav-icon" id="export-btn" title="Export">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5-5m0 0l5 5m-5-5v12"/>
         </svg>
-      </div>
-      <div class="nav-icon" title="Settings">
+      </button>
+      <button class="nav-icon" id="settings-btn" title="Settings">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6m9-9h-6m-6 0H3"/>
         </svg>
-      </div>
+      </button>
     </div>
   </div>
   
   <div class="main-container">
-    <div class="dashboard-grid">
-      <div>
-        <!-- Status Card -->
-        <div class="card" style="margin-bottom: 16px;">
-          <div class="status-card">
-            <div class="status-badge">
-              <div class="status-icon ${passRate >= 80 ? 'status-verified' : 'status-failed'}">
-                ${passRate >= 80 ? '✓' : '✗'}
+    <!-- Dashboard View -->
+    <div class="view-section active" id="dashboard-view">
+      <div class="dashboard-grid">
+        <div>
+          <!-- Status Card -->
+          <div class="card" style="margin-bottom: 16px;">
+            <div class="status-card">
+              <div class="status-badge">
+                <div class="status-icon ${passRate >= 80 ? 'status-verified' : 'status-failed'}">
+                  ${passRate >= 80 ? '✓' : '✗'}
+                </div>
+                <div>
+                  <div style="font-size: 16px;">Status: ${passRate >= 80 ? 'VERIFIED' : 'FAILED'}</div>
+                  <div style="font-size: 12px; color: var(--text-muted);">${results.passed}/${results.total} tests passed</div>
+                </div>
               </div>
-              <div>
-                <div style="font-size: 16px;">Status: ${passRate >= 80 ? 'VERIFIED' : 'FAILED'}</div>
-                <div style="font-size: 12px; color: var(--text-muted);">${results.passed}/${results.total} tests passed</div>
+              <div class="status-meta">
+                <div>Last updated: ${new Date(results.timestamp).toLocaleString()}</div>
+                <div>Duration: ${((results.duration_ms || 0) / 1000).toFixed(2)}s</div>
+                <div>Endpoint: ${results.endpoint || 'N/A'}</div>
               </div>
             </div>
-            <div class="status-meta">
-              <div>Last updated: ${new Date(results.timestamp).toLocaleString()}</div>
-              <div>Duration: ${((results.duration_ms || 0) / 1000).toFixed(2)}s</div>
+          </div>
+          
+          <!-- Timeline Card -->
+          <div class="card" style="margin-bottom: 16px;">
+            <div class="card-header">
+              <div class="card-title">AI Agent Action Timeline</div>
+              <div style="font-size: 11px; color: var(--text-muted);">Click events to filter forensic log</div>
             </div>
-          </div>
-        </div>
-        
-        <!-- Timeline Card -->
-        <div class="card" style="margin-bottom: 16px;">
-          <div class="card-header">
-            <div class="card-title">AI Agent Action Timeline</div>
-          </div>
-          <div class="card-body">
-            <div class="timeline-container">
-              <div class="timeline-lanes">
-                ${Object.entries(categories).map(([category, tests]) => `
-                  <div class="timeline-lane">
-                    <div class="timeline-lane-header">${category}</div>
-                    <div class="timeline-track" id="track-${category}">
-                      ${tests.map((test, idx) => {
-                        const position = (idx / tests.length) * 95;
-                        return `
-                          <div class="timeline-event ${test.pass ? 'pass' : 'fail'}" 
-                               style="left: ${position}%"
-                               data-case="${test.case}"
-                               data-status="${test.pass ? 'PASS' : 'FAIL'}"
-                               data-reason="${test.reason || test.error || 'N/A'}"
-                               data-duration="${test.duration_ms || 0}">
-                            ${test.pass ? '✓' : '✗'}
-                          </div>
-                        `;
-                      }).join('')}
+            <div class="card-body">
+              <div class="timeline-container">
+                <div class="timeline-lanes">
+                  ${Object.entries(categories).map(([category, tests]) => `
+                    <div class="timeline-lane">
+                      <div class="timeline-lane-header">${category} (${tests.filter(t => !t.pass).length}/${tests.length} failed)</div>
+                      <div class="timeline-track" id="track-${category}">
+                        ${tests.map((test, idx) => {
+                          const position = (idx / tests.length) * 95;
+                          return `
+                            <div class="timeline-event ${test.pass ? 'pass' : 'fail'}" 
+                                 style="left: ${position}%"
+                                 data-case="${test.case}"
+                                 data-status="${test.pass ? 'PASS' : 'FAIL'}"
+                                 data-reason="${(test.reason || test.error || 'N/A').replace(/"/g, '&quot;')}"
+                                 data-duration="${test.duration_ms || 0}"
+                                 data-severity="${getSeverity(test.case)}">
+                              ${test.pass ? '✓' : '✗'}
+                            </div>
+                          `;
+                        }).join('')}
+                      </div>
                     </div>
-                  </div>
-                `).join('')}
+                  `).join('')}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Metrics Row -->
+          <div class="metrics-row">
+            <div class="card metric-card">
+              <div class="metric-value">${passRate}%</div>
+              <div class="metric-label">Pass Rate</div>
+              <div class="metric-chart">
+                ${Object.entries(categories).slice(0, 8).map(([cat, tests]) => {
+                  const passRate = tests.length > 0 ? (tests.filter(t => t.pass).length / tests.length) * 100 : 0;
+                  return `<div class="chart-bar" style="height: ${Math.max(passRate, 10)}%" title="${cat}: ${passRate.toFixed(0)}%"></div>`;
+                }).join('')}
+              </div>
+            </div>
+            
+            <div class="card metric-card">
+              <div class="metric-value">${results.total}</div>
+              <div class="metric-label">Total Tests</div>
+              <div class="metric-chart">
+                ${Object.values(severityCounts).map((count, idx) => {
+                  const height = results.total > 0 ? (count / results.total) * 100 : 0;
+                  return `<div class="chart-bar" style="height: ${Math.max(height, 10)}%"></div>`;
+                }).join('')}
+              </div>
+            </div>
+            
+            <div class="card metric-card">
+              <div class="metric-value">${severityCounts.critical}</div>
+              <div class="metric-label">Critical</div>
+              <div class="metric-chart">
+                ${['critical', 'high', 'medium', 'low'].map(sev => {
+                  const count = severityCounts[sev];
+                  const maxCount = Math.max(...Object.values(severityCounts), 1);
+                  const height = (count / maxCount) * 100;
+                  return `<div class="chart-bar" style="height: ${Math.max(height, 10)}%"></div>`;
+                }).join('')}
               </div>
             </div>
           </div>
         </div>
         
-        <!-- Metrics Row -->
-        <div class="metrics-row">
-          <div class="card metric-card">
-            <div class="metric-value">${passRate}%</div>
-            <div class="metric-label">Pass Rate</div>
-            <div class="metric-chart">
-              ${Array.from({length: 10}, (_, i) => {
-                const height = Math.random() * 100;
-                return `<div class="chart-bar" style="height: ${height}%"></div>`;
-              }).join('')}
+        <!-- Forensic Log Panel -->
+        <div class="card forensic-panel">
+          <div class="card-header">
+            <div class="card-title">Forensic Log Details</div>
+            <div style="font-size: 11px; color: var(--text-muted);">Click items to expand</div>
+          </div>
+          <div class="forensic-search">
+            <input type="text" class="search-input" placeholder="Search test cases..." id="forensic-search">
+            <div class="forensic-filters">
+              <button class="filter-btn active" data-filter="all">All (${results.total})</button>
+              <button class="filter-btn" data-filter="fail">Failed (${failures.length})</button>
+              <button class="filter-btn" data-filter="pass">Passed (${passes.length})</button>
+              <button class="filter-btn" data-filter="critical">Critical (${severityCounts.critical})</button>
+              <button class="filter-btn" data-filter="high">High (${severityCounts.high})</button>
             </div>
           </div>
-          
-          <div class="card metric-card">
-            <div class="metric-value">${results.total}</div>
-            <div class="metric-label">Total Tests</div>
-            <div class="metric-chart">
-              ${Object.values(severityCounts).map(count => {
-                const height = results.total > 0 ? (count / results.total) * 100 : 0;
-                return `<div class="chart-bar" style="height: ${Math.max(height, 10)}%"></div>`;
-              }).join('')}
-            </div>
-          </div>
-          
-          <div class="card metric-card">
-            <div class="metric-value">${failures.filter(f => getSeverity(f.case) === 'critical').length}</div>
-            <div class="metric-label">Critical</div>
-            <div class="metric-chart">
-              ${['critical', 'high', 'medium', 'low'].map(sev => {
-                const count = failures.filter(f => getSeverity(f.case) === sev).length;
-                const height = failures.length > 0 ? (count / failures.length) * 100 : 0;
-                return `<div class="chart-bar" style="height: ${Math.max(height, 10)}%"></div>`;
-              }).join('')}
-            </div>
+          <div class="forensic-list" id="forensic-list">
+            ${results.results.map((result, idx) => `
+              <div class="forensic-item" data-idx="${idx}" data-case="${result.case}" data-status="${result.pass ? 'pass' : 'fail'}" data-severity="${getSeverity(result.case)}">
+                <div class="forensic-item-header">
+                  <div class="forensic-case">${result.case}</div>
+                  <div class="severity-tag severity-${getSeverity(result.case)}">${getSeverity(result.case)}</div>
+                </div>
+                <div class="forensic-item-meta">
+                  ${result.pass ? '✓ PASS' : '✗ FAIL'} · ${result.duration_ms || 0}ms
+                  ${(result.source_location || (result.response && result.response.source_location)) ? ` · ${(result.source_location || result.response.source_location).file}:${(result.source_location || result.response.source_location).line}` : ''}
+                </div>
+                <div class="forensic-item-details">
+                  ${result.reason || result.error ? `
+                    <div class="detail-section">
+                      <div class="detail-label">Failure Reason</div>
+                      <div class="detail-content">${result.reason || result.error}</div>
+                    </div>
+                  ` : ''}
+                  
+                  ${(result.source_location || (result.response && result.response.source_location)) ? `
+                    <div class="detail-section">
+                      <div class="detail-label">Source Location</div>
+                      <div class="source-location-box">
+                        <div><strong>File:</strong> ${(result.source_location || result.response.source_location).file}</div>
+                        ${(result.source_location || result.response.source_location).function ? `<div><strong>Function:</strong> ${(result.source_location || result.response.source_location).function}</div>` : ''}
+                        <div><strong>Line:</strong> ${(result.source_location || result.response.source_location).line}${(result.source_location || result.response.source_location).column ? `:${(result.source_location || result.response.source_location).column}` : ''}</div>
+                      </div>
+                    </div>
+                  ` : ''}
+                  
+                  ${result.request ? `
+                    <div class="detail-section">
+                      <div class="detail-label">Request</div>
+                      <div class="detail-content">
+                        <pre>${syntaxHighlightJson(result.request)}</pre>
+                      </div>
+                    </div>
+                  ` : ''}
+                  
+                  ${result.response || result.outputs ? `
+                    <div class="detail-section">
+                      <div class="detail-label">Response</div>
+                      <div class="detail-content">
+                        <pre>${syntaxHighlightJson(result.response || result.outputs)}</pre>
+                      </div>
+                    </div>
+                  ` : ''}
+                  
+                  ${result.expected ? `
+                    <div class="detail-section">
+                      <div class="detail-label">Expected</div>
+                      <div class="detail-content">
+                        <pre>${syntaxHighlightJson(result.expected)}</pre>
+                      </div>
+                    </div>
+                  ` : ''}
+                  
+                  ${result.actual ? `
+                    <div class="detail-section">
+                      <div class="detail-label">Actual</div>
+                      <div class="detail-content">
+                        <pre>${syntaxHighlightJson(result.actual)}</pre>
+                      </div>
+                    </div>
+                  ` : ''}
+                </div>
+              </div>
+            `).join('')}
           </div>
         </div>
       </div>
-      
-      <!-- Forensic Log Panel -->
-      <div class="card forensic-panel">
+    </div>
+    
+    <!-- Other views placeholder -->
+    <div class="view-section" id="timeline-view">
+      <div class="card">
         <div class="card-header">
-          <div class="card-title">Forensic Log Details</div>
+          <div class="card-title">Timeline View</div>
         </div>
-        <div class="forensic-search">
-          <input type="text" class="search-input" placeholder="Search test cases..." id="forensic-search">
-          <div class="forensic-filters">
-            <button class="filter-btn active" data-filter="all">All</button>
-            <button class="filter-btn" data-filter="fail">Failed</button>
-            <button class="filter-btn" data-filter="pass">Passed</button>
-            <button class="filter-btn" data-filter="critical">Critical</button>
-          </div>
+        <div class="card-body">
+          <p style="color: var(--text-secondary);">Detailed timeline view with all test execution data.</p>
         </div>
-        <div class="forensic-list" id="forensic-list">
-          ${results.results.map((result, idx) => `
-            <div class="forensic-item" data-idx="${idx}" data-status="${result.pass ? 'pass' : 'fail'}" data-severity="${getSeverity(result.case)}">
-              <div class="forensic-item-header">
-                <div class="forensic-case">${result.case}</div>
-                <div class="severity-tag severity-${getSeverity(result.case)}">${getSeverity(result.case)}</div>
-              </div>
-              <div class="forensic-item-meta">
-                ${result.pass ? '✓ PASS' : '✗ FAIL'} · ${result.duration_ms || 0}ms
-                ${result.source_location ? ` · ${result.source_location.file}:${result.source_location.line}` : ''}
-              </div>
-            </div>
-          `).join('')}
+      </div>
+    </div>
+    
+    <div class="view-section" id="forensics-view">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Forensics View</div>
+        </div>
+        <div class="card-body">
+          <p style="color: var(--text-secondary);">Full forensic analysis with detailed test case breakdown.</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="view-section" id="reports-view">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Reports View</div>
+        </div>
+        <div class="card-body">
+          <p style="color: var(--text-secondary);">Generate and export reports in various formats.</p>
         </div>
       </div>
     </div>
@@ -698,27 +1005,62 @@ function generateDashboard(results) {
     <div class="tooltip-content"></div>
   </div>
   
+  <!-- Export Modal -->
+  <div class="modal" id="export-modal">
+    <div class="modal-content">
+      <div class="modal-title">Export Report</div>
+      <div class="modal-body">
+        <p style="color: var(--text-secondary); margin-bottom: 12px;">Choose export format:</p>
+        <button class="btn btn-primary" style="width: 100%; margin-bottom: 8px;" onclick="exportJSON()">Export as JSON</button>
+        <button class="btn btn-secondary" style="width: 100%;" onclick="exportHTML()">Save Dashboard HTML</button>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+  
   <script>
-    // Timeline event tooltips
+    // Store full test data
+    const testData = ${resultsData};
+    
+    // Timeline event interactions
     document.querySelectorAll('.timeline-event').forEach(event => {
+      // Tooltip on hover
       event.addEventListener('mouseenter', (e) => {
         const tooltip = document.getElementById('tooltip');
         const rect = e.target.getBoundingClientRect();
+        const testCase = e.target.dataset.case;
+        const test = testData.find(t => t.case === testCase);
         
-        tooltip.querySelector('.tooltip-title').textContent = e.target.dataset.case;
+        tooltip.querySelector('.tooltip-title').textContent = testCase;
         tooltip.querySelector('.tooltip-content').innerHTML = \`
           <strong>Status:</strong> \${e.target.dataset.status}<br>
           <strong>Duration:</strong> \${e.target.dataset.duration}ms<br>
+          <strong>Severity:</strong> \${e.target.dataset.severity}<br>
           \${e.target.dataset.reason !== 'N/A' ? \`<strong>Reason:</strong> \${e.target.dataset.reason}\` : ''}
         \`;
         
-        tooltip.style.left = rect.left + 'px';
+        tooltip.style.left = Math.min(rect.left, window.innerWidth - 350) + 'px';
         tooltip.style.top = (rect.top - tooltip.offsetHeight - 10) + 'px';
         tooltip.classList.add('show');
       });
       
       event.addEventListener('mouseleave', () => {
         document.getElementById('tooltip').classList.remove('show');
+      });
+      
+      // Click to filter forensic log
+      event.addEventListener('click', (e) => {
+        const testCase = e.target.dataset.case;
+        const forensicItem = document.querySelector(\`.forensic-item[data-case="\${testCase}"]\`);
+        if (forensicItem) {
+          // Scroll to item
+          forensicItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Select and expand
+          document.querySelectorAll('.forensic-item').forEach(i => i.classList.remove('selected'));
+          forensicItem.classList.add('selected', 'expanded');
+        }
       });
     });
     
@@ -750,32 +1092,82 @@ function generateDashboard(results) {
       });
     });
     
-    // Forensic item selection
+    // Forensic item click to expand
     document.querySelectorAll('.forensic-item').forEach(item => {
-      item.addEventListener('click', () => {
-        document.querySelectorAll('.forensic-item').forEach(i => i.classList.remove('selected'));
+      item.addEventListener('click', (e) => {
+        // Don't toggle if clicking inside details
+        if (e.target.closest('.forensic-item-details')) return;
+        
+        item.classList.toggle('expanded');
+        document.querySelectorAll('.forensic-item').forEach(i => {
+          if (i !== item) i.classList.remove('selected');
+        });
         item.classList.add('selected');
       });
+    });
+    
+    // Tab navigation
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+      tab.addEventListener('click', (e) => {
+        const view = e.target.dataset.view;
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        e.target.classList.add('active');
+        document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+        document.getElementById(view + '-view').classList.add('active');
+      });
+    });
+    
+    // Export button
+    document.getElementById('export-btn').addEventListener('click', () => {
+      document.getElementById('export-modal').classList.add('show');
+    });
+    
+    // Settings button
+    document.getElementById('settings-btn').addEventListener('click', () => {
+      alert('Settings panel coming soon!\\n\\nCurrent features:\\n- Interactive timeline\\n- Real-time search\\n- Expandable forensic details\\n- Multiple export formats');
+    });
+    
+    function closeModal() {
+      document.getElementById('export-modal').classList.remove('show');
+    }
+    
+    function exportJSON() {
+      const dataStr = JSON.stringify(testData, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'fail-kit-audit-' + new Date().toISOString().split('T')[0] + '.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      closeModal();
+    }
+    
+    function exportHTML() {
+      const html = document.documentElement.outerHTML;
+      const blob = new Blob([html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'fail-kit-dashboard-' + new Date().toISOString().split('T')[0] + '.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      closeModal();
+    }
+    
+    // Close modal on outside click
+    document.getElementById('export-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'export-modal') {
+        closeModal();
+      }
     });
   </script>
 </body>
 </html>`;
-}
-
-/**
- * Get severity level for a case ID
- */
-function getSeverity(caseId) {
-  if (caseId.includes('CONTRACT_0003') || caseId.includes('CONTRACT_02') || caseId.includes('AGENT_0008')) {
-    return 'critical';
-  }
-  if (caseId.startsWith('ADV_') || caseId.startsWith('AGENT_')) {
-    return 'high';
-  }
-  if (caseId.startsWith('RAG_') || caseId.startsWith('SHIFT_')) {
-    return 'medium';
-  }
-  return 'low';
 }
 
 module.exports = {
