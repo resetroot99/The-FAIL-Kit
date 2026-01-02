@@ -41,11 +41,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/The-FAIL-Kit.git",
+    "url": "https://github.com/resetroot99/The-FAIL-Kit.git",
     "directory": "middleware/langchain/javascript"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/The-FAIL-Kit/issues"
+    "url": "https://github.com/resetroot99/The-FAIL-Kit/issues"
   },
-  "homepage": "https://github.com/yourusername/The-FAIL-Kit/tree/main/middleware/langchain"
+  "homepage": "https://github.com/resetroot99/The-FAIL-Kit/tree/main/middleware/langchain"
 }

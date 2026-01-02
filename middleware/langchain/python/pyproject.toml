@@ -43,7 +43,7 @@ langgraph = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/The-FAIL-Kit"
-Documentation = "https://github.com/yourusername/The-FAIL-Kit/tree/main/middleware/langchain"
-Repository = "https://github.com/yourusername/The-FAIL-Kit"
-Issues = "https://github.com/yourusername/The-FAIL-Kit/issues"
+Homepage = "https://github.com/resetroot99/The-FAIL-Kit"
+Documentation = "https://github.com/resetroot99/The-FAIL-Kit/tree/main/middleware/langchain"
+Repository = "https://github.com/resetroot99/The-FAIL-Kit"
+Issues = "https://github.com/resetroot99/The-FAIL-Kit/issues"
