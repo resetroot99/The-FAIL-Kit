@@ -691,6 +691,92 @@ function generateHtmlReport(results) {
       text-decoration: underline;
     }
     
+    /* Source Location Display */
+    .source-location {
+      background: rgba(99, 102, 241, 0.05);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      border-left: 3px solid #6366f1;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .source-location-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #6366f1;
+      margin-bottom: 12px;
+    }
+    
+    .source-location-header svg {
+      stroke: #6366f1;
+    }
+    
+    .source-location-content {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      line-height: 1.8;
+    }
+    
+    .source-location-content > div {
+      padding: 4px 0;
+    }
+    
+    .source-location-content strong {
+      color: var(--text-secondary);
+      font-weight: 600;
+      margin-right: 8px;
+    }
+    
+    .source-file {
+      color: var(--accent);
+    }
+    
+    .source-function {
+      color: #a78bfa;
+    }
+    
+    .source-line, .source-column {
+      color: var(--text-primary);
+    }
+    
+    .stack-trace-details {
+      margin-top: 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    
+    .stack-trace-details summary {
+      padding: 8px 12px;
+      background: var(--bg-tertiary);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      user-select: none;
+    }
+    
+    .stack-trace-details summary:hover {
+      background: var(--border);
+    }
+    
+    .stack-trace {
+      padding: 12px;
+      margin: 0;
+      background: #0d0d0d;
+      font-size: 11px;
+      line-height: 1.6;
+      color: #888;
+      overflow-x: auto;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
     /* Payload Sections (Request/Response) */
     .payload-section {
       margin-top: 16px;
@@ -960,6 +1046,29 @@ function generateHtmlReport(results) {
               </div>
               <div class="failure-details">
                 ${generateErrorExplanation(f.case, f.reason || f.error, f.expected, f.actual)}
+                
+                ${f.source_location || (f.response && f.response.source_location) ? `
+                  <div class="source-location">
+                    <div class="source-location-header">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                      </svg>
+                      Source Location
+                    </div>
+                    <div class="source-location-content">
+                      ${(() => {
+                        const loc = f.source_location || (f.response && f.response.source_location);
+                        let html = '';
+                        if (loc.file) html += `<div class="source-file"><strong>File:</strong> ${loc.file}</div>`;
+                        if (loc.function) html += `<div class="source-function"><strong>Function:</strong> ${loc.function}</div>`;
+                        if (loc.line) html += `<div class="source-line"><strong>Line:</strong> ${loc.line}</div>`;
+                        if (loc.column) html += `<div class="source-column"><strong>Column:</strong> ${loc.column}</div>`;
+                        if (loc.stack_trace) html += `<details class="stack-trace-details"><summary>Stack Trace</summary><pre class="stack-trace">${loc.stack_trace}</pre></details>`;
+                        return html;
+                      })()}
+                    </div>
+                  </div>
+                ` : ''}
                 
                 <div class="detail-section">
                   <div class="detail-label">Technical Details</div>
