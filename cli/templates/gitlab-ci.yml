@@ -7,7 +7,7 @@
 # 2. Set the AGENT_ENDPOINT variable in CI/CD settings
 # 3. Optionally customize the audit level and other options
 #
-# For more information: https://fail-kit.dev/docs/ci-integration
+# For more information: https://github.com/resetroot99/The-FAIL-Kit/blob/main/INTEGRATION.md
 
 variables:
   FAIL_AUDIT_TIMEOUT: "30000"

@@ -165,9 +165,9 @@ variables:
 
 ## Links
 
-- [Documentation](https://fail-kit.dev/docs)
-- [Failure Modes Catalog](https://fail-kit.dev/docs/failure-modes)
-- [Receipt Standard](https://fail-kit.dev/docs/receipt-standard)
+- [Documentation](https://github.com/resetroot99/The-FAIL-Kit#readme)
+- [Failure Modes Catalog](https://github.com/resetroot99/The-FAIL-Kit/blob/main/FAILURE_MODES.md)
+- [Receipt Standard](https://github.com/resetroot99/The-FAIL-Kit/tree/main/receipt-standard)
 - [GitHub](https://github.com/fail-kit/fail-kit)
 
 ---

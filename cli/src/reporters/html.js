@@ -34,14 +34,15 @@ function getSeverity(caseId) {
 function getDocLink(caseId) {
   const prefix = caseId.split('_')[0];
   const links = {
-    'CONTRACT': 'https://fail-kit.dev/docs/failure-modes#contract-violations',
-    'AGENT': 'https://fail-kit.dev/docs/failure-modes#agentic-failures',
-    'ADV': 'https://fail-kit.dev/docs/failure-modes#adversarial-attacks',
-    'RAG': 'https://fail-kit.dev/docs/failure-modes#rag-failures',
-    'SHIFT': 'https://fail-kit.dev/docs/failure-modes#distribution-shift',
-    'GROUND': 'https://fail-kit.dev/docs/failure-modes#grounding-failures'
+    'CONTRACT': 'https://github.com/resetroot99/The-FAIL-Kit/blob/main/FAILURE_MODES.md#contract-violations',
+    'AGENT': 'https://github.com/resetroot99/The-FAIL-Kit/blob/main/FAILURE_MODES.md#agentic-failures',
+    'ADV': 'https://github.com/resetroot99/The-FAIL-Kit/blob/main/FAILURE_MODES.md#adversarial-attacks',
+    'RAG': 'https://github.com/resetroot99/The-FAIL-Kit/blob/main/FAILURE_MODES.md#rag-failures',
+    'SHIFT': 'https://github.com/resetroot99/The-FAIL-Kit/blob/main/FAILURE_MODES.md#distribution-shift',
+    'GROUND': 'https://github.com/resetroot99/The-FAIL-Kit/blob/main/FAILURE_MODES.md#grounding-failures',
+    'AUTO': 'https://github.com/resetroot99/The-FAIL-Kit/blob/main/README.md'
   };
-  return links[prefix] || 'https://fail-kit.dev/docs';
+  return links[prefix] || 'https://github.com/resetroot99/The-FAIL-Kit#readme';
 }
 
 /**
