@@ -17,6 +17,8 @@ const axios = require('axios');
 const { loadConfig, writeConfig, configExists, DEFAULT_CONFIG, validateConfig } = require('./config');
 const { runDiagnostics, formatDiagnostics } = require('./diagnostics');
 const { generateReport, getExtension } = require('./reporters');
+const { scanCodebase, getScanSummary } = require('./scanner');
+const { generateTestCases, saveTestCases, getTestCaseSummary, createIndexFile } = require('./generator');
 
 const program = new Command();
 
@@ -29,7 +31,7 @@ const isCI = process.env.CI === 'true' ||
 program
   .name('fail-audit')
   .description('Forensic Audit of Intelligent Logic - CLI for auditing AI agents')
-  .version('1.1.0');
+  .version('1.2.0');
 
 // ============================================================================
 // Command: init
@@ -319,9 +321,50 @@ program
     // Load test cases
     const casesDir = path.resolve(process.cwd(), config.cases_dir);
     
+    // Smart defaults: auto-scan if no test cases exist
+    let needsScan = false;
     if (!fs.existsSync(casesDir)) {
-      console.error(ciMode ? `Cases directory not found: ${casesDir}` : chalk.red('✗ Cases directory not found:'), casesDir);
+      needsScan = true;
+    } else {
+      const existingCases = fs.readdirSync(casesDir).filter(f => f.endsWith('.yaml'));
+      if (existingCases.length === 0) {
+        needsScan = true;
+      }
+    }
+    
+    if (needsScan) {
+      log(chalk.yellow('⚠ No test cases found. Auto-scanning codebase...\n'));
+      
+      const scanResults = await scanCodebase(process.cwd());
+      const summary = getScanSummary(scanResults);
+      
+      log(chalk.green('✓'), `Scanned ${summary.files} files`);
+      log(chalk.green('✓'), `Found ${summary.endpoints} endpoints, ${summary.agentFunctions} agent functions`);
+      log(chalk.green('✓'), `Found ${summary.toolCalls} tool calls, ${summary.llmInvocations} LLM invocations\n`);
+      
+      const testCases = generateTestCases(scanResults);
+      
+      if (testCases.length === 0) {
+        console.error(ciMode 
+          ? 'No agent code detected. Cannot auto-generate test cases.' 
+          : chalk.red('✗ No agent code detected. Cannot auto-generate test cases.')
+        );
+        console.error(ciMode 
+          ? 'Create test cases manually or use: fail-audit generate --tools tools.json'
+          : chalk.dim('Create test cases manually or use: fail-audit generate --tools tools.json\n')
+        );
       process.exit(1);
+      }
+      
+      // Create cases directory and save
+      if (!fs.existsSync(casesDir)) {
+        fs.mkdirSync(casesDir, { recursive: true });
+      }
+      
+      saveTestCases(testCases, casesDir);
+      const caseSummary = getTestCaseSummary(testCases);
+      
+      log(chalk.green('✓'), `Auto-generated ${caseSummary.total} test cases\n`);
     }
     
     const caseFiles = fs.readdirSync(casesDir).filter(f => f.endsWith('.yaml'));
@@ -697,6 +740,132 @@ program
     console.log(chalk.dim('Output directory:'), outputDir);
     console.log(chalk.dim('\nTo run these cases:'));
     console.log(chalk.bold(`  fail-audit run --cases ${outputDir}\n`));
+  });
+
+// ============================================================================
+// Command: scan
+// ============================================================================
+
+program
+  .command('scan')
+  .description('Scan codebase and auto-generate test cases')
+  .option('-p, --path <dir>', 'Path to scan', '.')
+  .option('-o, --output <dir>', 'Output directory for generated cases')
+  .option('--run', 'Run audit immediately after generating cases')
+  .option('--dry-run', 'Preview what would be generated without saving')
+  .option('-v, --verbose', 'Show detailed scan results')
+  .action(async (options) => {
+    console.log(chalk.bold.cyan('\n┌─────────────────────────────────────────┐'));
+    console.log(chalk.bold.cyan('│  F.A.I.L. Kit - Codebase Scanner        │'));
+    console.log(chalk.bold.cyan('└─────────────────────────────────────────┘\n'));
+    
+    const targetPath = path.resolve(process.cwd(), options.path);
+    
+    if (!fs.existsSync(targetPath)) {
+      console.log(chalk.red('✗ Path not found:'), targetPath);
+      process.exit(1);
+    }
+    
+    console.log(chalk.dim('Scanning:'), targetPath);
+    console.log(chalk.dim('Please wait...\n'));
+    
+    // Scan the codebase
+    const scanStart = Date.now();
+    const scanResults = await scanCodebase(targetPath);
+    const summary = getScanSummary(scanResults);
+    
+    // Display scan results
+    const scanTime = Date.now() - scanStart;
+    console.log(chalk.green('✓'), chalk.bold(`Scanned ${summary.files} files`), chalk.dim(`(${scanTime}ms)`));
+    console.log(chalk.green('✓'), `Found ${chalk.bold(summary.endpoints)} API endpoints`);
+    console.log(chalk.green('✓'), `Found ${chalk.bold(summary.agentFunctions)} agent functions`);
+    console.log(chalk.green('✓'), `Found ${chalk.bold(summary.toolCalls)} tool calls`);
+    console.log(chalk.green('✓'), `Found ${chalk.bold(summary.llmInvocations)} LLM invocations`);
+    console.log('');
+    
+    // Verbose mode: show details
+    if (options.verbose) {
+      console.log(chalk.bold('Tool calls by category:'));
+      for (const [category, count] of Object.entries(summary.toolCallsByCategory)) {
+        console.log(chalk.dim(`  ${category}:`), count);
+      }
+      console.log('');
+      
+      if (scanResults.endpoints.length > 0) {
+        console.log(chalk.bold('API Endpoints:'));
+        for (const endpoint of scanResults.endpoints.slice(0, 10)) {
+          console.log(chalk.dim(`  ${endpoint.method}`), endpoint.path, chalk.dim(`(${endpoint.framework})`));
+        }
+        if (scanResults.endpoints.length > 10) {
+          console.log(chalk.dim(`  ... and ${scanResults.endpoints.length - 10} more`));
+        }
+        console.log('');
+      }
+    }
+    
+    // Generate test cases
+    console.log(chalk.bold('Generating test cases...\n'));
+    const testCases = generateTestCases(scanResults);
+    const caseSummary = getTestCaseSummary(testCases);
+    
+    console.log(chalk.green('✓'), `Generated ${chalk.bold(caseSummary.total)} test cases`);
+    
+    for (const [category, ids] of Object.entries(caseSummary.byCategory)) {
+      console.log(chalk.dim(`  - ${ids.length} ${category.replace(/_/g, ' ')} tests`));
+    }
+    console.log('');
+    
+    // Dry run: just show what would be generated
+    if (options.dryRun) {
+      console.log(chalk.yellow('Dry run mode - no files written\n'));
+      console.log(chalk.bold('Test cases that would be generated:'));
+      for (const tc of testCases) {
+        console.log(chalk.dim(`  - ${tc.id}`), chalk.dim(`(${tc.category})`));
+      }
+      console.log('');
+      return;
+    }
+    
+    // Determine output directory
+    let outputDir;
+    if (options.output) {
+      outputDir = path.resolve(process.cwd(), options.output);
+    } else {
+      // Check for config
+      const { config } = loadConfig({});
+      outputDir = config ? path.resolve(process.cwd(), config.cases_dir) : path.join(process.cwd(), 'cases');
+    }
+    
+    // Save test cases
+    const savedFiles = saveTestCases(testCases, outputDir);
+    const indexPath = createIndexFile(testCases, outputDir);
+    
+    console.log(chalk.green('✓'), `Saved test cases to:`, chalk.bold(outputDir));
+    console.log(chalk.dim(`  Index file:`), indexPath);
+    console.log('');
+    
+    // Run audit if requested
+    if (options.run) {
+      console.log(chalk.bold.cyan('┌─────────────────────────────────────────┐'));
+      console.log(chalk.bold.cyan('│  Running Audit...                       │'));
+      console.log(chalk.bold.cyan('└─────────────────────────────────────────┘\n'));
+      
+      // Execute run command programmatically
+      const { spawn } = require('child_process');
+      const child = spawn('node', [__filename, 'run'], {
+        stdio: 'inherit',
+        cwd: process.cwd()
+      });
+      
+      child.on('exit', (code) => {
+        process.exit(code);
+      });
+    } else {
+      console.log(chalk.bold('Next steps:'));
+      console.log(chalk.dim('  1.'), chalk.bold('fail-audit run'), chalk.dim('- Run the audit'));
+      console.log(chalk.dim('  2.'), chalk.bold('fail-audit run --format html'), chalk.dim('- Generate HTML report'));
+      console.log('');
+    }
   });
 
 // ============================================================================

@@ -123,15 +123,21 @@ class CodebaseScanner {
   scanForAgentFunctions(content, filePath) {
     // Look for functions with "agent", "query", "process", "generate" in the name
     const patterns = [
-      /async\s+function\s+(.*(?:agent|query|process|generate|estimate)[^(]*)\s*\(/gi,
-      /const\s+(.*(?:agent|query|process|generate|estimate)[^=]*)\s*=\s*async/gi,
-      /async\s+(.*(?:agent|query|process|generate|estimate)[^(]*)\s*\(/gi
+      /async\s+function\s+(\w+(?:agent|query|process|generate|estimate)\w*)\s*\(/gi,
+      /const\s+(\w+(?:agent|query|process|generate|estimate)\w*)\s*=\s*async/gi,
+      /function\s+(\w+(?:agent|query|process|generate|estimate)\w*)\s*\(/gi,
+      /def\s+(\w+(?:agent|query|process|generate|estimate)\w*)\s*\(/gi
     ];
 
     patterns.forEach(pattern => {
       let match;
       while ((match = pattern.exec(content)) !== null) {
         const functionName = match[1].trim();
+        // Skip if the function name is too long (likely a comment or docstring match)
+        if (functionName.length > 50) continue;
+        // Skip if it contains special characters (except underscore)
+        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(functionName)) continue;
+        
         this.results.agentFunctions.push({
           name: functionName,
           file: filePath,
@@ -209,6 +215,76 @@ class CodebaseScanner {
     console.log(`✓ Found ${this.results.llmCalls.length} LLM invocations`);
     console.log(`✓ Scanned ${this.results.files.length} files`);
   }
+
+  /**
+   * Get summary statistics
+   */
+  getSummary() {
+    // Count tool calls by category
+    const toolCallsByCategory = {};
+    for (const tc of this.results.toolCalls) {
+      toolCallsByCategory[tc.tool] = (toolCallsByCategory[tc.tool] || 0) + 1;
+    }
+
+    return {
+      files: this.results.files.length,
+      endpoints: this.results.endpoints.length,
+      agentFunctions: this.results.agentFunctions.length,
+      toolCalls: this.results.toolCalls.length,
+      toolCallsByCategory,
+      llmInvocations: this.results.llmCalls.length
+    };
+  }
+
+  /**
+   * Convert results to format expected by generator
+   */
+  toGeneratorFormat() {
+    return {
+      scannedFiles: this.results.files.length,
+      endpoints: this.results.endpoints.map(e => ({
+        framework: e.type,
+        method: e.method,
+        path: e.path || e.file,
+        file: e.file
+      })),
+      agentFunctions: this.results.agentFunctions.map(f => ({
+        name: f.name,
+        file: f.file
+      })),
+      toolCalls: this.getSummary().toolCallsByCategory,
+      llmInvocations: this.results.llmCalls.length
+    };
+  }
 }
 
-module.exports = { CodebaseScanner };
+/**
+ * Helper function to scan codebase (sync wrapper)
+ */
+async function scanCodebase(targetPath) {
+  const scanner = new CodebaseScanner({ rootPath: targetPath });
+  await scanner.scan();
+  return scanner.toGeneratorFormat();
+}
+
+/**
+ * Helper function to get scan summary
+ */
+function getScanSummary(results) {
+  const totalToolCalls = Object.values(results.toolCalls || {}).reduce((a, b) => a + b, 0);
+  
+  return {
+    files: results.scannedFiles,
+    endpoints: results.endpoints?.length || 0,
+    agentFunctions: results.agentFunctions?.length || 0,
+    toolCalls: totalToolCalls,
+    toolCallsByCategory: results.toolCalls || {},
+    llmInvocations: results.llmInvocations || 0
+  };
+}
+
+module.exports = { 
+  CodebaseScanner,
+  scanCodebase,
+  getScanSummary
+};
