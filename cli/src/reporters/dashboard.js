@@ -361,7 +361,7 @@ function generateDashboard(results) {
     * { margin: 0; padding: 0; box-sizing: border-box; }
     
     :root {
-      --bg-primary: #0a0e1a;
+      --bg-primary: #ffffff;
       --bg-secondary: #111827;
       --bg-tertiary: #1f2937;
       --border: rgba(255, 255, 255, 0.08);
@@ -386,7 +386,7 @@ function generateDashboard(results) {
     .container {
       max-width: 1400px;
       margin: 0 auto;
-      padding: 20px;
+      padding: 32px 24px;
     }
     
     /* Header */
@@ -396,7 +396,7 @@ function generateDashboard(results) {
       justify-content: space-between;
       padding: 16px 0;
       border-bottom: 1px solid var(--border);
-      margin-bottom: 20px;
+      margin-bottom: 24px;
     }
     
     .brand {
@@ -448,14 +448,15 @@ function generateDashboard(results) {
     
     /* Status Bar */
     .status-bar {
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 16px 20px;
       background: var(--bg-secondary);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      margin-bottom: 12px;
+      border-radius: 12px;
+      margin-bottom: 16px;
     }
     
     .status-left {
@@ -511,11 +512,12 @@ function generateDashboard(results) {
     
     /* Ship Decision Block */
     .ship-decision {
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
       background: var(--bg-secondary);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 12px;
       padding: 16px 20px;
-      margin-bottom: 12px;
+      margin-bottom: 16px;
     }
     
     .decision-header {
@@ -579,8 +581,8 @@ function generateDashboard(results) {
     .root-causes {
       background: var(--bg-secondary);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      margin-bottom: 20px;
+      border-radius: 12px;
+      margin-bottom: 24px;
     }
     
     .root-causes summary {
@@ -604,7 +606,7 @@ function generateDashboard(results) {
     }
     
     .root-cause-item {
-      margin-bottom: 12px;
+      margin-bottom: 16px;
       padding: 10px;
       background: rgba(255, 255, 255, 0.02);
       border-radius: 4px;
@@ -636,11 +638,12 @@ function generateDashboard(results) {
     
     /* Card */
     .card {
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
       background: var(--bg-secondary);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 12px;
       overflow: hidden;
-      margin-bottom: 20px;
+      margin-bottom: 24px;
     }
     
     .card-header {
@@ -668,13 +671,13 @@ function generateDashboard(results) {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 12px;
-      margin-bottom: 20px;
+      margin-bottom: 24px;
     }
     
     .metric {
       background: var(--bg-secondary);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 12px;
       padding: 14px;
       text-align: center;
       cursor: pointer;
@@ -1111,7 +1114,7 @@ function generateDashboard(results) {
       color: var(--text-secondary);
       background: var(--bg-secondary);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 12px;
       user-select: none;
     }
     
