@@ -362,14 +362,14 @@ function generateDashboard(results) {
     
     :root {
       --bg-primary: #ffffff;
-      --bg-secondary: #111827;
-      --bg-tertiary: #1f2937;
-      --border: rgba(255, 255, 255, 0.08);
-      --text-primary: #f9fafb;
-      --text-secondary: #9ca3af;
-      --text-muted: #6b7280;
-      --accent: #22d3ee;
-      --success: #10b981;
+      --bg-secondary: #fafafa;
+      --bg-tertiary: #f5f5f5;
+      --border: rgba(0, 0, 0, 0.1);
+      --text-primary: #171717;
+      --text-secondary: #525252;
+      --text-muted: #a3a3a3;
+      --accent: #3b82f6;
+      --success: #22c55e;
       --danger: #ef4444;
       --warning: #f59e0b;
       --info: #3b82f6;
@@ -386,7 +386,7 @@ function generateDashboard(results) {
     .container {
       max-width: 1400px;
       margin: 0 auto;
-      padding: 32px 24px;
+      padding: 20px;
     }
     
     /* Header */
@@ -448,14 +448,13 @@ function generateDashboard(results) {
     
     /* Status Bar */
     .status-bar {
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 16px 20px;
       background: var(--bg-secondary);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 6px;
       margin-bottom: 16px;
     }
     
@@ -512,10 +511,9 @@ function generateDashboard(results) {
     
     /* Ship Decision Block */
     .ship-decision {
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
       background: var(--bg-secondary);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 6px;
       padding: 16px 20px;
       margin-bottom: 16px;
     }
@@ -581,7 +579,7 @@ function generateDashboard(results) {
     .root-causes {
       background: var(--bg-secondary);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 6px;
       margin-bottom: 24px;
     }
     
@@ -638,10 +636,9 @@ function generateDashboard(results) {
     
     /* Card */
     .card {
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
       background: var(--bg-secondary);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 6px;
       overflow: hidden;
       margin-bottom: 24px;
     }
@@ -677,7 +674,7 @@ function generateDashboard(results) {
     .metric {
       background: var(--bg-secondary);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 6px;
       padding: 14px;
       text-align: center;
       cursor: pointer;
@@ -1114,7 +1111,7 @@ function generateDashboard(results) {
       color: var(--text-secondary);
       background: var(--bg-secondary);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 6px;
       user-select: none;
     }
     
