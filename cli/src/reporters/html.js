@@ -9,14 +9,14 @@ const { generateErrorExplanation } = require('../error-explainer');
  * Category metadata for display
  */
 const CATEGORY_META = {
-  CONTRACT: { icon: '📋', name: 'Contract', color: '#6366f1' },
-  AGENT: { icon: '🤖', name: 'Agent', color: '#f97316' },
-  ADV: { icon: '⚔️', name: 'Adversarial', color: '#ef4444' },
-  RAG: { icon: '📚', name: 'RAG', color: '#8b5cf6' },
-  SHIFT: { icon: '🔄', name: 'Distribution Shift', color: '#14b8a6' },
-  GROUND: { icon: '🎯', name: 'Grounding', color: '#3b82f6' },
-  AUTO: { icon: '⚡', name: 'Auto-Generated', color: '#10b981' },
-  CUSTOM: { icon: '🔧', name: 'Custom', color: '#f59e0b' }
+  CONTRACT: { icon: 'C', name: 'Contract', color: '#6366f1' },
+  AGENT: { icon: 'A', name: 'Agent', color: '#f97316' },
+  ADV: { icon: 'X', name: 'Adversarial', color: '#ef4444' },
+  RAG: { icon: 'R', name: 'RAG', color: '#8b5cf6' },
+  SHIFT: { icon: 'S', name: 'Distribution Shift', color: '#14b8a6' },
+  GROUND: { icon: 'G', name: 'Grounding', color: '#3b82f6' },
+  AUTO: { icon: 'Z', name: 'Auto-Generated', color: '#10b981' },
+  CUSTOM: { icon: 'U', name: 'Custom', color: '#f59e0b' }
 };
 
 /**
@@ -430,8 +430,15 @@ function generateHtmlReport(results) {
     }
     
     .category-icon {
-      font-size: 28px;
-      margin-bottom: 8px;
+      font-size: 18px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      width: 32px;
+      height: 32px;
+      line-height: 32px;
+      border-radius: 8px;
+      background: var(--bg-tertiary);
+      margin: 0 auto 8px;
     }
     
     .category-name {
@@ -912,7 +919,7 @@ function generateHtmlReport(results) {
     
     <div class="categories-grid">
       ${Object.entries(categories).map(([name, data]) => {
-        const meta = CATEGORY_META[name] || { icon: '📦', name: name, color: '#666' };
+        const meta = CATEGORY_META[name] || { icon: '?', name: name, color: '#666' };
         const total = data.passed + data.failed;
         const passRate = total > 0 ? Math.round((data.passed / total) * 100) : 0;
         const rateClass = passRate >= 80 ? 'pass-rate-high' : passRate >= 50 ? 'pass-rate-mid' : 'pass-rate-low';
@@ -975,7 +982,7 @@ function generateHtmlReport(results) {
                 
                 ${f.request ? `
                   <details class="payload-section">
-                    <summary>📤 Request Payload</summary>
+                    <summary>Request Payload</summary>
                     <div class="payload-content">
                       <pre>${syntaxHighlightJson(f.request)}</pre>
                     </div>
@@ -984,7 +991,7 @@ function generateHtmlReport(results) {
                 
                 ${f.response ? `
                   <details class="payload-section">
-                    <summary>📥 Response Payload</summary>
+                    <summary>Response Payload</summary>
                     <div class="payload-content">
                       <pre>${syntaxHighlightJson(f.response)}</pre>
                     </div>
