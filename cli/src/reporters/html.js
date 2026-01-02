@@ -3,6 +3,8 @@
  * Creates beautiful, shareable HTML reports with charts and detailed failure analysis.
  */
 
+const { generateErrorExplanation } = require('../error-explainer');
+
 /**
  * Severity classification for test cases
  */
@@ -505,6 +507,67 @@ function generateHtmlReport(results) {
       color: var(--text-primary);
     }
     
+    /* Error Explanation */
+    .error-explanation {
+      background: var(--bg-tertiary);
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 20px;
+    }
+    
+    .explanation-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--danger);
+      margin-bottom: 16px;
+    }
+    
+    .explanation-section {
+      margin-bottom: 16px;
+    }
+    
+    .explanation-section:last-child {
+      margin-bottom: 0;
+    }
+    
+    .explanation-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+    
+    .explanation-text {
+      font-size: 14px;
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+    
+    .explanation-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .explanation-list li {
+      font-size: 14px;
+      color: var(--text-primary);
+      line-height: 1.6;
+      padding-left: 20px;
+      position: relative;
+      margin-bottom: 8px;
+    }
+    
+    .explanation-list li:before {
+      content: "→";
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+      font-weight: 600;
+    }
+    
     .doc-link {
       display: inline-flex;
       align-items: center;
@@ -654,8 +717,10 @@ function generateHtmlReport(results) {
                 </div>
               </div>
               <div class="failure-details">
+                ${generateErrorExplanation(f.case, f.reason || f.error, f.expected, f.actual)}
+                
                 <div class="detail-section">
-                  <div class="detail-label">Failure Reason</div>
+                  <div class="detail-label">Technical Details</div>
                   <div class="detail-content">${f.reason || f.error || 'Unknown failure'}</div>
                 </div>
                 
