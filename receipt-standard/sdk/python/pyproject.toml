@@ -4,7 +4,7 @@ build-backend = "setuptools.build_backend"
 
 [project]
 name = "fail-kit-receipt-standard"
-version = "1.0.0"
+version = "1.5.1"
 description = "Receipt Standard SDK for validating and generating AI agent action receipts"
 readme = "README.md"
 authors = [{name = "Ali Jakvan", email = "ali@jakvan.io"}]
