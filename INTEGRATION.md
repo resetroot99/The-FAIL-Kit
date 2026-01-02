@@ -40,7 +40,61 @@ Add this endpoint to your agent, point the F.A.I.L. Kit at it, and run the audit
 
 ## LangChain
 
-### Python (LangChain + FastAPI)
+**✨ NEW: Drop-in LangChain adapter available!**
+
+The F.A.I.L. Kit now includes dedicated adapters for LangChain (Python) and LangChain.js (JavaScript/TypeScript) that automatically generate receipts from tool executions.
+
+### Quick Start with Adapter
+
+**Python:**
+```python
+from fastapi import FastAPI
+from fail_kit_langchain import create_fail_kit_endpoint, ReceiptGeneratingTool
+
+app = FastAPI()
+
+class EmailTool(ReceiptGeneratingTool):
+    name = "email_sender"
+    description = "Send an email"
+    
+    def _execute(self, to: str, subject: str):
+        send_email(to, subject)
+        return {"status": "sent"}
+
+agent_executor = AgentExecutor(agent=agent, tools=[EmailTool()])
+app.include_router(create_fail_kit_endpoint(agent_executor), prefix="/eval")
+```
+
+**JavaScript:**
+```typescript
+import { createFailKitRouter, ReceiptGeneratingTool } from '@fail-kit/langchain-adapter';
+
+class EmailTool extends ReceiptGeneratingTool {
+  name = 'email_sender';
+  async _execute(input) {
+    await sendEmail(input.to, input.subject);
+    return { status: 'sent' };
+  }
+}
+
+app.use('/eval', createFailKitRouter(agentExecutor));
+```
+
+**📚 See [LangChain Integration Guide](docs/LANGCHAIN_INTEGRATION.md) for complete documentation.**
+
+**📦 Adapter locations:**
+- Python: `middleware/langchain/python/`
+- JavaScript: `middleware/langchain/javascript/`
+
+**🎯 Examples:**
+- [Python Example](examples/langchain-python/)
+- [JavaScript Example](examples/langchain-javascript/)
+
+### Manual Integration (Without Adapter)
+
+If you prefer not to use the adapter, you can manually implement the endpoint:
+
+**Python (LangChain + FastAPI):**
 
 ```python
 from fastapi import FastAPI
@@ -87,7 +141,7 @@ async def evaluate(request: dict):
     }
 ```
 
-### JavaScript (LangChain.js + Express)
+**JavaScript (LangChain.js + Express):**
 
 ```javascript
 const express = require('express');

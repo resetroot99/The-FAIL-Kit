@@ -1,0 +1,51 @@
+{
+  "name": "@fail-kit/langchain-adapter",
+  "version": "1.0.0",
+  "description": "F.A.I.L. Kit adapter for LangChain.js agents",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "ai",
+    "agents",
+    "langchain",
+    "auditing",
+    "testing",
+    "receipts",
+    "fail-kit"
+  ],
+  "author": "The FAIL Kit Contributors",
+  "license": "SEE LICENSE IN ../../../LICENSE.txt",
+  "peerDependencies": {
+    "express": "^4.18.0",
+    "langchain": ">=0.1.0",
+    "@langchain/core": ">=0.1.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/jest": "^29.5.11",
+    "@types/node": "^20.10.6",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {},
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/The-FAIL-Kit.git",
+    "directory": "middleware/langchain/javascript"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/The-FAIL-Kit/issues"
+  },
+  "homepage": "https://github.com/yourusername/The-FAIL-Kit/tree/main/middleware/langchain"
+}

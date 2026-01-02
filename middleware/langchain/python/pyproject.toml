@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fail-kit-langchain"
+version = "1.0.0"
+description = "F.A.I.L. Kit adapter for LangChain agents (Python)"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {file = "../../../LICENSE.txt"}
+authors = [
+    {name = "The FAIL Kit Contributors"}
+]
+keywords = ["ai", "agents", "langchain", "auditing", "testing", "receipts"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12"
+]
+
+dependencies = [
+    "fastapi>=0.100.0",
+    "langchain>=0.1.0",
+    "langchain-core>=0.1.0",
+    "pydantic>=2.0.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "httpx>=0.24.0",
+    "langchain-openai>=0.0.5"
+]
+
+langgraph = [
+    "langgraph>=0.0.20"
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/The-FAIL-Kit"
+Documentation = "https://github.com/yourusername/The-FAIL-Kit/tree/main/middleware/langchain"
+Repository = "https://github.com/yourusername/The-FAIL-Kit"
+Issues = "https://github.com/yourusername/The-FAIL-Kit/issues"

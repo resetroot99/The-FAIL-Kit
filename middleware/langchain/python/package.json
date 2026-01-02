@@ -1,0 +1,18 @@
+{
+  "name": "@fail-kit/langchain-python",
+  "version": "1.0.0",
+  "description": "F.A.I.L. Kit adapter for LangChain (Python)",
+  "license": "SEE LICENSE IN ../../LICENSE.txt",
+  "requires-python": ">=3.9",
+  "dependencies": [
+    "fastapi>=0.100.0",
+    "langchain>=0.1.0",
+    "langchain-core>=0.1.0",
+    "pydantic>=2.0.0"
+  ],
+  "dev-dependencies": [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "httpx>=0.24.0"
+  ]
+}
