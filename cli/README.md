@@ -26,8 +26,8 @@ fail-audit init
 # Auto-generate test cases from your codebase
 fail-audit scan
 
-# Run the audit
-fail-audit run --format html
+# Run the audit with interactive dashboard
+fail-audit run --format dashboard
 ```
 
 **Zero manual test writing required.** The `scan` command automatically analyzes your codebase and generates test cases.
@@ -101,9 +101,10 @@ fail-audit run --ci                # CI mode (no colors)
 Generate reports from audit results.
 
 ```bash
-fail-audit report results.json                    # Generate HTML report
-fail-audit report results.json --format markdown  # Generate Markdown
-fail-audit report results.json --format junit     # Generate JUnit XML
+fail-audit report results.json                      # Generate HTML report  
+fail-audit report results.json --format dashboard   # Generate interactive dashboard
+fail-audit report results.json --format markdown    # Generate Markdown
+fail-audit report results.json --format junit       # Generate JUnit XML
 fail-audit report results.json --output report.html
 ```
 
@@ -155,6 +156,31 @@ Override config values with environment variables:
 | `FAIL_AUDIT_OUTPUT_DIR` | `output_dir` | Results output directory |
 
 ## CI/CD Integration
+
+### Report Formats
+
+F.A.I.L. Kit supports multiple output formats:
+
+| Format | Description | Best For |
+|--------|-------------|----------|
+| `dashboard` | Interactive enterprise UI with timeline, metrics, and forensic log | Development, demos, stakeholder presentations |
+| `html` | Detailed HTML report with error explanations and source locations | Development, debugging, documentation |
+| `json` | Raw results data | Programmatic analysis, custom tooling |
+| `junit` | JUnit XML format | CI/CD integration, test runners |
+| `markdown` | Markdown report | GitHub/GitLab comments, documentation |
+
+**Examples:**
+
+```bash
+# Interactive dashboard (recommended for development)
+fail-audit run --format dashboard
+
+# Detailed HTML report with debugging info
+fail-audit run --format html
+
+# CI/CD with JUnit XML
+fail-audit run --format junit --ci
+```
 
 ### GitHub Actions
 

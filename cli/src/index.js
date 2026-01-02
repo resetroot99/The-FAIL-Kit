@@ -31,7 +31,7 @@ const isCI = process.env.CI === 'true' ||
 program
   .name('fail-audit')
   .description('Forensic Audit of Intelligent Logic - CLI for auditing AI agents')
-  .version('1.3.0');
+  .version('1.4.0');
 
 // ============================================================================
 // Command: init
@@ -321,7 +321,7 @@ program
   .option('-e, --endpoint <url>', 'Override the endpoint URL')
   .option('-l, --level <level>', 'Run specific level: smoke, interrogation, or red-team')
   .option('-c, --case <id>', 'Run a specific test case by ID')
-  .option('-f, --format <format>', 'Output format: json, html, junit, markdown', 'json')
+  .option('-f, --format <format>', 'Output format: json, html, dashboard, junit, markdown', 'json')
   .option('-o, --output <file>', 'Output file path (auto-generated if not specified)')
   .option('--ci', 'CI mode: no colors, machine-readable output')
   .option('--quiet', 'Suppress progress output, only show summary')
@@ -899,7 +899,7 @@ program
     } else {
       console.log(chalk.bold('Next steps:'));
       console.log(chalk.dim('  1.'), chalk.bold('fail-audit run'), chalk.dim('- Run the audit'));
-      console.log(chalk.dim('  2.'), chalk.bold('fail-audit run --format html'), chalk.dim('- Generate HTML report'));
+      console.log(chalk.dim('  2.'), chalk.bold('fail-audit run --format dashboard'), chalk.dim('- Generate interactive dashboard'));
       console.log('');
     }
   });
