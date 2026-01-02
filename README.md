@@ -6,7 +6,7 @@
 
 ![The Interrogation](assets/fail_kit_interrogation.png)
 
-**Version 1.0** | [Quick Start](#quick-start) | [Installation](#installation) | [Documentation](#documentation) | [Support](#support)
+**Version 1.5.1** | [Quick Start](#quick-start) | [Installation](#installation) | [Documentation](#documentation) | [Support](#support)
 
 > **"Because your agent is a fluent liar and it's time for an interrogation."**
 

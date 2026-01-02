@@ -1,12 +1,30 @@
 {
-  "name": "middleware",
-  "version": "1.0.0",
-  "main": "index.js",
+  "name": "@fail-kit/middleware",
+  "version": "1.5.1",
+  "description": "F.A.I.L. Kit middleware packages for Express, Next.js, and FastAPI",
+  "private": true,
+  "workspaces": [
+    "express",
+    "nextjs",
+    "fastapi"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Run tests in individual middleware packages\" && exit 0"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": ""
+  "keywords": [
+    "fail-kit",
+    "middleware",
+    "express",
+    "nextjs",
+    "fastapi",
+    "ai-agent",
+    "audit"
+  ],
+  "author": "Ali Jakvani <ali@jakvan.io>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/resetroot99/The-FAIL-Kit.git",
+    "directory": "middleware"
+  }
 }

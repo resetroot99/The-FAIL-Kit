@@ -2,7 +2,7 @@ THE F.A.I.L. KIT LICENSE
 Forensic Audit of Intelligent Logic
 Version 1.0 - December 31, 2025
 
-Copyright (c) 2025 [Your Name/Company]
+Copyright (c) 2025 Ali Jakvani
 
 This is a commercial license for The F.A.I.L. Kit (Forensic Audit of Intelligent Logic).
 
@@ -35,7 +35,7 @@ ADVISORY SERVICES
 
 If you wish to use this Kit to audit systems you do not own or operate (e.g.,
 client systems, partner systems), you must engage the Licensor for advisory
-services. Contact [your-email] for pricing.
+services. Contact ali@jakvan.io for pricing.
 
 Available tiers:
 - The Guided Audit ($4,500) - We run the audit and present findings
@@ -68,7 +68,7 @@ your possession.
 GOVERNING LAW
 
 This license shall be governed by and construed in accordance with the laws of
-[Your Jurisdiction], without regard to its conflict of law provisions.
+California, United States, without regard to its conflict of law provisions.
 
 ENTIRE AGREEMENT
 
@@ -79,7 +79,7 @@ regarding such subject matter.
 CONTACT
 
 For questions about this license, advisory services, or to report violations:
-[your-email]
+ali@jakvan.io
 
 ---
 

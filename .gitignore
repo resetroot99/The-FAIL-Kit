@@ -1,5 +1,46 @@
+# Dependencies
 node_modules/
+
+# Logs
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+
+# Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
+
+# Build Artifacts
+dist/
+build/
+*.tgz
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Test Coverage
+coverage/
+.nyc_output/
+
+# Audit Results (examples should be in examples/)
+audit-results/
+
 # Internal Development Docs
 STATUS_COMPLETE.md
 IMPLEMENTATION_COMPLETE.md
