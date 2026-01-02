@@ -89,8 +89,9 @@ fail-audit run --level smoke       # Run smoke tests only
 fail-audit run --level interrogation   # Run behavioral tests
 fail-audit run --level red-team    # Run adversarial tests
 fail-audit run --case CONTRACT_0001    # Run specific test
-fail-audit run --format html       # Output as HTML
-fail-audit run --format junit      # Output as JUnit XML
+fail-audit run --format dashboard  # Decision-grade interactive report (NEW)
+fail-audit run --format html       # Detailed HTML report
+fail-audit run --format junit      # JUnit XML for CI/CD
 fail-audit run --ci                # CI mode (no colors)
 ```
 
@@ -163,11 +164,23 @@ F.A.I.L. Kit supports multiple output formats:
 
 | Format | Description | Best For |
 |--------|-------------|----------|
-| `dashboard` | Interactive enterprise UI with timeline, metrics, and forensic log | Development, demos, stakeholder presentations |
+| `dashboard` | **NEW v1.5.0:** Decision-grade interactive report with ship decision, failure buckets, root causes, provenance, and keyboard navigation | Development, fixing failures, stakeholder decisions |
 | `html` | Detailed HTML report with error explanations and source locations | Development, debugging, documentation |
 | `json` | Raw results data | Programmatic analysis, custom tooling |
 | `junit` | JUnit XML format | CI/CD integration, test runners |
 | `markdown` | Markdown report | GitHub/GitLab comments, documentation |
+
+**Dashboard Report Features (v1.5.0):**
+- Ship Decision Block (BLOCK/NEEDS REVIEW/SHIP) with reason and next action
+- Failure Buckets (receipt/evidence/policy/tool/validation) for 5-second triage
+- Top 3 Root Causes auto-generated from failure patterns
+- Interactive timeline with hover tooltips and failure clustering
+- Enhanced forensic details: assertion, diff, fix hint, doc link
+- Run context & provenance (git hash, versions, receipt verification)
+- Keyboard navigation (j/k), copy buttons, VSCode deep links
+- Deterministic severity: Critical blocks ship, High needs review, Medium acceptable, Low deferrable
+
+See [Severity Guide](../docs/SEVERITY_GUIDE.md) for detailed severity explanations.
 
 **Examples:**
 
