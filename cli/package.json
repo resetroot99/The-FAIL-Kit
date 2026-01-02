@@ -1,6 +1,6 @@
 {
   "name": "@fail-kit/cli",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "Forensic Audit of Intelligent Logic - CLI for auditing AI agents",
   "main": "src/index.js",
   "bin": {
