@@ -20,13 +20,12 @@
 - [Quick Start](#quick-start)
 - [Installation](#installation)
 - [The Three Audit Levels](#the-three-audit-levels)
-- [You Should Buy This If](#you-should-buy-this-if)
+- [You Should Use This If](#you-should-use-this-if)
 - [The Receipt Standard](#the-receipt-standard)
 - [Failure Modes](#failure-modes)
 - [Enforcement & Gates](#enforcement--gates)
 - [Documentation](#documentation)
 - [Integration Examples](#integration-examples)
-- [Advisory Services](#advisory-services)
 - [About & Open Standard](#about)
 - [License & Support](#license--support)
 
@@ -394,7 +393,7 @@ See [cases/INDEX.md](cases/INDEX.md) for complete test case catalog.
 
 ---
 
-## You Should Buy This If
+## You Should Use This If
 
 You've had a postmortem where logs couldn't prove what happened.
 
@@ -416,7 +415,6 @@ You're building a chatbot that only answers questions (no actions, no tools).
 
 You're looking for model benchmarks or generic red-teaming.
 
-You want someone else to do the work (that's the Guided Audit tier).
 
 Your AI has no ability to take actions in external systems.
 
@@ -647,91 +645,6 @@ See [INTEGRATION.md](INTEGRATION.md) for complete examples in all frameworks.
 
 ---
 
-## Advisory Services
-
-### The Core Kit - $990
-
-**What you get in 60 minutes:**
-
-Run 50-case audit against your agent system.
-
-Generate executive report with critical failures and deployment recommendation.
-
-Identify which failures block deployment vs monitor.
-
-Get enforcement code for your stack (Express, FastAPI, Next.js).
-
-**What happens after purchase:**
-
-Instant download link to private GitHub release.
-
-License key for version updates.
-
-30-day email support for integration questions.
-
-Lifetime access to v1.x updates and bug fixes.
-
----
-
-### The Guided Audit - $4,500
-
-**What you get:**
-
-We run the audit for you (you provide API endpoint).
-
-2-hour presentation of findings with remediation plan.
-
-Custom test case recommendations for your domain.
-
-Priority email support for 90 days.
-
-**Timeline:** 1 week from kickoff to presentation.
-
----
-
-### The Enterprise Gate - $15,000/year
-
-**What you get:**
-
-Custom test development for your specific tools and workflows.
-
-Quarterly audit reviews with trend analysis.
-
-Policy pack development for your compliance requirements.
-
-Dedicated Slack channel for support.
-
-Incident-to-regression-test conversion service.
-
-**Best for:** Organizations with multiple AI systems or regulated environments.
-
----
-
-**Contact:** [ali@jakvan.io](mailto:ali@jakvan.io)
-
-[↑ Back to top](#table-of-contents)
-
----
-
-## License & Support
-
-### License
-
-**Commercial - Internal Use Only**
-
-You may:
-- Use it to audit your own AI systems
-- Share results within your organization
-- Implement the provided code in production
-
-You may NOT:
-- Redistribute the kit to third parties
-- Resell or repackage the kit
-
-See [LICENSE.txt](LICENSE.txt) for full terms.
-
-### Support
-
 **Documentation:** All files are self-contained. Start with [QUICKSTART.md](QUICKSTART.md).
 
 **Questions:** [ali@jakvan.io](mailto:ali@jakvan.io)
@@ -762,7 +675,7 @@ The **Receipt Standard** (receipt-standard/) is open-sourced under MIT to enable
 - TypeScript and Python validation libraries
 - Framework integration examples
 
-While the receipt standard is open, the F.A.I.L. Kit test cases, enforcement gates, and policy packs remain commercially licensed.
+The F.A.I.L. Kit test cases, enforcement gates, and policy packs are available under the MIT license.
 
 ---
 
@@ -787,7 +700,6 @@ See [AUDIT_RUNBOOK.md](AUDIT_RUNBOOK.md) for guidance on interpreting results.
 
 - Read the docs - Everything you need is included
 - Ask questions - [ali@jakvan.io](mailto:ali@jakvan.io)
-- Advisory services - We can run the audit for you
 
 [↑ Back to top](#table-of-contents)
 
@@ -824,7 +736,6 @@ See [AUDIT_RUNBOOK.md](AUDIT_RUNBOOK.md) for guidance on interpreting results.
 - Installation - Setup instructions
 - Documentation - All guides and references
 - Integration Examples - Framework code
-- Advisory Services - Get help
 - License - Terms and support
 
 ---
