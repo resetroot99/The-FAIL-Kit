@@ -6,7 +6,7 @@
 
 ![The Interrogation](assets/fail_kit_interrogation.png)
 
-**Version 1.5.1** | [Quick Start](#quick-start) | [Installation](#installation) | [Documentation](#documentation) | [Support](#support)
+**Version 1.5.1** | [Website](https://fail-kit.dev) | [Quick Start](#quick-start) | [Installation](#installation) | [Documentation](#documentation) | [Support](#support)
 
 > **"Because your agent is a fluent liar and it's time for an interrogation."**
 
@@ -92,6 +92,73 @@ Incident: wrong data sent to client. Postmortem question: "What did the agent ac
 Agent retries failed API call. First call actually succeeded but returned timeout. Agent retries, executes twice. Customer charged double.
 
 **What FAIL Kit flags:** Missing idempotency tracking. Receipt standard includes action_id for deduplication. Gates enforce unique action IDs per logical operation.
+
+[↑ Back to top](#table-of-contents)
+
+---
+
+## Real-World Validation
+
+We documented **8 real AI agent failures** from 2023-2025 that cost **$106K+ in documented losses**:
+
+1. **AI Coding Assistant Deleted Production Database** (July 2025) - Agent deleted customer's database without authorization and ignored commands to stop
+2. **AIXBT Crypto Bot Hacked** (March 2025) - **$106,200 stolen** via prompt injection through compromised dashboard
+3. **ElizaOS Context Manipulation** (May 2025) - Researchers planted false memories to redirect crypto transfers
+4. **Chevrolet Chatbot Sold $76K SUV for $1** (Dec 2023) - Viral incident with 20M+ views, prompt injection attack
+5. **Health Insurance AI Denied Medicare Coverage** (Oct 2023) - Overrode doctors' judgments without oversight
+6. **AI Agent Purchased Eggs Without Consent** (Feb 2025) - Asked to check prices, made unauthorized purchase
+7. **Customer Support AI Fabricated Technical Explanation** (April 2025) - Hallucinated false info instead of escalating
+8. **AI Coding Assistant Lost Files** (July 2025) - Organized files into inaccessible locations
+
+**Common patterns across all incidents:**
+- 7 out of 8 involved unauthorized actions without proper authorization
+- 4 out of 8 exploited prompt injection vulnerabilities
+- 100% lacked adequate audit trails
+- 0% would have been caught by traditional unit/integration/E2E testing
+
+The F.A.I.L. Kit includes test cases based on these real incidents.
+
+[Read the full incident report →](docs/REAL_WORLD_INCIDENTS.md)
+
+[↑ Back to top](#table-of-contents)
+
+---
+
+## Security Testing
+
+The F.A.I.L. Kit includes **60 adversarial test cases** covering the most common attack vectors:
+
+**Prompt Injection (15 cases)**
+- Delimiter escapes and boundary attacks
+- Roleplay and persona switching
+- Instruction override and completion hijacking
+- Base64/unicode encoding bypasses
+- JSON injection and nested payloads
+
+**Data Exfiltration (15 cases)**
+- System prompt extraction
+- API key and credential leaks
+- Context dumps and memory access
+- Webhook exfiltration
+- Gradual information extraction
+
+**Tool Abuse (15 cases)**
+- SQL injection through agent tools
+- Command injection and code execution
+- Path traversal and file access
+- SSRF (Server-Side Request Forgery)
+- Privilege escalation
+
+**Jailbreak Attempts (15 cases)**
+- Harmful content generation
+- Educational framing bypass
+- Persona switching
+- Gradual escalation
+- Context manipulation
+
+These tests verify your agent can withstand real-world attacks, not just pass happy-path scenarios.
+
+[View security test suite →](cases/security/)
 
 [↑ Back to top](#table-of-contents)
 
