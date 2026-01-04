@@ -14,6 +14,7 @@ export * from './receiptValidator';
 export * from './cfgBuilder';
 export * from './dataFlowAnalyzer';
 export * from './scopeAnalyzer';
+export * from './cfgAnalyzer';
 
 import {
   analyzeDocument,

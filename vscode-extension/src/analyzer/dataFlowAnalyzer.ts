@@ -493,3 +493,217 @@ export function doesReceiptUseToolResult(
   const uses = dataFlow.allUses.get(toolDef.name) || [];
   return uses.some(use => use.line === receiptLine);
 }
+
+/**
+ * Variable state for tracking initialization
+ */
+export interface VariableState {
+  name: string;
+  initialized: boolean;
+  possiblyUninitialized: boolean;
+  definitionLine?: number;
+}
+
+/**
+ * Definition-use chain entry
+ */
+export interface DefinitionUseChain {
+  definition: VarDef;
+  uses: VarUse[];
+  isComplete: boolean;
+}
+
+/**
+ * Uninitialized variable use info
+ */
+export interface UninitializedUse {
+  variableName: string;
+  line: number;
+  column: number;
+  message: string;
+}
+
+/**
+ * Class-based Data Flow Analyzer for CFG integration
+ */
+export class DataFlowAnalyzer {
+  private sourceFile: ts.SourceFile;
+  private checker: ts.TypeChecker;
+  private cfg: CFG;
+  private dataFlowResult: DataFlowResult | null = null;
+
+  constructor(sourceFile: ts.SourceFile, checker: ts.TypeChecker, cfg: CFG) {
+    this.sourceFile = sourceFile;
+    this.checker = checker;
+    this.cfg = cfg;
+  }
+
+  /**
+   * Run data flow analysis
+   */
+  analyze(): DataFlowResult {
+    if (!this.dataFlowResult) {
+      this.dataFlowResult = analyzeDataFlow(this.cfg);
+    }
+    return this.dataFlowResult;
+  }
+
+  /**
+   * Find variables that may be used before initialization
+   */
+  findUninitializedVariableUses(): UninitializedUse[] {
+    const result = this.analyze();
+    const uninitializedUses: UninitializedUse[] = [];
+
+    // For each variable use, check if there's a reaching definition
+    for (const [nodeId, nodeFacts] of result.facts) {
+      for (const [varName, uses] of nodeFacts.uses) {
+        for (const use of uses) {
+          // Check reaching definitions for this use
+          const reachingDefs = nodeFacts.reachingDefs.get(varName);
+          
+          // If no reaching definitions, the variable may be uninitialized
+          if (!reachingDefs || reachingDefs.size === 0) {
+            // Check if it's a global or parameter (those are okay)
+            if (!this.isGlobalOrParameter(varName)) {
+              uninitializedUses.push({
+                variableName: varName,
+                line: use.line,
+                column: use.column,
+                message: `Variable '${varName}' may be used before initialization`,
+              });
+            }
+          }
+
+          // Check for possibly uninitialized (some paths don't initialize)
+          if (reachingDefs && reachingDefs.size > 0) {
+            const hasPossiblyUninitPath = this.hasPossiblyUninitializedPath(nodeId, varName);
+            if (hasPossiblyUninitPath) {
+              uninitializedUses.push({
+                variableName: varName,
+                line: use.line,
+                column: use.column,
+                message: `Variable '${varName}' may be uninitialized on some execution paths`,
+              });
+            }
+          }
+        }
+      }
+    }
+
+    return uninitializedUses;
+  }
+
+  /**
+   * Check if a variable is a global or function parameter
+   */
+  private isGlobalOrParameter(varName: string): boolean {
+    // Check common globals
+    const commonGlobals = ['console', 'process', 'require', 'module', 'exports', 
+                           'window', 'document', 'global', 'Buffer', 'Promise',
+                           'Array', 'Object', 'String', 'Number', 'Boolean',
+                           'JSON', 'Math', 'Date', 'RegExp', 'Error', 'Map', 'Set'];
+    if (commonGlobals.includes(varName)) return true;
+
+    // Check if it's a parameter (would need to check function signature)
+    const result = this.analyze();
+    const allDefs = result.allDefinitions.get(varName) || [];
+    return allDefs.some(def => def.type === 'parameter' || def.type === 'import');
+  }
+
+  /**
+   * Check if there's a path where the variable might not be initialized
+   */
+  private hasPossiblyUninitializedPath(targetNodeId: string, varName: string): boolean {
+    // Check if all paths from entry to this node have a definition
+    const visited = new Set<string>();
+    const queue: string[] = [this.cfg.entry.id];
+    let hasUninitPath = false;
+
+    // BFS to find paths to target
+    while (queue.length > 0) {
+      const nodeId = queue.shift()!;
+      if (visited.has(nodeId)) continue;
+      visited.add(nodeId);
+
+      if (nodeId === targetNodeId) {
+        // Check if we passed through a definition
+        const nodeFacts = this.dataFlowResult?.facts.get(nodeId);
+        const reachingDefs = nodeFacts?.reachingDefs.get(varName);
+        if (!reachingDefs || reachingDefs.size === 0) {
+          hasUninitPath = true;
+          break;
+        }
+        continue;
+      }
+
+      const node = this.cfg.nodes.get(nodeId);
+      if (node) {
+        for (const successor of node.successors) {
+          queue.push(successor);
+        }
+      }
+    }
+
+    return hasUninitPath;
+  }
+
+  /**
+   * Get definition-use chains for a variable
+   */
+  getDefinitionUseChains(varName: string): DefinitionUseChain[] {
+    const result = this.analyze();
+    const chains: DefinitionUseChain[] = [];
+
+    const defs = result.allDefinitions.get(varName) || [];
+    const allUses = result.allUses.get(varName) || [];
+
+    for (const def of defs) {
+      const usesForDef = allUses.filter(use => {
+        // A use is associated with a def if the def reaches the use
+        const nodeFacts = result.facts.get(use.nodeId);
+        const reachingDefs = nodeFacts?.reachingDefs.get(varName);
+        return reachingDefs?.has(def);
+      });
+
+      chains.push({
+        definition: def,
+        uses: usesForDef,
+        isComplete: usesForDef.length > 0,
+      });
+    }
+
+    return chains;
+  }
+
+  /**
+   * Check if a variable is used after a definition
+   */
+  isVariableUsedAfterDefinition(def: VarDef): boolean {
+    const result = this.analyze();
+    const uses = result.allUses.get(def.name) || [];
+    return uses.some(use => use.line > def.line);
+  }
+
+  /**
+   * Find dead stores (definitions that are never used)
+   */
+  findDeadStores(): VarDef[] {
+    const result = this.analyze();
+    const deadStores: VarDef[] = [];
+
+    for (const [varName, defs] of result.allDefinitions) {
+      for (const def of defs) {
+        if (!this.isVariableUsedAfterDefinition(def)) {
+          // Check if it's not the last definition (reassigned before use)
+          const laterDefs = defs.filter(d => d.line > def.line);
+          if (laterDefs.length > 0) {
+            deadStores.push(def);
+          }
+        }
+      }
+    }
+
+    return deadStores;
+  }
+}
