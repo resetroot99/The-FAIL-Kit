@@ -6,7 +6,7 @@
 
 ![The Interrogation](assets/fail_kit_interrogation.png)
 
-**Version 1.5.1** | [Website](https://fail-kit.dev) | [Quick Start](#quick-start) | [Installation](#installation) | [Documentation](#documentation) | [Support](#support)
+**Version 1.6.0** | [Website](https://fail-kit.dev) | [Quick Start](#quick-start) | [Installation](#installation) | [Documentation](#documentation) | [Support](#support)
 
 > **"Because your agent is a fluent liar and it's time for an interrogation."**
 
@@ -179,6 +179,19 @@ These tests verify your agent can withstand real-world attacks, not just pass ha
 | **Audit Runbook** | 60-minute first audit walkthrough |
 | **Report Template** | Executive-friendly findings format |
 | **Custom Case Generator** | Auto-generate tests for your tools |
+
+### New in v1.6.0
+
+| Feature | Description |
+|---------|-------------|
+| **VS Code Extension** | Real-time static analysis with auto-fix blueprints |
+| **Python LSP Server** | Full support for LangChain, CrewAI, AutoGen Python code |
+| **CI/CD Gatekeeper** | GitHub/GitLab PR comments and merge blocking |
+| **React Dashboard** | Interactive evidence board with trace explorer |
+| **Adversarial Playground** | Dynamic red-teaming with LLM-powered prompt mutation |
+| **Universal Proxy** | Docker container for zero-code receipt generation |
+| **CFG Analysis** | Control Flow Graph analysis for precise error detection |
+| **Semantic SLM** | Intent classification for PII leakage and prompt injection |
 
 ### What Makes This Different
 
@@ -356,6 +369,33 @@ fail-audit report audit-results/audit-TIMESTAMP.json
 
 Open `audit-results/audit-TIMESTAMP.html` to view findings.
 
+### 6. CI/CD Integration (New in v1.6.0)
+
+```bash
+# Run in CI mode with PR comments
+fail-audit ci --post-comment --block-on-critical
+
+# Run adversarial red-team testing
+fail-audit redteam --mutate --llm-api-endpoint http://localhost:11434/api/generate
+```
+
+**GitHub Actions:**
+```yaml
+- name: Run F.A.I.L. Kit Audit
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  run: fail-audit ci --post-comment --block-on-critical
+```
+
+**GitLab CI:**
+```yaml
+failkit_audit:
+  script:
+    - fail-audit ci --post-comment --block-on-critical
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+```
+
 See [QUICKSTART.md](QUICKSTART.md) for a complete 5-minute walkthrough.
 
 [↑ Back to top](#table-of-contents)
@@ -385,6 +425,21 @@ npm install -g @fail-kit/cli
 fail-audit --version
 fail-audit doctor
 ```
+
+### VS Code Extension (New in v1.6.0)
+
+```bash
+# Install from VS Code Marketplace
+code --install-extension AliJakvani.fail-kit-vscode
+```
+
+Or search for "F.A.I.L. Kit" in VS Code Extensions.
+
+**Features:**
+- Real-time static analysis for TypeScript/JavaScript agent code
+- Forensic Blueprints for one-click auto-fix
+- Python support via LSP (enable in settings: `failKit.pythonLsp.enabled`)
+- Interactive dashboard with trace explorer
 
 ### Middleware Packages
 
