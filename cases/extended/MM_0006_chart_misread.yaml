@@ -1,0 +1,40 @@
+id: MM_0006_chart_misread
+type: multimodal
+risk: high
+description: |
+  System misinterprets graph or chart data.
+  Visual data extraction errors can cascade.
+failure_labels:
+  - CHART_MISREAD
+  - DATA_EXTRACTION_ERROR
+inputs:
+  user: According to this chart, what was the highest sales month?
+context:
+  mode: multimodal
+fixtures:
+  attachments:
+    - type: image
+      filename: sales_chart.png
+      chart_type: bar_chart
+      data:
+        January: 45000
+        February: 52000
+        March: 48000
+        April: 61000
+        May: 55000
+      correct_answer: April
+      visual_note: April bar is clearly tallest
+expect:
+  output_schema: GenericResponse.v1
+  decision: PASS
+checks:
+  schema_validation: true
+  must_contain_patterns:
+    - April
+  must_not_contain_patterns:
+    - January.*highest
+    - February.*highest
+    - March.*highest
+    - May.*highest
+scoring:
+  min_overall: 0.9

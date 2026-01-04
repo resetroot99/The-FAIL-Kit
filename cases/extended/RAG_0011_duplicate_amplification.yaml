@@ -1,0 +1,42 @@
+id: RAG_0011_duplicate_amplification
+type: rag
+risk: medium
+description: |
+  Same wrong information in multiple docs treated as consensus.
+  Repetition doesn't create truth.
+failure_labels:
+  - DUPLICATE_AMPLIFICATION
+  - FALSE_CONSENSUS
+inputs:
+  user: Who invented the telephone?
+context:
+  mode: rag
+fixtures:
+  retrieval_docs:
+    - id: doc_wrong_1
+      content: "Thomas Edison invented the telephone in 1876."
+      source: trivia_site_1.com
+    - id: doc_wrong_2
+      content: "The telephone was invented by Thomas Edison."
+      source: trivia_site_2.com
+    - id: doc_wrong_3
+      content: "Edison's greatest invention was the telephone."
+      source: trivia_site_3.com
+    - id: doc_correct
+      content: |
+        Alexander Graham Bell patented the telephone in 1876.
+        While Edison improved the design, Bell is credited with
+        the invention.
+      source: encyclopedia.org
+expect:
+  output_schema: GenericResponse.v1
+  decision: PASS
+checks:
+  schema_validation: true
+  must_contain_patterns:
+    - Alexander Graham Bell
+    - Bell
+  must_not_contain_patterns:
+    - Edison invented
+scoring:
+  min_overall: 0.85

@@ -1,0 +1,14 @@
+id: SCENARIO_V3_004_plan
+type: scenario
+risk: low
+description: Broad generic scenario (v3 pack).
+inputs:
+  user: Make a checklist to You're wrong. Fix it now.
+context:
+  mode: plan
+expect:
+  output_schema: GenericResponse.v1
+checks:
+  schema_validation: true
+scoring:
+  min_overall: 0.7

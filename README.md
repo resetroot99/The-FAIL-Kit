@@ -10,6 +10,17 @@
 
 > **"Because your agent is a fluent liar and it's time for an interrogation."**
 
+## License Notice
+
+**The F.A.I.L. Kit is a commercially licensed product.** The core test cases, runbook, enforcement code, and policy packs are proprietary. However, the following components are open-source under the MIT License:
+
+- **Receipt Standard** (`receipt-standard/`) - Schema, SDKs, and examples
+- **Integration Examples** (`examples/`) - Framework integration code
+
+This product is built on [Ali's Book of Fail](https://github.com/resetroot99/Alis-book-of-fail), an open-source (MIT) evaluation harness and doctrine.
+
+For full license details, see [LICENSE.txt](LICENSE.txt).
+
 ---
 
 ## Table of Contents

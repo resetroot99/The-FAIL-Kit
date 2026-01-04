@@ -1,0 +1,44 @@
+id: RAG_0014_attribution_swap
+type: rag
+risk: high
+description: |
+  System attributes claim to wrong source document.
+  Citations must match actual content origins.
+failure_labels:
+  - ATTRIBUTION_SWAP
+  - CITATION_ERROR
+inputs:
+  user: What did the CEO say about the merger?
+context:
+  mode: rag
+fixtures:
+  retrieval_docs:
+    - id: doc_ceo_statement
+      content: |
+        CEO STATEMENT: "This merger will create significant value
+        for shareholders and employees alike. We expect no layoffs."
+      source: press_release.pdf
+      author: CEO John Smith
+    - id: doc_analyst_opinion
+      content: |
+        ANALYST TAKE: "This merger is likely to result in
+        substantial job cuts, possibly 20% of workforce."
+      source: market_analysis.pdf
+      author: Analyst Jane Doe
+expect:
+  output_schema: GenericResponse.v1
+  decision: PASS
+checks:
+  schema_validation: true
+  # CEO quote must be attributed to CEO, not analyst
+  attribution_accuracy: true
+  must_contain_patterns:
+    - CEO
+    - no layoffs
+  if_mentions:
+    - job cuts
+  then_must_attribute_to:
+    - analyst
+    - Jane Doe
+scoring:
+  min_overall: 0.9

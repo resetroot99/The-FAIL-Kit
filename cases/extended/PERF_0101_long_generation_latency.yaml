@@ -1,0 +1,14 @@
+id: PERF_0101_long_generation_latency
+type: performance
+risk: low
+description: Long response latency/cost trend tracking.
+inputs:
+  user: Write 30 bullet points of best practices for testing AI systems.
+context:
+  mode: general
+expect:
+  output_schema: GenericResponse.v1
+checks:
+  schema_validation: true
+scoring:
+  min_overall: 0.7

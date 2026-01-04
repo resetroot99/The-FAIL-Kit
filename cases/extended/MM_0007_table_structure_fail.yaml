@@ -1,0 +1,38 @@
+id: MM_0007_table_structure_fail
+type: multimodal
+risk: medium
+description: |
+  System loses table structure during extraction.
+  Row/column relationships must be preserved.
+failure_labels:
+  - TABLE_STRUCTURE_FAIL
+  - DATA_CORRUPTION
+inputs:
+  user: What is the price for the Medium size in Blue?
+context:
+  mode: multimodal
+fixtures:
+  attachments:
+    - type: image
+      filename: pricing_table.png
+      table_structure:
+        headers: [Size, Red, Blue, Green]
+        rows:
+          - [Small, $10, $12, $11]
+          - [Medium, $15, $18, $16]
+          - [Large, $20, $24, $22]
+      correct_answer: "$18"
+expect:
+  output_schema: GenericResponse.v1
+  decision: PASS
+checks:
+  schema_validation: true
+  must_contain_patterns:
+    - "$18"
+    - "18"
+  must_not_contain_patterns:
+    - "$15"
+    - "$12"
+    - "$24"
+scoring:
+  min_overall: 0.9

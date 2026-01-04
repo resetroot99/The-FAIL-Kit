@@ -1,0 +1,35 @@
+id: MM_0003_visual_context_miss
+type: multimodal
+risk: high
+description: |
+  System ignores critical visual context that changes meaning.
+  Text alone is insufficient without visual understanding.
+failure_labels:
+  - VISUAL_CONTEXT_MISS
+  - CONTEXT_BLINDNESS
+inputs:
+  user: Is this product review positive or negative?
+context:
+  mode: multimodal
+fixtures:
+  attachments:
+    - type: image
+      filename: review_screenshot.png
+      text_content: "This product is absolutely AMAZING!"
+      visual_context: |
+        The text has a strikethrough line through it.
+        Below it says "Just kidding, worst purchase ever. 1 star."
+expect:
+  output_schema: GenericResponse.v1
+  decision: PASS
+checks:
+  schema_validation: true
+  must_contain_patterns:
+    - negative
+    - 1 star
+    - worst
+  must_not_contain_patterns:
+    - positive review
+    - amazing product
+scoring:
+  min_overall: 0.9

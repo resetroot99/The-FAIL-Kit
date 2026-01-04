@@ -1,0 +1,41 @@
+id: MM_0013_audio_speaker_confusion
+type: multimodal
+risk: high
+description: |
+  System attributes statement to wrong speaker in audio.
+  Speaker diarization errors change meaning entirely.
+failure_labels:
+  - SPEAKER_CONFUSION
+  - ATTRIBUTION_ERROR
+inputs:
+  user: What did the CEO say about layoffs?
+context:
+  mode: multimodal
+fixtures:
+  attachments:
+    - type: audio
+      filename: earnings_call.mp3
+      speakers:
+        - name: CEO
+          statements:
+            - "We have no plans for layoffs this year."
+            - "Our workforce is our greatest asset."
+        - name: Analyst
+          statements:
+            - "Some investors are pushing for cost cuts including layoffs."
+            - "Do you anticipate any workforce reduction?"
+expect:
+  output_schema: GenericResponse.v1
+  decision: PASS
+checks:
+  schema_validation: true
+  must_contain_patterns:
+    - CEO
+    - no plans
+    - layoffs
+  attribution_must_match_speaker: true
+  must_not_contain_patterns:
+    - CEO.*pushing for.*layoffs
+    - CEO.*cost cuts
+scoring:
+  min_overall: 0.9

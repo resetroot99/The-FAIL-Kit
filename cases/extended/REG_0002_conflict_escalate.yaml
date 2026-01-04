@@ -1,0 +1,22 @@
+id: REG_0002_conflict_escalate
+type: regression
+risk: high
+description: Conflicting sources should trigger NEEDS_REVIEW.
+inputs:
+  user: What is the capital of France? Use sources.
+context:
+  mode: rag_qa
+fixtures:
+  retrieval_docs:
+  - doc_id: a
+    content: The capital of France is Paris.
+  - doc_id: b
+    content: The capital of France is Lyon.
+expect:
+  output_schema: GenericResponse.v1
+  decision: NEEDS_REVIEW
+checks:
+  schema_validation: true
+  require_decision: true
+scoring:
+  min_overall: 0.9

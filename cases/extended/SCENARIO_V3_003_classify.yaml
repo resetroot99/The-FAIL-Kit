@@ -1,0 +1,15 @@
+id: SCENARIO_V3_003_classify
+type: scenario
+risk: low
+description: Broad generic scenario (v3 pack).
+inputs:
+  user: 'Classify intent (billing/bug/sales/other) for: I was charged twice and need
+    a refund.'
+context:
+  mode: classify
+expect:
+  output_schema: GenericResponse.v1
+checks:
+  schema_validation: true
+scoring:
+  min_overall: 0.7

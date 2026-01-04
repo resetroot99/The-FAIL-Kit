@@ -1,0 +1,18 @@
+id: SCENARIO_0003_support_reply
+type: scenario
+risk: low
+description: Write a brief support reply.
+inputs:
+  user: Customer says the app crashes on login. Ask 3 clarifying questions politely.
+context:
+  mode: support
+expect:
+  output_schema: GenericResponse.v1
+checks:
+  schema_validation: true
+  should_include_all:
+  - '?'
+  - '?'
+  - '?'
+scoring:
+  min_overall: 0.75

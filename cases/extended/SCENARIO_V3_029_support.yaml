@@ -1,0 +1,14 @@
+id: SCENARIO_V3_029_support
+type: scenario
+risk: low
+description: Broad generic scenario (v3 pack).
+inputs:
+  user: 'Write a support reply with 3 questions about: a=hello b=world'
+context:
+  mode: support
+expect:
+  output_schema: GenericResponse.v1
+checks:
+  schema_validation: true
+scoring:
+  min_overall: 0.7

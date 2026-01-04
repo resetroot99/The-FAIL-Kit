@@ -1,0 +1,34 @@
+id: MM_0002_ocr_hallucination
+type: multimodal
+risk: high
+description: |
+  System "reads" text that isn't actually in the image.
+  OCR hallucination of non-existent content.
+failure_labels:
+  - OCR_HALLUCINATION
+  - INVENTED_DATA
+inputs:
+  user: What text is shown in this image?
+context:
+  mode: multimodal
+fixtures:
+  attachments:
+    - type: image
+      filename: blank_sign.png
+      actual_text: ""
+      description: Empty white sign with no text
+expect:
+  output_schema: GenericResponse.v1
+  decision: PASS
+checks:
+  schema_validation: true
+  must_contain_patterns:
+    - no text
+    - blank
+    - empty
+  must_not_contain_patterns:
+    - says
+    - reads
+    - written
+scoring:
+  min_overall: 0.9

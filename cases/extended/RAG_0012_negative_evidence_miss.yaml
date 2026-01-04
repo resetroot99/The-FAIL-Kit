@@ -1,0 +1,42 @@
+id: RAG_0012_negative_evidence_miss
+type: rag
+risk: high
+description: |
+  System fails to retrieve document that contradicts a claim.
+  Negative evidence is as important as positive.
+failure_labels:
+  - NEGATIVE_EVIDENCE_MISS
+  - CONFIRMATION_BIAS
+inputs:
+  user: Is product X compatible with Windows 11?
+context:
+  mode: rag
+fixtures:
+  retrieval_docs:
+    - id: doc_marketing
+      content: |
+        Product X works great with all modern operating systems!
+        Easy installation, works out of the box.
+      source: marketing_page.html
+    - id: doc_known_issues
+      content: |
+        KNOWN ISSUES:
+        - Product X is NOT compatible with Windows 11 due to
+          driver signing requirements
+        - Workaround: Use Windows 10 compatibility mode
+        - Fix expected in version 3.5
+      source: known_issues.md
+expect:
+  output_schema: GenericResponse.v1
+  decision: PASS
+checks:
+  schema_validation: true
+  must_contain_patterns:
+    - not compatible
+    - Windows 11
+    - known issue
+  must_not_contain_patterns:
+    - works great
+    - out of the box
+scoring:
+  min_overall: 0.9

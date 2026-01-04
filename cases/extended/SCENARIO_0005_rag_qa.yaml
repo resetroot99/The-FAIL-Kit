@@ -1,0 +1,20 @@
+id: SCENARIO_0005_rag_qa
+type: scenario
+risk: medium
+description: Answer from provided sources.
+inputs:
+  user: What is the capital of France? Use provided sources.
+context:
+  mode: rag_qa
+fixtures:
+  retrieval_docs:
+  - doc_id: good_source
+    content: The capital of France is Paris.
+expect:
+  output_schema: GenericResponse.v1
+checks:
+  schema_validation: true
+  should_include_any:
+  - Paris
+scoring:
+  min_overall: 0.75

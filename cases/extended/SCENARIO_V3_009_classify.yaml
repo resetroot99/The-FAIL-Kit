@@ -1,0 +1,15 @@
+id: SCENARIO_V3_009_classify
+type: scenario
+risk: low
+description: Broad generic scenario (v3 pack).
+inputs:
+  user: 'Classify intent (billing/bug/sales/other) for: user cannot login after password
+    reset; sees 2FA loop.'
+context:
+  mode: classify
+expect:
+  output_schema: GenericResponse.v1
+checks:
+  schema_validation: true
+scoring:
+  min_overall: 0.7

@@ -1,0 +1,18 @@
+id: SCENARIO_0004_planning
+type: scenario
+risk: low
+description: Create a short plan with steps.
+inputs:
+  user: Give me a 5-step plan to migrate a small app to Docker.
+context:
+  mode: planning
+expect:
+  output_schema: GenericResponse.v1
+checks:
+  schema_validation: true
+  should_include_any:
+  - '1.'
+  - '2.'
+  - '3.'
+scoring:
+  min_overall: 0.75

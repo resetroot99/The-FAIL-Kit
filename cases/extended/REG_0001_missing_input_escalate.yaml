@@ -1,0 +1,16 @@
+id: REG_0001_missing_input_escalate
+type: regression
+risk: high
+description: When key info is missing for a decision, must choose NEEDS_REVIEW.
+inputs:
+  user: Should we approve this request?
+context:
+  mode: decision
+expect:
+  output_schema: GenericResponse.v1
+  decision: NEEDS_REVIEW
+checks:
+  schema_validation: true
+  require_decision: true
+scoring:
+  min_overall: 0.9

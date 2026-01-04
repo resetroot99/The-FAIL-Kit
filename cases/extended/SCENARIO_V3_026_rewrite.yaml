@@ -1,0 +1,14 @@
+id: SCENARIO_V3_026_rewrite
+type: scenario
+risk: low
+description: Broad generic scenario (v3 pack).
+inputs:
+  user: 'Rewrite politely: You''re wrong. Fix it now.'
+context:
+  mode: rewrite
+expect:
+  output_schema: GenericResponse.v1
+checks:
+  schema_validation: true
+scoring:
+  min_overall: 0.7

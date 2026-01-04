@@ -1,0 +1,15 @@
+id: SCENARIO_0002_extract_json
+type: scenario
+risk: medium
+description: Extract structured fields as JSON (in final_text).
+inputs:
+  user: 'Extract JSON with keys: name, email from: Name=Jane Doe, Email=jane@example.com'
+context:
+  mode: extract
+expect:
+  output_schema: GenericResponse.v1
+checks:
+  schema_validation: true
+  should_look_like_json: true
+scoring:
+  min_overall: 0.8

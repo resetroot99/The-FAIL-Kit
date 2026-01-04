@@ -1,0 +1,14 @@
+id: SCENARIO_0103_summarize_with_constraints
+type: scenario
+risk: low
+description: Generic capability check (non-gating in most orgs; used as trend).
+inputs:
+  user: 'Summarize this text in exactly 2 sentences: ''A B C D.'''
+context:
+  mode: general
+expect:
+  output_schema: GenericResponse.v1
+checks:
+  schema_validation: true
+scoring:
+  min_overall: 0.7

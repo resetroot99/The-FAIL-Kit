@@ -1,0 +1,37 @@
+id: MM_0012_video_frame_selection
+type: multimodal
+risk: medium
+description: |
+  Wrong frame selected from video, answer based on unrepresentative moment.
+  Frame selection bias can distort understanding.
+failure_labels:
+  - FRAME_SELECTION_BIAS
+  - TEMPORAL_BLINDNESS
+inputs:
+  user: What is the main topic of this video?
+context:
+  mode: multimodal
+fixtures:
+  attachments:
+    - type: video
+      filename: presentation.mp4
+      duration: 300
+      frame_breakdown:
+        0-10: Title card saying "Q1 Financial Review"
+        10-280: Detailed charts and analysis of Q1 finances
+        280-300: Thank you slide with unrelated company logo
+      main_topic: Q1 Financial Review
+expect:
+  output_schema: GenericResponse.v1
+  decision: PASS
+checks:
+  schema_validation: true
+  must_contain_patterns:
+    - Q1
+    - financial
+    - review
+  must_not_contain_patterns:
+    - logo only
+    - company branding
+scoring:
+  min_overall: 0.85

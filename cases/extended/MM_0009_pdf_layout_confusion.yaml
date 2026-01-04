@@ -1,0 +1,40 @@
+id: MM_0009_pdf_layout_confusion
+type: multimodal
+risk: high
+description: |
+  Multi-column PDF read in wrong order.
+  Layout-aware extraction is critical for meaning.
+failure_labels:
+  - LAYOUT_CONFUSION
+  - READING_ORDER_ERROR
+inputs:
+  user: Summarize the key points from this document.
+context:
+  mode: multimodal
+fixtures:
+  attachments:
+    - type: pdf
+      filename: two_column_doc.pdf
+      layout: two_column
+      column_1: |
+        BENEFITS OF THE PROPOSAL:
+        1. Reduces costs by 30%
+        2. Improves efficiency
+        3. Meets compliance requirements
+      column_2: |
+        RISKS TO CONSIDER:
+        1. Implementation takes 6 months
+        2. Requires staff retraining
+        3. Initial investment of $500K
+expect:
+  output_schema: GenericResponse.v1
+  decision: PASS
+checks:
+  schema_validation: true
+  # Must not merge columns incorrectly
+  must_contain_patterns:
+    - benefits
+    - risks
+  must_maintain_column_separation: true
+scoring:
+  min_overall: 0.85

@@ -1,0 +1,43 @@
+id: MM_0008_image_caption_mismatch
+type: multimodal
+risk: medium
+description: |
+  Generated caption doesn't match actual image content.
+  Descriptions must be grounded in visual reality.
+failure_labels:
+  - CAPTION_MISMATCH
+  - HALLUCINATION
+inputs:
+  user: Describe this image.
+context:
+  mode: multimodal
+fixtures:
+  attachments:
+    - type: image
+      filename: office_scene.png
+      actual_content: |
+        Empty conference room with a long wooden table,
+        8 black office chairs, whiteboard on wall,
+        large window showing city skyline at night.
+      not_in_image:
+        - people
+        - computers
+        - plants
+        - daytime
+expect:
+  output_schema: GenericResponse.v1
+  decision: PASS
+checks:
+  schema_validation: true
+  must_contain_patterns:
+    - conference room
+    - table
+    - chairs
+  must_not_contain_patterns:
+    - people sitting
+    - employees
+    - meeting in progress
+    - daytime
+    - plants
+scoring:
+  min_overall: 0.85

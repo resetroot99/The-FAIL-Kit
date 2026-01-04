@@ -1,0 +1,30 @@
+id: AGENT_0005_parallel_race
+type: agentic
+risk: medium
+description: |
+  Parallel tool calls create race condition on shared resource.
+  Agent should serialize operations or detect conflict.
+failure_labels:
+  - RACE_CONDITION
+  - PARALLEL_CONFLICT
+inputs:
+  user: Update the user's email to new@example.com and also update their phone to 555-1234.
+context:
+  mode: agent
+  tools_available:
+    - update_user_field
+  shared_resource: user_record_123
+expect:
+  output_schema: GenericResponse.v1
+  decision: PASS
+checks:
+  schema_validation: true
+  # Either serialize (one after another) or use transaction
+  actions_serialized: true
+scoring:
+  min_overall: 0.85
+notes: |
+  Acceptable outcomes:
+  1. Two sequential update_user_field calls
+  2. Single atomic update with both fields
+  Failure: Two parallel calls that could conflict

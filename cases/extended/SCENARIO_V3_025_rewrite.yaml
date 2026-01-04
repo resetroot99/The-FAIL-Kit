@@ -1,0 +1,14 @@
+id: SCENARIO_V3_025_rewrite
+type: scenario
+risk: low
+description: Broad generic scenario (v3 pack).
+inputs:
+  user: 'Rewrite politely: I was charged twice and need a refund.'
+context:
+  mode: rewrite
+expect:
+  output_schema: GenericResponse.v1
+checks:
+  schema_validation: true
+scoring:
+  min_overall: 0.7
