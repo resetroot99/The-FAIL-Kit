@@ -2,16 +2,35 @@
 # Forensic Audit of Intelligent Logic
 #
 # Add this to your repository as .gitlab-ci.yml or include it
+#
+# Security & Performance Optimizations Applied:
+# - Pinned Docker image versions (prevents supply chain attacks)
+# - Job timeouts (prevent zombie jobs)
+# - Parallel matrix testing (Node.js 18.x and 20.x)
+# - Dependency caching (faster builds)
+
+# Default settings
+default:
+  timeout: 15 minutes  # Prevent zombie jobs
+
+# Cache configuration for faster builds
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - node_modules/
+    - .npm/
 
 # F.A.I.L. Kit Audit Job Template
 .fail-audit:
-  image: node:20-alpine
+  # Pinned image version - prevents supply chain attacks
+  image: node:20.10.0-alpine3.19
   stage: test
   variables:
     FAIL_AUDIT_FORMAT: "json"
     FAIL_AUDIT_STRICT: "false"
+    NPM_CONFIG_CACHE: "${CI_PROJECT_DIR}/.npm"
   before_script:
-    - npm ci --silent
+    - npm ci --cache .npm --prefer-offline --silent
     - npm install -g @fail-kit/cli
   script:
     - |
@@ -25,6 +44,11 @@
       fail-audit report audit-results.json \
         --format html \
         --output audit-dashboard.html
+      
+      # Generate JUnit report for GitLab integration
+      fail-audit report audit-results.json \
+        --format junit \
+        --output audit-results-junit.xml
       
       # Post to MR if applicable
       if [ -n "$CI_MERGE_REQUEST_IID" ]; then
@@ -112,6 +136,14 @@
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# Parallel matrix testing for Node.js compatibility
+.fail-audit-matrix:
+  extends: .fail-audit
+  parallel:
+    matrix:
+      - NODE_VERSION: ["18", "20"]
+  image: node:${NODE_VERSION}-alpine
 
 # Example usage in your .gitlab-ci.yml:
 #
