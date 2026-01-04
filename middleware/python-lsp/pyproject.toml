@@ -1,0 +1,73 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "failkit-lsp"
+version = "1.0.0"
+description = "F.A.I.L. Kit Python Language Server for LangChain, CrewAI, and AutoGen"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "v3ctor", email = "failkit@example.com"}
+]
+requires-python = ">=3.9"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Software Development :: Testing",
+]
+keywords = ["ai", "agents", "audit", "langchain", "crewai", "autogen", "lsp", "language-server"]
+
+dependencies = [
+    "pygls>=1.2.0",
+    "lsprotocol>=2023.0.0",
+    "tree-sitter>=0.20.0",
+    "tree-sitter-python>=0.20.0",
+    "pydantic>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+]
+
+[project.scripts]
+failkit-lsp = "failkit_lsp.server:main"
+
+[project.urls]
+"Homepage" = "https://github.com/your-org/fail-kit"
+"Documentation" = "https://fail-kit.dev/docs/python-lsp"
+"Repository" = "https://github.com/your-org/fail-kit"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.black]
+line-length = 100
+target-version = ['py39', 'py310', 'py311', 'py312']
+
+[tool.ruff]
+line-length = 100
+select = ["E", "F", "I", "W"]
+
+[tool.mypy]
+python_version = "3.9"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

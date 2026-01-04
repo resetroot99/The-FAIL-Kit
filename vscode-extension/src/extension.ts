@@ -27,6 +27,7 @@ import {
   rollbackLastFix,
   previewFix,
   fixHistory,
+  registerBlueprintCommands,
 } from './autofix';
 import {
   loadBaseline,
@@ -41,11 +42,13 @@ import { registerCICommands } from './ci';
 import { registerPolicyCommands } from './policies';
 import { registerSDKCommands, runCustomRules, matchesToIssues } from './sdk';
 import { initTelemetry, reportError } from './utils';
+import { PythonLSPClient, createPythonLSPClient } from './python-lsp';
 
 let diagnosticsProvider: FailKitDiagnosticsProvider | undefined;
 let dashboardPanel: vscode.WebviewPanel | undefined;
 let currentResults: Map<string, AnalysisResult> = new Map();
 let currentRegressionResult: RegressionResult | undefined;
+let pythonLSPClient: PythonLSPClient | undefined;
 
 const EXTENSION_VERSION = '1.0.1';
 
@@ -91,6 +94,59 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // Register SDK commands
   registerSDKCommands(context);
+
+  // Register Blueprint commands (Forensic Patterns)
+  registerBlueprintCommands(context);
+
+  // Initialize Python LSP client if enabled
+  const pythonLSPEnabled = vscode.workspace.getConfiguration('failKit').get<boolean>('pythonLsp.enabled', false);
+  if (pythonLSPEnabled) {
+    pythonLSPClient = createPythonLSPClient();
+    pythonLSPClient.start().then((started) => {
+      if (started) {
+        vscode.window.showInformationMessage('F.A.I.L. Kit: Python LSP server started');
+      }
+    });
+    context.subscriptions.push({ dispose: () => pythonLSPClient?.dispose() });
+  }
+
+  // Register Python LSP commands
+  context.subscriptions.push(
+    vscode.commands.registerCommand('fail-kit.startPythonLSP', async () => {
+      if (!pythonLSPClient) {
+        pythonLSPClient = createPythonLSPClient();
+      }
+      const started = await pythonLSPClient.start();
+      if (started) {
+        vscode.window.showInformationMessage('F.A.I.L. Kit: Python LSP server started');
+      } else {
+        vscode.window.showErrorMessage('F.A.I.L. Kit: Failed to start Python LSP server');
+      }
+    }),
+    vscode.commands.registerCommand('fail-kit.stopPythonLSP', async () => {
+      if (pythonLSPClient) {
+        await pythonLSPClient.stop();
+        vscode.window.showInformationMessage('F.A.I.L. Kit: Python LSP server stopped');
+      }
+    }),
+    vscode.commands.registerCommand('fail-kit.restartPythonLSP', async () => {
+      if (pythonLSPClient) {
+        const restarted = await pythonLSPClient.restart();
+        if (restarted) {
+          vscode.window.showInformationMessage('F.A.I.L. Kit: Python LSP server restarted');
+        } else {
+          vscode.window.showErrorMessage('F.A.I.L. Kit: Failed to restart Python LSP server');
+        }
+      }
+    }),
+    vscode.commands.registerCommand('fail-kit.showPythonLSPLogs', () => {
+      if (pythonLSPClient) {
+        pythonLSPClient.getOutputChannel().show();
+      } else {
+        vscode.window.showWarningMessage('Python LSP client not initialized');
+      }
+    })
+  );
 
   // Register manual analysis commands
   context.subscriptions.push(
@@ -754,5 +810,9 @@ export function deactivate(): void {
   if (dashboardPanel) {
     dashboardPanel.dispose();
     dashboardPanel = undefined;
+  }
+  if (pythonLSPClient) {
+    pythonLSPClient.dispose();
+    pythonLSPClient = undefined;
   }
 }

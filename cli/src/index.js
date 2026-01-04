@@ -905,6 +905,253 @@ program
   });
 
 // ============================================================================
+// Command: ci
+// ============================================================================
+
+program
+  .command('ci')
+  .description('Run audit in CI mode with PR/MR commenting')
+  .option('-e, --endpoint <url>', 'Override the endpoint URL')
+  .option('-f, --format <format>', 'Output format: json, html, dashboard', 'json')
+  .option('-o, --output <file>', 'Output file path')
+  .option('--strict', 'Fail on any test failure (not just critical)')
+  .option('--no-comment', 'Skip posting PR/MR comment')
+  .option('--no-check', 'Skip creating check run / commit status')
+  .option('--block-on-critical', 'Exit 1 only on critical failures (default)', true)
+  .action(async (options) => {
+    const { 
+      postAuditResults, 
+      getExitCode, 
+      generateBadgeUrl,
+      detectCIEnvironment 
+    } = require('./ci');
+    
+    const ci = detectCIEnvironment();
+    
+    if (!ci) {
+      console.log(chalk.yellow('⚠ Not running in CI environment'));
+      console.log(chalk.dim('This command is designed for CI/CD pipelines.'));
+      console.log(chalk.dim('Use "fail-audit run" for local execution.\n'));
+    }
+    
+    console.log(chalk.bold.cyan('F.A.I.L. Kit CI Mode'));
+    console.log(chalk.dim(`Platform: ${ci || 'local'}\n`));
+    
+    // Load config
+    const { config, error, validation } = loadConfig(options);
+    
+    if (error) {
+      console.error(chalk.red(`✗ ${error}`));
+      process.exit(1);
+    }
+    
+    const endpoint = options.endpoint || config.endpoint;
+    const casesDir = path.resolve(process.cwd(), config.cases_dir);
+    
+    // Run audit (reuse run command logic)
+    if (!fs.existsSync(casesDir)) {
+      console.error(chalk.red('✗ No test cases found'));
+      process.exit(1);
+    }
+    
+    const caseFiles = fs.readdirSync(casesDir).filter(f => f.endsWith('.yaml'));
+    
+    console.log(chalk.dim(`Running ${caseFiles.length} test cases...`));
+    
+    const results = [];
+    let passed = 0;
+    let failed = 0;
+    const startTime = Date.now();
+    
+    for (const caseFile of caseFiles) {
+      const casePath = path.join(casesDir, caseFile);
+      const testCase = yaml.load(fs.readFileSync(casePath, 'utf8'));
+      const caseId = testCase.id || caseFile.replace('.yaml', '');
+      const caseStart = Date.now();
+      
+      try {
+        const response = await axios.post(endpoint, {
+          inputs: testCase.inputs
+        }, {
+          timeout: config.timeout
+        });
+        
+        const result = evaluateResponse(testCase, response.data);
+        const duration_ms = Date.now() - caseStart;
+        
+        results.push({ 
+          case: caseId, 
+          ...result,
+          duration_ms,
+          request: { inputs: testCase.inputs },
+          response: response.data,
+        });
+        
+        if (result.pass) passed++;
+        else failed++;
+        
+      } catch (error) {
+        failed++;
+        results.push({
+          case: caseId,
+          pass: false,
+          error: error.message,
+          duration_ms: Date.now() - caseStart
+        });
+      }
+    }
+    
+    const auditResults = {
+      timestamp: new Date().toISOString(),
+      endpoint,
+      total: results.length,
+      passed,
+      failed,
+      duration_ms: Date.now() - startTime,
+      results
+    };
+    
+    // Save results
+    const outputDir = path.resolve(process.cwd(), config.output_dir);
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+    
+    const outputPath = options.output 
+      ? path.resolve(process.cwd(), options.output)
+      : path.join(outputDir, 'audit-results.json');
+    
+    fs.writeFileSync(outputPath, JSON.stringify(auditResults, null, 2));
+    
+    // Generate HTML report too
+    const htmlPath = outputPath.replace('.json', '.html');
+    const { generateReport } = require('./reporters');
+    fs.writeFileSync(htmlPath, generateReport(auditResults, 'dashboard'));
+    
+    // Post to PR/MR
+    if (options.comment !== false) {
+      const postResult = await postAuditResults(auditResults, {
+        commitSha: process.env.GITHUB_SHA || process.env.CI_COMMIT_SHA,
+        createCheck: options.check !== false,
+        strict: options.strict,
+      });
+      
+      if (postResult.posted) {
+        console.log(chalk.green('✓'), `Posted comment to ${postResult.platform} ${postResult.prNumber ? `PR #${postResult.prNumber}` : `MR !${postResult.mrIid}`}`);
+      } else if (postResult.reason) {
+        console.log(chalk.dim(`Skipped comment: ${postResult.reason}`));
+      }
+    }
+    
+    // Output summary
+    const passRate = ((passed / results.length) * 100).toFixed(1);
+    console.log('');
+    console.log(chalk.bold('Audit Complete'));
+    console.log(chalk.dim(`Pass Rate: ${passRate}% (${passed}/${results.length})`));
+    console.log(chalk.dim(`Results: ${outputPath}`));
+    console.log(chalk.dim(`Badge: ${generateBadgeUrl(auditResults)}`));
+    
+    // Exit with appropriate code
+    const exitCode = getExitCode(auditResults, {
+      strict: options.strict,
+      blockOnCritical: options.blockOnCritical,
+    });
+    
+    if (exitCode !== 0) {
+      console.log(chalk.red('\n✗ Audit failed - blocking merge'));
+    }
+    
+    process.exit(exitCode);
+  });
+
+// ============================================================================
+// Command: redteam
+// ============================================================================
+
+program
+  .command('redteam')
+  .description('Run adversarial red-team testing')
+  .option('-e, --endpoint <url>', 'Override the endpoint URL')
+  .option('-c, --category <categories...>', 'Attack categories to test')
+  .option('--variants', 'Include attack variants', false)
+  .option('--mutations', 'Include local mutations', false)
+  .option('--llm-mutations', 'Use LLM for advanced mutations (requires API key)', false)
+  .option('--export <dir>', 'Export test cases to directory')
+  .option('--stop-on-fail', 'Stop on first vulnerability', false)
+  .option('-o, --output <file>', 'Output results to file')
+  .option('-v, --verbose', 'Verbose output')
+  .action(async (options) => {
+    const { 
+      runRedTeamSession, 
+      exportTestCases,
+      ATTACK_CATEGORIES,
+    } = require('./redteam');
+
+    console.log(chalk.bold.red('\n🎯 F.A.I.L. Kit Adversarial Playground'));
+    console.log(chalk.dim('Red-teaming your AI agent with attack vectors\n'));
+
+    // Load config
+    const { config, error } = loadConfig(options);
+    
+    if (error) {
+      console.error(chalk.red(`✗ ${error}`));
+      process.exit(1);
+    }
+
+    // Export mode
+    if (options.export) {
+      const categories = options.category || Object.values(ATTACK_CATEGORIES);
+      const count = exportTestCases(options.export, categories);
+      console.log(chalk.green(`✓ Exported ${count} attack vectors to ${options.export}`));
+      return;
+    }
+
+    // Run red team session
+    const sessionConfig = {
+      endpoint: options.endpoint || config.endpoint,
+      timeout: config.timeout,
+      categories: options.category || Object.values(ATTACK_CATEGORIES),
+      includeVariants: options.variants,
+      includeMutations: options.mutations,
+      useLLMMutations: options.llmMutations,
+      stopOnFirstFailure: options.stopOnFail,
+      verbose: options.verbose,
+      llmConfig: {
+        provider: process.env.ANTHROPIC_API_KEY ? 'anthropic' : 'openai',
+      },
+    };
+
+    try {
+      const result = await runRedTeamSession(sessionConfig);
+      
+      // Save results if output specified
+      if (options.output) {
+        const outputPath = path.resolve(process.cwd(), options.output);
+        fs.writeFileSync(outputPath, JSON.stringify(result.toJSON(), null, 2));
+        console.log(chalk.dim(`Results saved to: ${outputPath}`));
+      }
+
+      // Exit with appropriate code
+      const hasVulnerabilities = result.vulnerable.length > 0;
+      const hasCritical = result.vulnerable.some(v => v.severity === 'critical');
+      
+      if (hasCritical) {
+        process.exit(2); // Critical vulnerabilities
+      } else if (hasVulnerabilities) {
+        process.exit(1); // Non-critical vulnerabilities
+      } else {
+        process.exit(0); // All attacks blocked
+      }
+    } catch (error) {
+      console.error(chalk.red(`\n✗ Red team session failed: ${error.message}`));
+      if (options.verbose) {
+        console.error(error.stack);
+      }
+      process.exit(1);
+    }
+  });
+
+// ============================================================================
 // Helper Functions
 // ============================================================================
 

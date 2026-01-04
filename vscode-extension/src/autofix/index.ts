@@ -3,13 +3,25 @@
  *
  * Automatically generates fixes for common issues.
  * Includes preview, confirmation, and rollback support.
+ * 
+ * Enhanced with Forensic Blueprints for standardized audit patterns.
  */
 
 import * as vscode from 'vscode';
 import { Issue } from '../analyzer';
 import { fixHistory, generateUnifiedDiff, DiffHunk, parseDiffHunks } from './history';
+import {
+  getBlueprintsForIssue,
+  getBestBlueprint,
+  applyBlueprint,
+  createBlueprintQuickFixes,
+  showBlueprintPicker,
+  registerBlueprintCommands,
+  Blueprint,
+} from './blueprints';
 
 export * from './history';
+export * from './blueprints';
 
 export interface AutoFix {
   ruleId: string;
@@ -622,3 +634,112 @@ ${result.preview}
 
   return patch;
 }
+
+// ============================================
+// Forensic Blueprint Integration
+// ============================================
+
+/**
+ * Get all available fixes for an issue (both legacy and blueprint-based)
+ */
+export function getAllAvailableFixes(
+  issue: Issue,
+  document: vscode.TextDocument
+): Array<{ type: 'legacy' | 'blueprint'; fix: AutoFix | Blueprint; confidence: number }> {
+  const fixes: Array<{ type: 'legacy' | 'blueprint'; fix: AutoFix | Blueprint; confidence: number }> = [];
+  
+  // Get legacy auto-fix
+  const legacyFix = findAutoFix(issue);
+  if (legacyFix) {
+    fixes.push({ type: 'legacy', fix: legacyFix, confidence: legacyFix.confidence });
+  }
+  
+  // Get blueprint fixes
+  const blueprints = getBlueprintsForIssue(issue, document);
+  for (const bp of blueprints) {
+    fixes.push({ type: 'blueprint', fix: bp, confidence: bp.confidence });
+  }
+  
+  // Sort by confidence
+  return fixes.sort((a, b) => b.confidence - a.confidence);
+}
+
+/**
+ * Apply the best available fix (blueprint preferred if higher confidence)
+ */
+export async function applyBestFix(
+  issue: Issue,
+  document: vscode.TextDocument
+): Promise<{ applied: boolean; type: 'legacy' | 'blueprint'; name: string }> {
+  const fixes = getAllAvailableFixes(issue, document);
+  
+  if (fixes.length === 0) {
+    return { applied: false, type: 'legacy', name: 'No fix available' };
+  }
+  
+  const best = fixes[0];
+  
+  if (best.type === 'blueprint') {
+    const blueprint = best.fix as Blueprint;
+    const success = await applyBlueprint(blueprint, issue, document);
+    return { applied: success, type: 'blueprint', name: blueprint.name };
+  } else {
+    const fixer = best.fix as AutoFix;
+    const edit = fixer.generateFix(issue, document);
+    if (edit) {
+      const success = await vscode.workspace.applyEdit(edit);
+      return { applied: success, type: 'legacy', name: `${fixer.ruleId} fix` };
+    }
+    return { applied: false, type: 'legacy', name: 'Fix generation failed' };
+  }
+}
+
+/**
+ * Create code actions including blueprint options
+ */
+export function createEnhancedCodeActions(
+  issue: Issue,
+  document: vscode.TextDocument,
+  diagnostic: vscode.Diagnostic
+): vscode.CodeAction[] {
+  const actions: vscode.CodeAction[] = [];
+  
+  // Add blueprint-based quick fixes (preferred)
+  const blueprintActions = createBlueprintQuickFixes(issue, document);
+  actions.push(...blueprintActions);
+  
+  // Add legacy auto-fix as fallback
+  const legacyFix = findAutoFix(issue);
+  if (legacyFix && blueprintActions.length === 0) {
+    const action = new vscode.CodeAction(
+      `Quick Fix: ${getFixDescription(issue)}`,
+      vscode.CodeActionKind.QuickFix
+    );
+    action.diagnostics = [diagnostic];
+    action.command = {
+      title: 'Apply Fix',
+      command: 'fail-kit.autoFixIssue',
+      arguments: [document.uri.fsPath, issue.line, issue.ruleId],
+    };
+    actions.push(action);
+  }
+  
+  // Add "Show all blueprints" option
+  if (blueprintActions.length > 1) {
+    const showAllAction = new vscode.CodeAction(
+      '$(list-unordered) Show All Fix Options...',
+      vscode.CodeActionKind.QuickFix
+    );
+    showAllAction.command = {
+      title: 'Show Blueprint Picker',
+      command: 'fail-kit.showBlueprintPicker',
+      arguments: [issue, document.uri.fsPath],
+    };
+    actions.push(showAllAction);
+  }
+  
+  return actions;
+}
+
+// Re-export blueprint registration for extension activation
+export { registerBlueprintCommands };

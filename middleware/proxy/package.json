@@ -1,0 +1,33 @@
+{
+  "name": "@fail-kit/proxy",
+  "version": "1.0.0",
+  "description": "F.A.I.L. Kit Universal Proxy - Auto-receipt generation without code changes",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "docker:build": "docker build -t fail-kit-proxy .",
+    "docker:run": "docker run -p 8080:8080 -p 8443:8443 fail-kit-proxy"
+  },
+  "keywords": [
+    "fail-kit",
+    "proxy",
+    "audit",
+    "forensic",
+    "ai-safety"
+  ],
+  "dependencies": {
+    "http-proxy": "^1.18.1"
+  },
+  "devDependencies": {
+    "@types/http-proxy": "^1.17.14",
+    "@types/node": "^20.10.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

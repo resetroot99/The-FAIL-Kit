@@ -7,6 +7,7 @@ const { generateHtmlReport, getSeverity, getDocLink, getRemediation } = require(
 const { generateJunitReport, generateMinimalJunitReport } = require('./junit');
 const { generateMarkdownReport, generateCompactMarkdownReport, generateOneLiner } = require('./markdown');
 const { generateDashboard } = require('./dashboard');
+const { generateReactDashboard, gatherProvenance, loadBaseline } = require('./react-dashboard');
 
 /**
  * Generate report in specified format
@@ -22,6 +23,11 @@ function generateReport(results, format, options = {}) {
     
     case 'dashboard':
       return generateDashboard(results);
+    
+    case 'react':
+    case 'react-dashboard':
+    case 'interactive':
+      return generateReactDashboard(results, options);
     
     case 'junit':
     case 'xml':
@@ -52,6 +58,9 @@ function getExtension(format) {
   const extensions = {
     html: '.html',
     dashboard: '.html',
+    react: '.html',
+    'react-dashboard': '.html',
+    interactive: '.html',
     junit: '.xml',
     xml: '.xml',
     markdown: '.md',
@@ -71,8 +80,11 @@ module.exports = {
   getSeverity,
   getDocLink,
   getRemediation,
-  // Dashboard export
+  // Dashboard exports
   generateDashboard,
+  generateReactDashboard,
+  gatherProvenance,
+  loadBaseline,
   // JUnit exports
   generateJunitReport,
   generateMinimalJunitReport,

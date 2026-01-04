@@ -3,11 +3,17 @@
  *
  * Main analyzer module that orchestrates AST analysis,
  * pattern matching, and receipt validation.
+ * 
+ * Enhanced with Control Flow Graph analysis for precise
+ * data flow tracking and error handling verification.
  */
 
 export * from './patterns';
 export * from './astAnalyzer';
 export * from './receiptValidator';
+export * from './cfgBuilder';
+export * from './dataFlowAnalyzer';
+export * from './scopeAnalyzer';
 
 import {
   analyzeDocument,

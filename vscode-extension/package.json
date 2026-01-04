@@ -33,7 +33,8 @@
     "onLanguage:typescript",
     "onLanguage:javascript",
     "onLanguage:typescriptreact",
-    "onLanguage:javascriptreact"
+    "onLanguage:javascriptreact",
+    "onLanguage:python"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -72,6 +73,26 @@
         "command": "fail-kit.exportReport",
         "title": "F.A.I.L. Kit: Export Report",
         "icon": "$(file-text)"
+      },
+      {
+        "command": "fail-kit.startPythonLSP",
+        "title": "F.A.I.L. Kit: Start Python LSP Server",
+        "icon": "$(play)"
+      },
+      {
+        "command": "fail-kit.stopPythonLSP",
+        "title": "F.A.I.L. Kit: Stop Python LSP Server",
+        "icon": "$(stop)"
+      },
+      {
+        "command": "fail-kit.restartPythonLSP",
+        "title": "F.A.I.L. Kit: Restart Python LSP Server",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "fail-kit.showPythonLSPLogs",
+        "title": "F.A.I.L. Kit: Show Python LSP Logs",
+        "icon": "$(output)"
       }
     ],
     "menus": {
@@ -155,6 +176,22 @@
           "type": "boolean",
           "default": false,
           "description": "Enable anonymous error telemetry to help improve F.A.I.L. Kit"
+        },
+        "failKit.pythonLsp.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable Python LSP server for LangChain/CrewAI/AutoGen analysis"
+        },
+        "failKit.pythonLsp.pythonPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to Python interpreter for LSP server (leave empty for auto-detection)"
+        },
+        "failKit.pythonLsp.logLevel": {
+          "type": "string",
+          "enum": ["debug", "info", "warning", "error"],
+          "default": "info",
+          "description": "Logging level for Python LSP server"
         }
       }
     }

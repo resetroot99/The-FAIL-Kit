@@ -1,32 +1,21 @@
-# F.A.I.L. Kit Audit - GitHub Actions Workflow
-# 
-# This workflow runs the F.A.I.L. Kit forensic audit on your AI agent.
-# 
-# Setup:
-# 1. Copy this file to .github/workflows/fail-audit.yml
-# 2. Set the AGENT_ENDPOINT secret in your repository settings
-# 3. Optionally customize the audit level and other options
+# F.A.I.L. Kit GitHub Action
+# Forensic Audit of Intelligent Logic
 #
-# For more information: https://github.com/resetroot99/The-FAIL-Kit/blob/main/INTEGRATION.md
+# Add this to your repository as .github/workflows/fail-audit.yml
 
 name: F.A.I.L. Kit Audit
 
 on:
+  pull_request:
+    types: [opened, synchronize, reopened]
   push:
     branches: [main, master]
-  pull_request:
-    branches: [main, master]
-  # Allow manual trigger
-  workflow_dispatch:
-    inputs:
-      level:
-        description: 'Audit level (smoke, interrogation, red-team)'
-        required: false
-        default: 'smoke'
 
-env:
-  # Default timeout in milliseconds
-  FAIL_AUDIT_TIMEOUT: 30000
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+  statuses: write
 
 jobs:
   audit:
@@ -34,110 +23,146 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-      
-      - name: Install F.A.I.L. Kit
-        run: npm install -g @fail-kit/cli
-      
-      # If you have a local agent to test, start it here
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Optional: Start your agent server if needed for testing
       # - name: Start Agent Server
-      #   run: |
-      #     npm install
-      #     npm start &
-      #     sleep 5  # Wait for server to start
-      
-      - name: Initialize Audit Config
+      #   run: npm run start:test &
+      #   env:
+      #     NODE_ENV: test
+
+      - name: Install F.A.I.L. Kit CLI
+        run: npm install -g @fail-kit/cli
+
+      - name: Run Audit
+        id: audit
         run: |
-          fail-audit init --yes \
-            --endpoint "${{ secrets.AGENT_ENDPOINT || 'http://localhost:8000/eval/run' }}" \
-            --timeout ${{ env.FAIL_AUDIT_TIMEOUT }}
-      
-      - name: Run Smoke Test
-        if: github.event_name == 'push' || github.event.inputs.level == 'smoke'
-        run: fail-audit run --level smoke --format junit --output smoke-results.xml --ci
-        continue-on-error: true
-      
-      - name: Run Interrogation (PR only)
-        if: github.event_name == 'pull_request' || github.event.inputs.level == 'interrogation'
-        run: fail-audit run --level interrogation --format junit --output interrogation-results.xml --ci
-        continue-on-error: true
-      
-      - name: Run Full Red Team
-        if: github.event.inputs.level == 'red-team'
-        run: fail-audit run --format junit --output full-results.xml --ci
-        continue-on-error: true
-      
-      - name: Upload Test Results
+          # Run the audit and capture results
+          fail-audit run --format json --output audit-results.json --ci || echo "AUDIT_FAILED=true" >> $GITHUB_OUTPUT
+          
+          # Generate HTML dashboard
+          fail-audit report audit-results.json --format html --output audit-dashboard.html
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Post PR Comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const results = JSON.parse(fs.readFileSync('audit-results.json', 'utf8'));
+            
+            const passed = results.passed;
+            const failed = results.failed;
+            const total = results.total;
+            const passRate = ((passed / total) * 100).toFixed(1);
+            
+            // Determine status
+            const criticalFailures = results.results.filter(r => 
+              !r.pass && (
+                r.case.includes('CONTRACT_0003') || 
+                r.case.includes('CONTRACT_02') ||
+                r.case.includes('AGENT_0008')
+              )
+            );
+            
+            let status, emoji;
+            if (criticalFailures.length > 0) {
+              status = 'BLOCK';
+              emoji = '🚫';
+            } else if (failed >= 5) {
+              status = 'NEEDS REVIEW';
+              emoji = '⚠️';
+            } else if (parseFloat(passRate) >= 95) {
+              status = 'PASS';
+              emoji = '✅';
+            } else {
+              status = 'NEEDS REVIEW';
+              emoji = '⚠️';
+            }
+            
+            let body = `## ${emoji} F.A.I.L. Kit Audit: ${status}\n\n`;
+            body += `| Metric | Value |\n|--------|-------|\n`;
+            body += `| **Pass Rate** | ${passRate}% (${passed}/${total}) |\n`;
+            body += `| **Critical Issues** | ${criticalFailures.length} |\n`;
+            body += `| **Duration** | ${(results.duration_ms / 1000).toFixed(2)}s |\n\n`;
+            
+            if (failed > 0) {
+              body += `<details><summary>View ${failed} failure(s)</summary>\n\n`;
+              body += `| Test | Reason |\n|------|--------|\n`;
+              for (const f of results.results.filter(r => !r.pass).slice(0, 15)) {
+                const reason = (f.reason || f.error || 'Failed').substring(0, 50);
+                body += `| \`${f.case}\` | ${reason} |\n`;
+              }
+              body += `\n</details>\n\n`;
+            }
+            
+            body += `---\n<sub>Generated by F.A.I.L. Kit • Commit: \`${context.sha.substring(0, 7)}\`</sub>`;
+            
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const existingComment = comments.find(c => 
+              c.body.includes('F.A.I.L. Kit Audit') && 
+              c.user.type === 'Bot'
+            );
+            
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body
+              });
+            }
+            
+            // Create check run
+            await github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: 'F.A.I.L. Kit Audit',
+              head_sha: context.sha,
+              status: 'completed',
+              conclusion: status === 'BLOCK' ? 'failure' : status === 'PASS' ? 'success' : 'neutral',
+              output: {
+                title: `F.A.I.L. Kit: ${status}`,
+                summary: `${passed}/${total} tests passed (${passRate}%)`,
+              }
+            });
+
+      - name: Upload Audit Results
         uses: actions/upload-artifact@v4
-        if: always()
         with:
           name: fail-audit-results
           path: |
-            *.xml
-            audit-results/
-      
-      - name: Publish Test Report
-        uses: mikepenz/action-junit-report@v4
-        if: always()
-        with:
-          report_paths: '*.xml'
-          fail_on_failure: true
-          include_passed: true
-          detailed_summary: true
-          check_name: 'F.A.I.L. Kit Audit Results'
-      
-      - name: Generate HTML Report
-        if: failure()
-        run: |
-          for f in *.xml; do
-            json_file="${f%.xml}.json"
-            if [ -f "$json_file" ]; then
-              fail-audit report "$json_file" --format html
-            fi
-          done
-      
-      - name: Upload HTML Reports
-        uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: fail-audit-html-reports
-          path: '*.html'
+            audit-results.json
+            audit-dashboard.html
+          retention-days: 30
 
-  # Optional: Post results to PR as a comment
-  comment:
-    name: Post Results
-    runs-on: ubuntu-latest
-    needs: audit
-    if: github.event_name == 'pull_request'
-    
-    steps:
-      - name: Download Results
-        uses: actions/download-artifact@v4
-        with:
-          name: fail-audit-results
-      
-      - name: Generate Markdown Summary
-        id: summary
+      - name: Fail on Critical Issues
+        if: steps.audit.outputs.AUDIT_FAILED == 'true'
         run: |
-          # Find the most recent JSON results file
-          RESULTS=$(ls -t audit-results/*.json 2>/dev/null | head -1 || echo "")
-          
-          if [ -n "$RESULTS" ] && [ -f "$RESULTS" ]; then
-            fail-audit report "$RESULTS" --format markdown --output summary.md
-            echo "has_results=true" >> $GITHUB_OUTPUT
-          else
-            echo "has_results=false" >> $GITHUB_OUTPUT
-          fi
-      
-      - name: Comment on PR
-        if: steps.summary.outputs.has_results == 'true'
-        uses: thollander/actions-comment-pull-request@v2
-        with:
-          filePath: summary.md
-          comment_tag: fail-audit-results
+          echo "::error::F.A.I.L. Kit audit detected critical issues"
+          exit 1

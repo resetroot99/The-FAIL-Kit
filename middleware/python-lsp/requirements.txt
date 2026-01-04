@@ -1,0 +1,20 @@
+# F.A.I.L. Kit Python LSP Server Dependencies
+# Install with: pip install -r requirements.txt
+
+# Core LSP dependencies
+pygls>=1.2.0
+lsprotocol>=2023.0.0
+
+# AST/Tree parsing
+tree-sitter>=0.20.0
+tree-sitter-python>=0.20.0
+
+# Data validation
+pydantic>=2.0.0
+
+# Development dependencies (optional)
+# pytest>=7.0.0
+# pytest-asyncio>=0.21.0
+# black>=23.0.0
+# ruff>=0.1.0
+# mypy>=1.0.0

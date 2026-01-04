@@ -1,0 +1,78 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "fail-kit-lsp"
+version = "1.0.0"
+description = "F.A.I.L. Kit Language Server for Python - Forensic analysis for LangChain, CrewAI, and AutoGen"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.9"
+authors = [
+    { name = "F.A.I.L. Kit Team" }
+]
+keywords = [
+    "lsp",
+    "language-server",
+    "fail-kit",
+    "ai-safety",
+    "langchain",
+    "crewai",
+    "autogen",
+    "forensic",
+    "audit"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Quality Assurance",
+]
+dependencies = [
+    "pygls>=1.2.0",
+    "lsprotocol>=2023.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "black>=23.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0",
+]
+
+[project.scripts]
+fail-kit-lsp = "fail_kit_lsp.server:main"
+
+[project.urls]
+Homepage = "https://github.com/resetroot99/The-FAIL-Kit"
+Documentation = "https://github.com/resetroot99/The-FAIL-Kit/tree/main/python-lsp"
+Repository = "https://github.com/resetroot99/The-FAIL-Kit"
+
+[tool.hatch.build.targets.wheel]
+packages = ["fail_kit_lsp"]
+
+[tool.black]
+line-length = 100
+target-version = ["py39", "py310", "py311", "py312"]
+
+[tool.ruff]
+line-length = 100
+select = ["E", "F", "I", "W"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.9"
+strict = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --cov=fail_kit_lsp --cov-report=term-missing"

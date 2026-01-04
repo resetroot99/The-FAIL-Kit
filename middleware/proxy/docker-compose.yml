@@ -1,0 +1,74 @@
+# F.A.I.L. Kit Universal Proxy - Docker Compose
+#
+# Usage:
+#   docker-compose up -d
+#
+# Configure your application to use this proxy:
+#   HTTP_PROXY=http://localhost:8080
+#   HTTPS_PROXY=http://localhost:8080
+
+version: '3.8'
+
+services:
+  fail-kit-proxy:
+    build: .
+    image: fail-kit-proxy:latest
+    container_name: fail-kit-proxy
+    ports:
+      - "8080:8080"     # HTTP proxy
+      - "8443:8443"     # HTTPS proxy (for SSL termination)
+      - "9090:9090"     # Admin API
+    environment:
+      - NODE_ENV=production
+      - PROXY_PORT=8080
+      - PROXY_SSL_PORT=8443
+      - ADMIN_PORT=9090
+      - RECEIPT_DIR=/app/receipts
+      - LOG_LEVEL=info
+      # Target configuration
+      - TARGET_HOSTS=api.openai.com,api.anthropic.com,*
+      # Receipt configuration
+      - RECEIPT_FORMAT=json
+      - RECEIPT_INCLUDE_BODY=true
+      - RECEIPT_HASH_ALGORITHM=sha256
+      # Optional: Forward to external storage
+      # - RECEIPT_WEBHOOK=http://your-server/receipts
+    volumes:
+      - fail-kit-receipts:/app/receipts
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    networks:
+      - fail-kit-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Optional: Receipt viewer dashboard
+  fail-kit-dashboard:
+    image: nginx:alpine
+    container_name: fail-kit-dashboard
+    ports:
+      - "3080:80"
+    volumes:
+      - fail-kit-receipts:/usr/share/nginx/html/receipts:ro
+    depends_on:
+      - fail-kit-proxy
+    networks:
+      - fail-kit-network
+    profiles:
+      - dashboard
+
+volumes:
+  fail-kit-receipts:
+    driver: local
+
+networks:
+  fail-kit-network:
+    driver: bridge
