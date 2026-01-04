@@ -3,8 +3,8 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "failkit-lsp"
-version = "1.0.0"
+name = "fail-kit"
+version = "1.1.0"
 description = "F.A.I.L. Kit Python Language Server for LangChain, CrewAI, and AutoGen"
 readme = "README.md"
 license = {text = "MIT"}
