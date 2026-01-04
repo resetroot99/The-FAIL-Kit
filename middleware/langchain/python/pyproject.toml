@@ -3,34 +3,58 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "fail-kit-langchain"
-version = "1.0.0"
-description = "F.A.I.L. Kit adapter for LangChain agents (Python)"
+name = "fail-kit"
+version = "1.6.0"
+description = "F.A.I.L. Kit adapter for LangChain agents - Receipts, auditing, policy enforcement, compliance, and resilience"
 readme = "README.md"
 requires-python = ">=3.9"
-license = {file = "../../../LICENSE.txt"}
+license = {text = "MIT"}
 authors = [
-    {name = "The FAIL Kit Contributors"}
+    {name = "F.A.I.L. Kit Contributors"}
 ]
-keywords = ["ai", "agents", "langchain", "auditing", "testing", "receipts"]
+keywords = [
+    "ai",
+    "agents",
+    "langchain",
+    "auditing",
+    "testing",
+    "receipts",
+    "llm",
+    "openai",
+    "anthropic",
+    "fail-kit",
+    "compliance",
+    "soc2",
+    "hipaa",
+    "gdpr"
+]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12"
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Security"
 ]
 
 dependencies = [
-    "fastapi>=0.100.0",
     "langchain>=0.1.0",
     "langchain-core>=0.1.0",
     "pydantic>=2.0.0"
 ]
 
 [project.optional-dependencies]
+fastapi = [
+    "fastapi>=0.100.0",
+    "uvicorn>=0.23.0"
+]
+
 dev = [
     "pytest>=7.0.0",
     "pytest-asyncio>=0.21.0",
@@ -42,8 +66,21 @@ langgraph = [
     "langgraph>=0.0.20"
 ]
 
+all = [
+    "fastapi>=0.100.0",
+    "uvicorn>=0.23.0",
+    "langgraph>=0.0.20"
+]
+
 [project.urls]
 Homepage = "https://github.com/resetroot99/The-FAIL-Kit"
 Documentation = "https://github.com/resetroot99/The-FAIL-Kit/tree/main/middleware/langchain"
 Repository = "https://github.com/resetroot99/The-FAIL-Kit"
 Issues = "https://github.com/resetroot99/The-FAIL-Kit/issues"
+Changelog = "https://github.com/resetroot99/The-FAIL-Kit/blob/main/CHANGELOG.md"
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.setuptools]
+py-modules = ["fail_kit_langchain"]

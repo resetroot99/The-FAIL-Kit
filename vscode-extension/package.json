@@ -1,15 +1,21 @@
 {
   "name": "fail-kit-vscode",
   "displayName": "F.A.I.L. Kit",
-  "description": "Forensic Audit of Intelligent Logic - Real-time static analysis for AI agent code",
-  "version": "0.1.0",
-  "publisher": "fail-kit",
+  "description": "Forensic Audit of Intelligent Logic - Real-time static analysis for AI agent code with dashboard, auto-fix, and regression detection.",
+  "version": "1.1.0",
+  "publisher": "AliJakvani",
+  "icon": "icon.png",
+  "galleryBanner": {
+    "color": "#1e293b",
+    "theme": "dark"
+  },
   "engines": {
     "vscode": "^1.85.0"
   },
   "categories": [
     "Linters",
-    "Programming Languages"
+    "Programming Languages",
+    "Testing"
   ],
   "keywords": [
     "ai",
@@ -18,7 +24,10 @@
     "langchain",
     "openai",
     "llm",
-    "security"
+    "security",
+    "receipts",
+    "error-handling",
+    "auto-fix"
   ],
   "activationEvents": [
     "onLanguage:typescript",
@@ -31,13 +40,61 @@
     "commands": [
       {
         "command": "fail-kit.analyzeFile",
-        "title": "F.A.I.L. Kit: Analyze Current File"
+        "title": "F.A.I.L. Kit: Analyze Current File",
+        "icon": "$(shield)"
       },
       {
         "command": "fail-kit.analyzeWorkspace",
-        "title": "F.A.I.L. Kit: Analyze Workspace"
+        "title": "F.A.I.L. Kit: Analyze Workspace",
+        "icon": "$(folder)"
+      },
+      {
+        "command": "fail-kit.generateReport",
+        "title": "F.A.I.L. Kit: Open Dashboard",
+        "icon": "$(dashboard)"
+      },
+      {
+        "command": "fail-kit.setBaseline",
+        "title": "F.A.I.L. Kit: Set Baseline",
+        "icon": "$(pin)"
+      },
+      {
+        "command": "fail-kit.compareBaseline",
+        "title": "F.A.I.L. Kit: Compare to Baseline",
+        "icon": "$(diff)"
+      },
+      {
+        "command": "fail-kit.autoFixAll",
+        "title": "F.A.I.L. Kit: Auto-Fix All Issues",
+        "icon": "$(wrench)"
+      },
+      {
+        "command": "fail-kit.exportReport",
+        "title": "F.A.I.L. Kit: Export Report",
+        "icon": "$(file-text)"
       }
     ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "fail-kit.analyzeFile",
+          "when": "editorLangId =~ /typescript|javascript/",
+          "group": "navigation"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "fail-kit.analyzeFile",
+          "when": "editorLangId =~ /typescript|javascript/",
+          "group": "failkit"
+        },
+        {
+          "command": "fail-kit.autoFixAll",
+          "when": "editorLangId =~ /typescript|javascript/",
+          "group": "failkit"
+        }
+      ]
+    },
     "configuration": {
       "title": "F.A.I.L. Kit",
       "properties": {
@@ -48,21 +105,56 @@
         },
         "fail-kit.severity.missingReceipt": {
           "type": "string",
-          "enum": ["error", "warning", "info", "hint"],
+          "enum": [
+            "error",
+            "warning",
+            "info",
+            "hint"
+          ],
           "default": "warning",
           "description": "Severity level for missing receipt warnings"
         },
         "fail-kit.severity.missingErrorHandling": {
           "type": "string",
-          "enum": ["error", "warning", "info", "hint"],
+          "enum": [
+            "error",
+            "warning",
+            "info",
+            "hint"
+          ],
           "default": "warning",
           "description": "Severity level for missing error handling warnings"
         },
         "fail-kit.excludePatterns": {
           "type": "array",
-          "items": { "type": "string" },
-          "default": ["**/node_modules/**", "**/*.test.ts", "**/*.spec.ts"],
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "**/node_modules/**",
+            "**/*.test.ts",
+            "**/*.spec.ts",
+            "**/dist/**",
+            "**/build/**"
+          ],
           "description": "Glob patterns for files to exclude from analysis"
+        },
+        "fail-kit.autoFix.minConfidence": {
+          "type": "number",
+          "default": 90,
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Minimum confidence level (0-100) for auto-fix suggestions"
+        },
+        "fail-kit.regression.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable regression detection against baseline"
+        },
+        "fail-kit.telemetry.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable anonymous error telemetry to help improve F.A.I.L. Kit"
         }
       }
     }
@@ -72,23 +164,31 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "lint": "eslint src --ext ts",
-    "test": "node ./out/test/runTest.js"
+    "test": "node ./out/test/runTest.js",
+    "package": "vsce package"
   },
   "devDependencies": {
+    "@types/minimatch": "^5.1.2",
     "@types/node": "^20.10.0",
     "@types/vscode": "^1.85.0",
     "@typescript-eslint/eslint-plugin": "^6.13.0",
     "@typescript-eslint/parser": "^6.13.0",
+    "@vscode/vsce": "^2.22.0",
     "eslint": "^8.54.0",
     "typescript": "^5.3.0"
   },
   "dependencies": {
     "ajv": "^8.12.0",
-    "ajv-formats": "^2.1.1"
+    "ajv-formats": "^2.1.1",
+    "minimatch": "^10.0.1"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/resetroot99/The-FAIL-Kit.git"
+    "url": "https://github.com/resetroot99/vscode-fail.git"
   },
-  "license": "Commercial"
+  "bugs": {
+    "url": "https://github.com/resetroot99/vscode-fail/issues"
+  },
+  "homepage": "https://github.com/resetroot99/vscode-fail#readme",
+  "license": "MIT"
 }

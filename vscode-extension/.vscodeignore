@@ -1,0 +1,35 @@
+# Development files
+.vscode/**
+.vscode-test/**
+src/**
+**/*.ts
+**/*.map
+.gitignore
+.eslintrc.js
+tsconfig.json
+
+# Test files
+**/*.test.ts
+**/*.spec.ts
+**/test/**
+samples/**
+
+# Build artifacts
+node_modules/.bin/**
+node_modules/**/test/**
+node_modules/**/tests/**
+node_modules/**/*.md
+node_modules/**/*.txt
+node_modules/**/LICENSE*
+node_modules/**/CHANGELOG*
+node_modules/**/.github/**
+node_modules/**/docs/**
+node_modules/**/examples/**
+
+# Package files we don't need
+*.vsix
+.npm
+.yarn
+
+# Other
+**/.DS_Store

@@ -12,6 +12,130 @@ export interface ToolPattern {
   requiresReceipt: boolean;
 }
 
+// ============================================
+// NEW: Secret detection patterns (FK003, FK007)
+// ============================================
+
+export interface SecretPattern {
+  pattern: RegExp;
+  type: string;
+  severity: 'critical' | 'high' | 'medium';
+  description: string;
+}
+
+export const SECRET_PATTERNS: SecretPattern[] = [
+  // Stripe keys
+  { pattern: /['"`]sk[-_]live[-_][a-zA-Z0-9]{20,}['"`]/g, type: 'stripe_secret_key', severity: 'critical', description: 'Stripe live secret key' },
+  { pattern: /['"`]sk[-_]test[-_][a-zA-Z0-9]{20,}['"`]/g, type: 'stripe_test_key', severity: 'high', description: 'Stripe test secret key' },
+  { pattern: /['"`]pk[-_]live[-_][a-zA-Z0-9]{20,}['"`]/g, type: 'stripe_publishable_key', severity: 'medium', description: 'Stripe live publishable key' },
+  
+  // AWS keys
+  { pattern: /['"`]AKIA[A-Z0-9]{16}['"`]/g, type: 'aws_access_key', severity: 'critical', description: 'AWS Access Key ID' },
+  { pattern: /['"`][A-Za-z0-9/+=]{40}['"`]/g, type: 'aws_secret_key', severity: 'critical', description: 'Potential AWS Secret Access Key' },
+  
+  // OpenAI keys
+  { pattern: /['"`]sk-[a-zA-Z0-9]{32,}['"`]/g, type: 'openai_api_key', severity: 'critical', description: 'OpenAI API key' },
+  
+  // Generic API keys
+  { pattern: /api[_-]?key\s*[:=]\s*['"`][^'"`]{20,}['"`]/gi, type: 'generic_api_key', severity: 'high', description: 'Generic API key assignment' },
+  { pattern: /secret[_-]?key\s*[:=]\s*['"`][^'"`]{10,}['"`]/gi, type: 'generic_secret', severity: 'high', description: 'Generic secret key assignment' },
+  { pattern: /password\s*[:=]\s*['"`][^'"`]{6,}['"`]/gi, type: 'hardcoded_password', severity: 'critical', description: 'Hardcoded password' },
+  
+  // GitHub tokens
+  { pattern: /['"`]ghp_[a-zA-Z0-9]{36}['"`]/g, type: 'github_pat', severity: 'critical', description: 'GitHub Personal Access Token' },
+  { pattern: /['"`]github_pat_[a-zA-Z0-9_]{22,}['"`]/g, type: 'github_fine_grained', severity: 'critical', description: 'GitHub Fine-grained PAT' },
+  
+  // Database connection strings
+  { pattern: /['"`]postgres(ql)?:\/\/[^'"`]+['"`]/gi, type: 'postgres_uri', severity: 'high', description: 'PostgreSQL connection string' },
+  { pattern: /['"`]mongodb(\+srv)?:\/\/[^'"`]+['"`]/gi, type: 'mongodb_uri', severity: 'high', description: 'MongoDB connection string' },
+  { pattern: /['"`]mysql:\/\/[^'"`]+['"`]/gi, type: 'mysql_uri', severity: 'high', description: 'MySQL connection string' },
+  
+  // JWT secrets
+  { pattern: /jwt[_-]?secret\s*[:=]\s*['"`][^'"`]{10,}['"`]/gi, type: 'jwt_secret', severity: 'critical', description: 'JWT secret key' },
+];
+
+// ============================================
+// NEW: Side-effect patterns (FK004)
+// ============================================
+
+export interface SideEffectPattern {
+  pattern: RegExp;
+  action: string;
+  severity: 'critical' | 'high' | 'medium';
+  requiresConfirmation: boolean;
+  description: string;
+}
+
+export const SIDE_EFFECT_PATTERNS: SideEffectPattern[] = [
+  // Destructive operations
+  { pattern: /\.delete\s*\(/g, action: 'delete', severity: 'high', requiresConfirmation: true, description: 'Delete operation' },
+  { pattern: /\.remove\s*\(/g, action: 'remove', severity: 'high', requiresConfirmation: true, description: 'Remove operation' },
+  { pattern: /\.destroy\s*\(/g, action: 'destroy', severity: 'critical', requiresConfirmation: true, description: 'Destroy operation' },
+  { pattern: /\.truncate\s*\(/g, action: 'truncate', severity: 'critical', requiresConfirmation: true, description: 'Truncate operation' },
+  { pattern: /\.drop\s*\(/g, action: 'drop', severity: 'critical', requiresConfirmation: true, description: 'Drop operation' },
+  
+  // Publishing/broadcasting
+  { pattern: /\.publish\s*\(/g, action: 'publish', severity: 'medium', requiresConfirmation: true, description: 'Publish operation' },
+  { pattern: /\.broadcast\s*\(/g, action: 'broadcast', severity: 'medium', requiresConfirmation: true, description: 'Broadcast operation' },
+  { pattern: /\.emit\s*\(/g, action: 'emit', severity: 'medium', requiresConfirmation: false, description: 'Emit event' },
+  
+  // Sending operations
+  { pattern: /\.send\s*\(/g, action: 'send', severity: 'medium', requiresConfirmation: true, description: 'Send operation' },
+  { pattern: /\.sendEmail\s*\(/g, action: 'send_email', severity: 'high', requiresConfirmation: true, description: 'Send email' },
+  { pattern: /\.sendSMS\s*\(/g, action: 'send_sms', severity: 'high', requiresConfirmation: true, description: 'Send SMS' },
+  { pattern: /\.sendNotification\s*\(/g, action: 'send_notification', severity: 'medium', requiresConfirmation: true, description: 'Send notification' },
+  
+  // Financial operations
+  { pattern: /\.charge\s*\(/g, action: 'charge', severity: 'critical', requiresConfirmation: true, description: 'Charge payment' },
+  { pattern: /\.refund\s*\(/g, action: 'refund', severity: 'critical', requiresConfirmation: true, description: 'Refund payment' },
+  { pattern: /\.transfer\s*\(/g, action: 'transfer', severity: 'critical', requiresConfirmation: true, description: 'Transfer funds' },
+];
+
+// ============================================
+// NEW: LLM resilience patterns (FK005)
+// ============================================
+
+export interface LLMResiliencePattern {
+  pattern: RegExp;
+  type: 'timeout' | 'retry' | 'fallback' | 'circuit_breaker';
+  description: string;
+}
+
+export const LLM_RESILIENCE_PATTERNS: LLMResiliencePattern[] = [
+  { pattern: /timeout\s*[:=]/gi, type: 'timeout', description: 'Timeout configuration' },
+  { pattern: /maxRetries\s*[:=]/gi, type: 'retry', description: 'Retry configuration' },
+  { pattern: /retryCount\s*[:=]/gi, type: 'retry', description: 'Retry count' },
+  { pattern: /retry\s*\(/gi, type: 'retry', description: 'Retry function' },
+  { pattern: /withRetry\s*\(/gi, type: 'retry', description: 'With retry wrapper' },
+  { pattern: /fallback\s*[:=]/gi, type: 'fallback', description: 'Fallback configuration' },
+  { pattern: /onFallback\s*[:=]/gi, type: 'fallback', description: 'Fallback handler' },
+  { pattern: /circuitBreaker/gi, type: 'circuit_breaker', description: 'Circuit breaker pattern' },
+];
+
+// ============================================
+// NEW: Provenance patterns (FK006)
+// ============================================
+
+export interface ProvenancePattern {
+  pattern: RegExp;
+  field: string;
+  required: boolean;
+}
+
+export const PROVENANCE_PATTERNS: ProvenancePattern[] = [
+  { pattern: /action_id\s*[:=]/g, field: 'action_id', required: true },
+  { pattern: /actionId\s*[:=]/g, field: 'action_id', required: true },
+  { pattern: /timestamp\s*[:=]/g, field: 'timestamp', required: true },
+  { pattern: /created_at\s*[:=]/g, field: 'timestamp', required: true },
+  { pattern: /createdAt\s*[:=]/g, field: 'timestamp', required: true },
+  { pattern: /trace_id\s*[:=]/g, field: 'trace_id', required: false },
+  { pattern: /traceId\s*[:=]/g, field: 'trace_id', required: false },
+  { pattern: /correlation_id\s*[:=]/g, field: 'correlation_id', required: false },
+  { pattern: /correlationId\s*[:=]/g, field: 'correlation_id', required: false },
+  { pattern: /user_id\s*[:=]/g, field: 'user_id', required: false },
+  { pattern: /userId\s*[:=]/g, field: 'user_id', required: false },
+];
+
 export interface LLMPattern {
   pattern: RegExp;
   provider: string;
@@ -209,4 +333,120 @@ export function hasErrorHandlingNearby(code: string, position: number): boolean 
   const hasCatch = /\.catch\s*\(/.test(afterCode) || /\}\s*catch\s*\(/.test(afterCode);
 
   return hasTry || hasCatch;
+}
+
+// ============================================
+// NEW: Helper functions for new patterns
+// ============================================
+
+/**
+ * Check if code contains secret patterns
+ */
+export function findSecrets(code: string): Array<{ pattern: SecretPattern; match: RegExpMatchArray; position: number }> {
+  const results: Array<{ pattern: SecretPattern; match: RegExpMatchArray; position: number }> = [];
+  
+  for (const secretPattern of SECRET_PATTERNS) {
+    secretPattern.pattern.lastIndex = 0;
+    let match: RegExpExecArray | null;
+    while ((match = secretPattern.pattern.exec(code)) !== null) {
+      // Skip if in comment
+      const lineStart = code.lastIndexOf('\n', match.index) + 1;
+      const lineContent = code.substring(lineStart, match.index);
+      if (lineContent.includes('//') || lineContent.includes('/*')) continue;
+      
+      // Skip environment variable references
+      if (/process\.env\.|import\.meta\.env\.|env\[/.test(code.substring(Math.max(0, match.index - 30), match.index))) continue;
+      
+      results.push({ pattern: secretPattern, match, position: match.index });
+    }
+  }
+  
+  return results;
+}
+
+/**
+ * Check if side-effect has confirmation/guard nearby
+ */
+export function hasSideEffectConfirmation(code: string, position: number): boolean {
+  const beforeCode = code.substring(Math.max(0, position - 300), position);
+  
+  // Check for confirmation patterns
+  const confirmPatterns = [
+    /confirm\s*\(/i,
+    /confirmAction\s*\(/i,
+    /userConfirm/i,
+    /await\s+confirm/i,
+    /if\s*\(\s*!?\s*confirm/i,
+    /policy\.allow/i,
+    /isAuthorized/i,
+    /hasPermission/i,
+    /canDelete/i,
+    /canExecute/i,
+    /approval/i,
+  ];
+  
+  return confirmPatterns.some(p => p.test(beforeCode));
+}
+
+/**
+ * Check if LLM call has resilience patterns nearby
+ */
+export function hasLLMResilience(code: string, position: number): { hasTimeout: boolean; hasRetry: boolean; hasFallback: boolean } {
+  const range = 500;
+  const beforeCode = code.substring(Math.max(0, position - range), position);
+  const afterCode = code.substring(position, Math.min(position + range, code.length));
+  const contextCode = beforeCode + afterCode;
+  
+  const hasTimeout = LLM_RESILIENCE_PATTERNS.filter(p => p.type === 'timeout').some(p => {
+    p.pattern.lastIndex = 0;
+    return p.pattern.test(contextCode);
+  });
+  
+  const hasRetry = LLM_RESILIENCE_PATTERNS.filter(p => p.type === 'retry').some(p => {
+    p.pattern.lastIndex = 0;
+    return p.pattern.test(contextCode);
+  });
+  
+  const hasFallback = LLM_RESILIENCE_PATTERNS.filter(p => p.type === 'fallback').some(p => {
+    p.pattern.lastIndex = 0;
+    return p.pattern.test(contextCode);
+  });
+  
+  return { hasTimeout, hasRetry, hasFallback };
+}
+
+/**
+ * Check if code has provenance metadata
+ */
+export function hasProvenanceMetadata(code: string, position: number): { hasActionId: boolean; hasTimestamp: boolean; missingFields: string[] } {
+  const range = 500;
+  const afterCode = code.substring(position, Math.min(position + range, code.length));
+  
+  const foundFields = new Set<string>();
+  
+  for (const prov of PROVENANCE_PATTERNS) {
+    prov.pattern.lastIndex = 0;
+    if (prov.pattern.test(afterCode)) {
+      foundFields.add(prov.field);
+    }
+  }
+  
+  const requiredFields = PROVENANCE_PATTERNS.filter(p => p.required).map(p => p.field);
+  const uniqueRequired = [...new Set(requiredFields)];
+  const missingFields = uniqueRequired.filter(f => !foundFields.has(f));
+  
+  return {
+    hasActionId: foundFields.has('action_id'),
+    hasTimestamp: foundFields.has('timestamp'),
+    missingFields,
+  };
+}
+
+/**
+ * Check if line is inside an environment file or config
+ */
+export function isConfigFile(filePath: string): boolean {
+  return /\.(env|config|settings)\.(ts|js|json)$/.test(filePath) ||
+         /\.env(\.\w+)?$/.test(filePath) ||
+         /config\.(ts|js|json)$/.test(filePath);
 }

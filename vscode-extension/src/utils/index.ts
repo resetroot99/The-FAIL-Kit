@@ -4,3 +4,4 @@
 
 export * from './debounce';
 export * from './cache';
+export * from './telemetry';

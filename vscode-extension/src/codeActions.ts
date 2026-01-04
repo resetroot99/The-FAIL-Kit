@@ -2,10 +2,21 @@
  * F.A.I.L. Kit Code Action Provider
  *
  * Provides quick fixes for agent code issues detected by diagnostics.
+ * Enhanced with dashboard links and severity indicators.
  */
 
 import * as vscode from 'vscode';
 import { DIAGNOSTIC_SOURCE } from './diagnostics';
+
+/**
+ * Extract rule ID from diagnostic code
+ */
+function getRuleIdFromDiagnostic(diagnostic: vscode.Diagnostic): string {
+  if (typeof diagnostic.code === 'object' && diagnostic.code !== null) {
+    return String(diagnostic.code.value);
+  }
+  return String(diagnostic.code);
+}
 
 /**
  * Quick fix templates for different issue types
@@ -41,6 +52,21 @@ const receiptResult = await generateReceiptForAction(async () => {
 }
 `,
   },
+  FK003: {
+    todo: '// TODO: [FAIL-Kit] Move this secret to environment variable\n',
+  },
+  FK004: {
+    todo: '// TODO: [FAIL-Kit] Add confirmation before this destructive operation\n',
+  },
+  FK005: {
+    todo: '// TODO: [FAIL-Kit] Add timeout and retry logic for this LLM call\n',
+  },
+  FK006: {
+    todo: '// TODO: [FAIL-Kit] Add action_id and timestamp for provenance\n',
+  },
+  FK007: {
+    todo: '// TODO: [FAIL-Kit] Remove hardcoded credential - use environment variable\n',
+  },
 };
 
 /**
@@ -68,7 +94,15 @@ export class FailKitCodeActionProvider implements vscode.CodeActionProvider {
         continue;
       }
 
-      const ruleId = diagnostic.code as string;
+      const ruleId = getRuleIdFromDiagnostic(diagnostic);
+
+      // Add "View in Dashboard" action for all rules
+      actions.push(this.createDashboardAction(document, diagnostic, ruleId));
+
+      // Add "Auto-Fix" action for supported rules
+      if (['FK001', 'FK002', 'FK003', 'FK004', 'FK005', 'FK006', 'FK007'].includes(ruleId)) {
+        actions.push(this.createAutoFixAction(document, diagnostic, ruleId));
+      }
 
       switch (ruleId) {
         case 'FK001':
@@ -76,6 +110,19 @@ export class FailKitCodeActionProvider implements vscode.CodeActionProvider {
           break;
         case 'FK002':
           actions.push(...this.createFK002Actions(document, diagnostic));
+          break;
+        case 'FK003':
+        case 'FK007':
+          actions.push(...this.createSecretActions(document, diagnostic, ruleId));
+          break;
+        case 'FK004':
+          actions.push(...this.createSideEffectActions(document, diagnostic));
+          break;
+        case 'FK005':
+          actions.push(...this.createResilienceActions(document, diagnostic));
+          break;
+        case 'FK006':
+          actions.push(...this.createProvenanceActions(document, diagnostic));
           break;
         default:
           // Generic TODO action for unknown rules
@@ -85,6 +132,191 @@ export class FailKitCodeActionProvider implements vscode.CodeActionProvider {
     }
 
     return actions;
+  }
+
+  /**
+   * Create "View in Dashboard" action
+   */
+  private createDashboardAction(
+    document: vscode.TextDocument,
+    diagnostic: vscode.Diagnostic,
+    ruleId: string
+  ): vscode.CodeAction {
+    const action = new vscode.CodeAction(
+      '$(dashboard) View in Dashboard',
+      vscode.CodeActionKind.QuickFix
+    );
+    action.command = {
+      command: 'fail-kit.showInDashboard',
+      title: 'View in Dashboard',
+      arguments: [document.uri.fsPath, diagnostic.range.start.line, ruleId],
+    };
+    return action;
+  }
+
+  /**
+   * Create "Auto-Fix" action
+   */
+  private createAutoFixAction(
+    document: vscode.TextDocument,
+    diagnostic: vscode.Diagnostic,
+    ruleId: string
+  ): vscode.CodeAction {
+    const action = new vscode.CodeAction(
+      '$(wand) Auto-Fix This Issue',
+      vscode.CodeActionKind.QuickFix
+    );
+    action.command = {
+      command: 'fail-kit.autoFixIssue',
+      title: 'Auto-Fix Issue',
+      arguments: [document.uri.fsPath, diagnostic.range.start.line, ruleId],
+    };
+    action.isPreferred = true;
+    return action;
+  }
+
+  /**
+   * Create actions for FK003/FK007: Secret exposure
+   */
+  private createSecretActions(
+    document: vscode.TextDocument,
+    diagnostic: vscode.Diagnostic,
+    ruleId: string
+  ): vscode.CodeAction[] {
+    const actions: vscode.CodeAction[] = [];
+    const template = ruleId === 'FK003' ? QUICK_FIX_TEMPLATES.FK003 : QUICK_FIX_TEMPLATES.FK007;
+
+    // Action 1: Add TODO comment
+    const todoAction = new vscode.CodeAction(
+      'Add TODO: Move secret to environment variable',
+      vscode.CodeActionKind.QuickFix
+    );
+    todoAction.edit = new vscode.WorkspaceEdit();
+    todoAction.edit.insert(
+      document.uri,
+      new vscode.Position(diagnostic.range.start.line, 0),
+      this.getIndentation(document, diagnostic.range.start.line) + template.todo
+    );
+    todoAction.diagnostics = [diagnostic];
+    actions.push(todoAction);
+
+    // Action 2: Show security documentation
+    const docsAction = new vscode.CodeAction(
+      'Learn about secure secret management',
+      vscode.CodeActionKind.QuickFix
+    );
+    docsAction.command = {
+      command: 'fail-kit.showDocumentation',
+      title: 'Show Documentation',
+      arguments: ['secrets'],
+    };
+    actions.push(docsAction);
+
+    return actions;
+  }
+
+  /**
+   * Create actions for FK004: Side-effect without confirmation
+   */
+  private createSideEffectActions(
+    document: vscode.TextDocument,
+    diagnostic: vscode.Diagnostic
+  ): vscode.CodeAction[] {
+    const actions: vscode.CodeAction[] = [];
+
+    const todoAction = new vscode.CodeAction(
+      'Add TODO: Add confirmation for destructive operation',
+      vscode.CodeActionKind.QuickFix
+    );
+    todoAction.edit = new vscode.WorkspaceEdit();
+    todoAction.edit.insert(
+      document.uri,
+      new vscode.Position(diagnostic.range.start.line, 0),
+      this.getIndentation(document, diagnostic.range.start.line) + QUICK_FIX_TEMPLATES.FK004.todo
+    );
+    todoAction.diagnostics = [diagnostic];
+    actions.push(todoAction);
+
+    // Disable action
+    actions.push(this.createDisableAction(document, diagnostic));
+
+    return actions;
+  }
+
+  /**
+   * Create actions for FK005: LLM without resilience
+   */
+  private createResilienceActions(
+    document: vscode.TextDocument,
+    diagnostic: vscode.Diagnostic
+  ): vscode.CodeAction[] {
+    const actions: vscode.CodeAction[] = [];
+
+    const todoAction = new vscode.CodeAction(
+      'Add TODO: Add timeout/retry for LLM call',
+      vscode.CodeActionKind.QuickFix
+    );
+    todoAction.edit = new vscode.WorkspaceEdit();
+    todoAction.edit.insert(
+      document.uri,
+      new vscode.Position(diagnostic.range.start.line, 0),
+      this.getIndentation(document, diagnostic.range.start.line) + QUICK_FIX_TEMPLATES.FK005.todo
+    );
+    todoAction.diagnostics = [diagnostic];
+    actions.push(todoAction);
+
+    actions.push(this.createDisableAction(document, diagnostic));
+
+    return actions;
+  }
+
+  /**
+   * Create actions for FK006: Missing provenance
+   */
+  private createProvenanceActions(
+    document: vscode.TextDocument,
+    diagnostic: vscode.Diagnostic
+  ): vscode.CodeAction[] {
+    const actions: vscode.CodeAction[] = [];
+
+    const todoAction = new vscode.CodeAction(
+      'Add TODO: Add provenance metadata',
+      vscode.CodeActionKind.QuickFix
+    );
+    todoAction.edit = new vscode.WorkspaceEdit();
+    todoAction.edit.insert(
+      document.uri,
+      new vscode.Position(diagnostic.range.start.line, 0),
+      this.getIndentation(document, diagnostic.range.start.line) + QUICK_FIX_TEMPLATES.FK006.todo
+    );
+    todoAction.diagnostics = [diagnostic];
+    actions.push(todoAction);
+
+    actions.push(this.createDisableAction(document, diagnostic));
+
+    return actions;
+  }
+
+  /**
+   * Create disable action for any rule
+   */
+  private createDisableAction(
+    document: vscode.TextDocument,
+    diagnostic: vscode.Diagnostic
+  ): vscode.CodeAction {
+    const disableAction = new vscode.CodeAction(
+      'Disable F.A.I.L. Kit for this line',
+      vscode.CodeActionKind.QuickFix
+    );
+    disableAction.edit = new vscode.WorkspaceEdit();
+    disableAction.edit.insert(
+      document.uri,
+      new vscode.Position(diagnostic.range.start.line, 0),
+      this.getIndentation(document, diagnostic.range.start.line) +
+        '// fail-kit-disable-next-line\n'
+    );
+    disableAction.diagnostics = [diagnostic];
+    return disableAction;
   }
 
   /**

@@ -7,12 +7,12 @@ A comprehensive, production-ready adapter that enables seamless integration betw
 ## What It Does
 
 The adapter automatically:
-- ✅ Generates action receipts from tool executions
-- ✅ Extracts intermediate steps from agent runs
-- ✅ Formats responses to match F.A.I.L. Kit schema
-- ✅ Hashes inputs/outputs for verification (SHA256)
-- ✅ Tracks execution latency and errors
-- ✅ Handles custom metadata
+- Generates action receipts from tool executions
+- Extracts intermediate steps from agent runs
+- Formats responses to match F.A.I.L. Kit schema
+- Hashes inputs/outputs for verification (SHA256)
+- Tracks execution latency and errors
+- Handles custom metadata
 
 **Result:** Zero-friction integration - add one line of code to enable F.A.I.L. Kit audits.
 
@@ -480,4 +480,4 @@ See [LICENSE.txt](LICENSE.txt)
 
 ---
 
-**No trace, no ship.** 🛡️
+**No trace, no ship.**

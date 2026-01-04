@@ -6,10 +6,15 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { AgentExecutor } from 'langchain/agents';
 import { Tool, StructuredTool } from '@langchain/core/tools';
-import { AgentAction, AgentFinish } from '@langchain/core/agents';
+import { CallbackManagerForToolRun } from '@langchain/core/callbacks/manager';
 import crypto from 'crypto';
+
+// Type for AgentExecutor to avoid direct import dependency
+interface AgentExecutorLike {
+  invoke: (input: any) => Promise<any>;
+  tools: any[];
+}
 
 /**
  * Configuration for F.A.I.L. Kit LangChain adapter
@@ -105,18 +110,19 @@ export abstract class ReceiptGeneratingTool extends Tool {
    * Execute tool and generate receipt.
    * DO NOT OVERRIDE - implement _execute() instead.
    */
-  async _call(input: string | Record<string, any>): Promise<any> {
+  async _call(
+    input: string,
+    _runManager?: CallbackManagerForToolRun
+  ): Promise<string> {
     const actionId = `act_${crypto.randomBytes(4).toString('hex')}`;
     const startTime = Date.now();
     
     // Parse input if string
-    let parsedInput = input;
-    if (typeof input === 'string') {
-      try {
-        parsedInput = JSON.parse(input);
-      } catch {
-        parsedInput = { input };
-      }
+    let parsedInput: any = input;
+    try {
+      parsedInput = JSON.parse(input);
+    } catch {
+      parsedInput = { input };
     }
     
     let outputData: any;
@@ -161,7 +167,8 @@ export abstract class ReceiptGeneratingTool extends Tool {
       throw new Error(errorMessage);
     }
     
-    return outputData;
+    // Return as string for LangChain
+    return typeof outputData === 'string' ? outputData : JSON.stringify(outputData);
   }
   
   /**
@@ -197,7 +204,7 @@ export abstract class ReceiptGeneratingTool extends Tool {
  * @returns Array of action receipts compliant with RECEIPT_SCHEMA.json
  */
 export function extractReceiptsFromAgentExecutor(
-  agentExecutor: AgentExecutor,
+  agentExecutor: AgentExecutorLike,
   result: any,
   config?: FailKitConfig
 ): ActionReceipt[] {
@@ -262,7 +269,8 @@ export function wrapToolWithReceipts(tool: Tool): ReceiptGeneratingTool {
     description = tool.description;
     
     async _execute(input: any): Promise<any> {
-      return await tool._call(input);
+      // Use invoke which is the public API
+      return await tool.invoke(typeof input === 'string' ? input : JSON.stringify(input));
     }
   }
   
@@ -284,9 +292,9 @@ export function wrapToolWithReceipts(tool: Tool): ReceiptGeneratingTool {
  * ```
  */
 export function createFailKitRouter(
-  agentExecutor: AgentExecutor,
+  agentExecutor: AgentExecutorLike,
   config?: FailKitConfig,
-  customHandler?: (executor: AgentExecutor, prompt: string, context: any) => Promise<any>
+  customHandler?: (executor: AgentExecutorLike, prompt: string, context: any) => Promise<any>
 ): Router {
   const cfg = config || {};
   const router = Router();
@@ -317,11 +325,8 @@ export function createFailKitRouter(
       if (customHandler) {
         result = await customHandler(agentExecutor, prompt, body.context || {});
       } else {
-        // Ensure intermediate steps are returned
-        result = await agentExecutor.call(
-          { input: prompt },
-          { returnIntermediateSteps: true }
-        );
+        // Use invoke (modern LangChain API)
+        result = await agentExecutor.invoke({ input: prompt });
       }
       
       // Extract output text
@@ -418,4 +423,273 @@ export function createSimpleFailKitRouter(
   });
   
   return router;
+}
+
+// ============================================
+// NEW v1.6.0: Compliance Mappings
+// ============================================
+
+export interface ComplianceMapping {
+  soc2?: string[];
+  pciDss?: string[];
+  hipaa?: string[];
+  gdpr?: string[];
+  iso27001?: string[];
+}
+
+export const COMPLIANCE_MAPPINGS: Record<string, ComplianceMapping> = {
+  FK001: {
+    soc2: ['CC6.1', 'CC7.2', 'CC7.3'],
+    pciDss: ['10.2.2', '10.3', '10.3.1'],
+    hipaa: ['164.312(b)', '164.308(a)(1)(ii)(D)'],
+    gdpr: ['Art. 30', 'Art. 5(2)'],
+  },
+  FK002: {
+    soc2: ['CC7.4', 'CC7.5'],
+    pciDss: ['6.5.5', '6.5.6'],
+    hipaa: ['164.308(a)(1)', '164.306(a)(2)'],
+  },
+  FK003: {
+    soc2: ['CC6.7', 'CC6.8', 'CC6.1'],
+    pciDss: ['3.4', '6.5.3', '8.2.1'],
+    hipaa: ['164.312(a)(1)', '164.312(e)(1)'],
+    gdpr: ['Art. 32', 'Art. 25'],
+  },
+  FK004: {
+    soc2: ['CC6.1', 'CC7.1', 'CC7.2'],
+    pciDss: ['7.1', '7.2', '10.2.5'],
+    hipaa: ['164.312(d)', '164.308(a)(4)'],
+  },
+  FK005: {
+    soc2: ['A1.2', 'CC7.4'],
+    pciDss: ['6.5.6', '12.10.1'],
+  },
+  FK006: {
+    soc2: ['CC5.2', 'CC7.2', 'CC7.3'],
+    pciDss: ['10.1', '10.2', '10.3.6'],
+    hipaa: ['164.312(b)', '164.308(a)(1)(ii)(D)'],
+    gdpr: ['Art. 30', 'Art. 5(2)'],
+  },
+  FK007: {
+    soc2: ['CC6.7', 'CC6.8'],
+    pciDss: ['2.3', '8.2.1', '8.2.3'],
+    hipaa: ['164.312(a)(1)', '164.312(d)'],
+    gdpr: ['Art. 32'],
+  },
+};
+
+/**
+ * Get compliance badges for a rule
+ */
+export function getComplianceBadges(ruleId: string): string[] {
+  const mapping = COMPLIANCE_MAPPINGS[ruleId];
+  if (!mapping) return [];
+  
+  const badges: string[] = [];
+  if (mapping.soc2?.length) badges.push('SOC2');
+  if (mapping.pciDss?.length) badges.push('PCI-DSS');
+  if (mapping.hipaa?.length) badges.push('HIPAA');
+  if (mapping.gdpr?.length) badges.push('GDPR');
+  if (mapping.iso27001?.length) badges.push('ISO27001');
+  
+  return badges;
+}
+
+// ============================================
+// NEW v1.6.0: Resilience Utilities
+// ============================================
+
+export interface RetryConfig {
+  maxRetries?: number;
+  baseDelay?: number;
+  maxDelay?: number;
+  exponentialBase?: number;
+  jitter?: boolean;
+  onRetry?: (error: Error, attempt: number) => void;
+}
+
+/**
+ * Execute a function with retry logic
+ */
+export async function withRetry<T>(
+  fn: () => Promise<T>,
+  config: RetryConfig = {}
+): Promise<T> {
+  const {
+    maxRetries = 3,
+    baseDelay = 1000,
+    maxDelay = 30000,
+    exponentialBase = 2,
+    jitter = true,
+    onRetry,
+  } = config;
+
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error: any) {
+      lastError = error;
+      
+      if (attempt < maxRetries) {
+        let delay = Math.min(baseDelay * Math.pow(exponentialBase, attempt), maxDelay);
+        
+        if (jitter) {
+          delay *= 0.5 + Math.random();
+        }
+        
+        if (onRetry) {
+          onRetry(error, attempt + 1);
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+
+  throw lastError;
+}
+
+/**
+ * Execute a function with timeout
+ */
+export async function withTimeout<T>(
+  fn: () => Promise<T>,
+  timeoutMs: number
+): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(`Operation timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+
+    fn()
+      .then(result => {
+        clearTimeout(timer);
+        resolve(result);
+      })
+      .catch(error => {
+        clearTimeout(timer);
+        reject(error);
+      });
+  });
+}
+
+// ============================================
+// NEW v1.6.0: Evidence Generation
+// ============================================
+
+export interface EvidencePackage {
+  version: string;
+  generatedAt: string;
+  receipts: ActionReceipt[];
+  provenance: ProvenanceData;
+  signature: string;
+  signatureAlgorithm: string;
+  complianceMappings: Record<string, string[]>;
+}
+
+export interface ProvenanceData {
+  gitHash?: string;
+  gitBranch?: string;
+  platform?: string;
+  nodeVersion?: string;
+  failKitVersion: string;
+}
+
+/**
+ * Generate HMAC signature for evidence integrity
+ */
+function signEvidence(data: string): string {
+  return crypto.createHmac('sha256', 'fail-kit-evidence').update(data).digest('hex');
+}
+
+/**
+ * Generate an evidence package for audit export
+ */
+export function generateEvidencePackage(
+  receipts: ActionReceipt[],
+  provenance: Partial<ProvenanceData> = {}
+): EvidencePackage {
+  const fullProvenance: ProvenanceData = {
+    failKitVersion: '1.6.0',
+    platform: process.platform,
+    nodeVersion: process.version,
+    ...provenance,
+  };
+
+  const dataToSign = JSON.stringify(receipts);
+
+  // Map receipts to compliance frameworks
+  const complianceMappings: Record<string, string[]> = {};
+  for (const receipt of receipts) {
+    const toolName = receipt.tool_name.toLowerCase();
+    if (toolName.includes('payment') || toolName.includes('charge')) {
+      complianceMappings['PCI-DSS'] = COMPLIANCE_MAPPINGS.FK001.pciDss || [];
+    }
+    if (toolName.includes('database') || toolName.includes('user')) {
+      complianceMappings['HIPAA'] = COMPLIANCE_MAPPINGS.FK001.hipaa || [];
+    }
+  }
+
+  return {
+    version: '1.0.0',
+    generatedAt: new Date().toISOString(),
+    receipts,
+    provenance: fullProvenance,
+    signature: signEvidence(dataToSign),
+    signatureAlgorithm: 'HMAC-SHA256',
+    complianceMappings,
+  };
+}
+
+/**
+ * Export evidence as CSV
+ */
+export function exportEvidenceAsCSV(receipts: ActionReceipt[]): string {
+  const headers = ['action_id', 'tool_name', 'timestamp', 'status', 'input_hash', 'output_hash', 'latency_ms'];
+  const rows = receipts.map(r => 
+    headers.map(h => String((r as any)[h] || '')).join(',')
+  );
+  return [headers.join(','), ...rows].join('\n');
+}
+
+// ============================================
+// NEW v1.6.0: Secret Detection
+// ============================================
+
+interface SecretFinding {
+  type: string;
+  masked: string;
+  severity: 'critical' | 'high' | 'medium';
+}
+
+const SECRET_PATTERNS: Array<{ pattern: RegExp; type: string }> = [
+  { pattern: /sk[-_]live[-_][a-zA-Z0-9]{20,}/g, type: 'stripe_secret_key' },
+  { pattern: /sk[-_]test[-_][a-zA-Z0-9]{20,}/g, type: 'stripe_test_key' },
+  { pattern: /AKIA[A-Z0-9]{16}/g, type: 'aws_access_key' },
+  { pattern: /sk-[a-zA-Z0-9]{32,}/g, type: 'openai_api_key' },
+  { pattern: /ghp_[a-zA-Z0-9]{36}/g, type: 'github_pat' },
+];
+
+/**
+ * Detect potential secrets in text
+ */
+export function detectSecrets(text: string): SecretFinding[] {
+  const findings: SecretFinding[] = [];
+  
+  for (const { pattern, type } of SECRET_PATTERNS) {
+    pattern.lastIndex = 0;
+    let match: RegExpExecArray | null;
+    while ((match = pattern.exec(text)) !== null) {
+      const value = match[0];
+      findings.push({
+        type,
+        masked: value.length > 8 ? `${value.slice(0, 4)}...${value.slice(-4)}` : '***',
+        severity: 'critical',
+      });
+    }
+  }
+  
+  return findings;
 }

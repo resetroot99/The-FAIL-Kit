@@ -1,56 +1,117 @@
-# F.A.I.L. Kit VS Code Extension
+# F.A.I.L. Kit for VS Code
 
-Real-time static analysis for AI agent code. Detects missing receipts, error handling issues, and audit gaps.
+**Forensic Audit of Intelligent Logic** - The complete agent code audit toolkit for VS Code.
+
+[![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/AliJakvani.fail-kit-vscode?color=blue&label=VS%20Code)](https://marketplace.visualstudio.com/items?itemName=AliJakvani.fail-kit-vscode)
+[![npm](https://img.shields.io/npm/v/@fail-kit/core?color=red&label=npm)](https://www.npmjs.com/package/@fail-kit/core)
+[![License](https://img.shields.io/badge/license-MIT-green)](https://github.com/resetroot99/The-FAIL-Kit/blob/main/LICENSE.txt)
+
+---
+
+Catch execution integrity failures before they reach production. F.A.I.L. Kit analyzes your AI agent code as you type, detecting missing receipts, error handling gaps, and audit trail issues.
 
 ## Features
 
-- **Real-time Analysis**: Analyzes your code as you type
-- **Missing Receipt Detection** (FK001): Warns when destructive operations lack audit receipts
+- **Professional Dashboard** - Light-themed audit report with ship decisions
+- **Auto-Fix System** - One-click fixes for common issues
+- **Regression Detection** - Compare against baseline to track progress
+- **Severity Classification** - Critical, High, Medium, Low with business impact
+- **Export Reports** - Generate markdown reports for documentation
+
+### Real-Time Analysis
+Analyzes your code as you type, highlighting issues inline with actionable suggestions.
+
+### Execution Integrity Checks
+- **Missing Receipt Detection** (FK001): Warns when tool calls lack audit receipts
 - **Missing Error Handling** (FK002): Warns when LLM calls lack try/catch blocks
-- **Quick Fixes**: One-click fixes to add TODOs or disable warnings
-- **Multi-Framework Support**: LangChain, OpenAI, Anthropic, CrewAI, and more
+- **Silent Failure Detection**: Catches agents that claim success when tools fail
+- **Audit Trail Gaps**: Identifies operations without proper logging
+
+### Professional Dashboard
+Click "F.A.I.L. Kit: Open Dashboard" to see:
+- Ship Decision (BLOCK / NEEDS_REVIEW / SHIP)
+- Severity breakdown (Critical, High, Medium, Low)
+- Root cause analysis
+- Pass rate metrics
+- Issue timeline
+
+### Auto-Fix System
+- Receipt generation for tool calls
+- Try-catch wrappers for LLM calls
+- Error escalation patterns
+- Works with high confidence (90%+)
+
+### Regression Detection
+- Set baseline at any point
+- Compare current issues against baseline
+- Track improvements over time
+- CI/CD friendly reports
+
+### Multi-Framework Support
+- LangChain (Python & JavaScript)
+- OpenAI Assistants API
+- Anthropic Claude
+- CrewAI
+- AutoGPT
+- Custom agent implementations
 
 ## Installation
 
 ### From VS Code Marketplace
 
-Coming soon! For now, install from source.
+1. Open VS Code
+2. Go to Extensions (Cmd+Shift+X)
+3. Search for "F.A.I.L. Kit"
+4. Click Install
 
 ### From Source
 
 ```bash
-cd vscode-extension
+git clone https://github.com/resetroot99/vscode-fail.git
+cd vscode-fail
 npm install
 npm run compile
 ```
 
 Then press `F5` in VS Code to launch the Extension Development Host.
 
-## Configuration
+## Quick Start
 
-Configure the extension in VS Code settings:
+1. Install the extension
+2. Open any TypeScript/JavaScript file with AI agent code
+3. F.A.I.L. Kit will automatically analyze your code
+4. Click the lightbulb icon (or press `Cmd+.`) to see quick fixes
+5. Open Command Palette and run "F.A.I.L. Kit: Open Dashboard"
 
-```json
-{
-  "fail-kit.enableRealTimeAnalysis": true,
-  "fail-kit.severity.missingReceipt": "warning",
-  "fail-kit.severity.missingErrorHandling": "warning",
-  "fail-kit.excludePatterns": [
-    "**/node_modules/**",
-    "**/*.test.ts",
-    "**/*.spec.ts"
-  ]
-}
-```
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `F.A.I.L. Kit: Analyze Current File` | Trigger analysis on current file |
+| `F.A.I.L. Kit: Analyze Workspace` | Analyze all files in workspace |
+| `F.A.I.L. Kit: Open Dashboard` | Open the audit dashboard |
+| `F.A.I.L. Kit: Set Baseline` | Save current state as baseline |
+| `F.A.I.L. Kit: Compare to Baseline` | Compare against saved baseline |
+| `F.A.I.L. Kit: Auto-Fix All Issues` | Apply auto-fixes to current file |
+| `F.A.I.L. Kit: Export Report` | Export markdown report |
 
 ## Detection Rules
 
-| Rule | Description | Default Severity |
-|------|-------------|------------------|
-| FK001 | Tool call without receipt generation | Warning |
-| FK002 | LLM call without error handling | Warning |
-| FK003 | External API call without logging | Info |
-| FK004 | Database mutation without transaction | Info |
+| Rule ID | Description | Severity |
+|---------|-------------|----------|
+| **FK001** | Tool call without receipt generation | Warning/Error |
+| **FK002** | LLM call without error handling | Warning |
+| **FK003** | External API call without logging | Info |
+| **FK004** | Database mutation without transaction | Info |
+
+## Severity Classification
+
+| Level | Impact | Examples |
+|-------|--------|----------|
+| **Critical** | Blocks deployment | Payment operations, data deletion |
+| **High** | Needs review | Database mutations, email sending |
+| **Medium** | Should fix | File operations, API calls |
+| **Low** | Nice to have | Logging, minor validations |
 
 ## Supported Patterns
 
@@ -75,18 +136,25 @@ Configure the extension in VS Code settings:
 - CrewAI: `crew.kickoff()`, `task.execute()`
 - AutoGPT: `agent.run()`
 
-## Quick Fixes
+## Configuration
 
-When you see a warning, click the lightbulb (or press `Cmd+.`) to see available fixes:
-
-1. **Add TODO comment** - Adds a reminder to implement the fix
-2. **Disable for this line** - Adds `// fail-kit-disable-next-line`
-3. **Wrap in try-catch** - Wraps the call in error handling (FK002)
-4. **Learn more** - Opens documentation
+```json
+{
+  "fail-kit.enableRealTimeAnalysis": true,
+  "fail-kit.severity.missingReceipt": "warning",
+  "fail-kit.severity.missingErrorHandling": "warning",
+  "fail-kit.excludePatterns": [
+    "**/node_modules/**",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "**/dist/**"
+  ],
+  "fail-kit.autoFix.minConfidence": 90,
+  "fail-kit.regression.enabled": true
+}
+```
 
 ## Disable Comments
-
-To disable F.A.I.L. Kit for specific lines:
 
 ```typescript
 // fail-kit-disable-next-line
@@ -96,40 +164,27 @@ await dangerousOperation(); // No warning
 await anotherOperation(); // No warning
 ```
 
-## Commands
+## Known Limitations
 
-- `F.A.I.L. Kit: Analyze Current File` - Manually trigger analysis
-- `F.A.I.L. Kit: Analyze Workspace` - Analyze all files in workspace
+- **TypeScript/JavaScript only** - Python support planned for v1.1.0
+- **Single-file analysis** - Cross-file receipt tracking not yet supported
+- **Dynamic calls not detected** - Calls via `eval()` won't be caught
 
-## Development
+## Roadmap
 
-```bash
-# Install dependencies
-npm install
-
-# Compile TypeScript
-npm run compile
-
-# Watch mode
-npm run watch
-
-# Run linter
-npm run lint
-```
-
-## Testing
-
-1. Press `F5` to launch Extension Development Host
-2. Open `samples/agent-with-issues.ts`
-3. Verify warnings appear
-4. Test quick fixes
+- **v1.1.0**: Python support, cross-file analysis
+- **v1.2.0**: Custom rule configuration, team sharing
+- **v2.0.0**: Full multi-language support, CI/CD integration
 
 ## Related
 
-- [F.A.I.L. Kit CLI](../cli) - Command-line audit tool
-- [Receipt Schema](../RECEIPT_SCHEMA.json) - Standard receipt format
-- [LangChain Adapter](../middleware/langchain) - LangChain integration
+- [F.A.I.L. Kit CLI](https://github.com/resetroot99/The-FAIL-Kit) - Command-line audit tool
+- [@fail-kit/core](https://github.com/resetroot99/The-FAIL-Kit/tree/main/packages/core) - Receipt generation library
 
 ## License
 
-Commercial - See [LICENSE](../LICENSE.txt)
+MIT License - See [LICENSE](LICENSE)
+
+---
+
+**Made by the F.A.I.L. Kit Team**

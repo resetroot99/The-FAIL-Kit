@@ -6,8 +6,12 @@
  */
 
 import * as vscode from 'vscode';
-import { FailKitAnalyzer, Issue, RULES } from './analyzer';
-import { debounce } from './utils';
+import { minimatch } from 'minimatch';
+import { FailKitAnalyzer, Issue, AnalysisResult, RULES } from './analyzer';
+import { debounce, reportError } from './utils';
+
+const VALID_SEVERITIES = ['error', 'warning', 'info', 'hint'] as const;
+type Severity = typeof VALID_SEVERITIES[number];
 
 export const DIAGNOSTIC_SOURCE = 'fail-kit';
 
@@ -45,16 +49,36 @@ function issueToDiagnostic(issue: Issue): vscode.Diagnostic {
   );
 
   diagnostic.source = DIAGNOSTIC_SOURCE;
-  diagnostic.code = issue.ruleId;
+  
+  // Add documentation link to the diagnostic code
+  diagnostic.code = {
+    value: issue.ruleId,
+    target: vscode.Uri.parse(issue.docLink || `https://github.com/resetroot99/The-FAIL-Kit/blob/main/docs/rules/${issue.ruleId}.md`),
+  };
 
-  // Add related information if there's a suggestion
+  // Add related information with suggestion and business impact
+  const relatedInfo: vscode.DiagnosticRelatedInformation[] = [];
+  
   if (issue.suggestion) {
-    diagnostic.relatedInformation = [
+    relatedInfo.push(
       new vscode.DiagnosticRelatedInformation(
         new vscode.Location(vscode.Uri.parse(''), range),
-        `Suggestion: ${issue.suggestion}`
-      ),
-    ];
+        `Fix: ${issue.suggestion}`
+      )
+    );
+  }
+  
+  if (issue.businessImpact) {
+    relatedInfo.push(
+      new vscode.DiagnosticRelatedInformation(
+        new vscode.Location(vscode.Uri.parse(''), range),
+        `Impact: ${issue.businessImpact}`
+      )
+    );
+  }
+  
+  if (relatedInfo.length > 0) {
+    diagnostic.relatedInformation = relatedInfo;
   }
 
   return diagnostic;
@@ -68,6 +92,7 @@ export class FailKitDiagnosticsProvider implements vscode.Disposable {
   private analyzer: FailKitAnalyzer;
   private disposables: vscode.Disposable[] = [];
   private debouncedAnalyze: ReturnType<typeof debounce>;
+  private resultsCache: Map<string, AnalysisResult> = new Map();
 
   constructor() {
     this.diagnosticCollection = vscode.languages.createDiagnosticCollection(DIAGNOSTIC_SOURCE);
@@ -78,8 +103,11 @@ export class FailKitDiagnosticsProvider implements vscode.Disposable {
     });
 
     // Create debounced analysis function (500ms delay)
+    // Check if document is still open to prevent race conditions
     this.debouncedAnalyze = debounce((document: vscode.TextDocument) => {
-      this.analyzeDocument(document);
+      if (vscode.workspace.textDocuments.some(doc => doc.uri.toString() === document.uri.toString())) {
+        this.analyzeDocument(document);
+      }
     }, 500);
 
     // Subscribe to document events
@@ -170,16 +198,20 @@ export class FailKitDiagnosticsProvider implements vscode.Disposable {
   }
 
   /**
-   * Simple glob pattern matching
+   * Glob pattern matching using minimatch
    */
   private matchesPattern(filePath: string, pattern: string): boolean {
-    // Convert glob to regex (simplified)
-    const regexPattern = pattern
-      .replace(/\*\*/g, '.*')
-      .replace(/\*/g, '[^/]*')
-      .replace(/\//g, '\\/');
-    const regex = new RegExp(regexPattern);
-    return regex.test(filePath);
+    return minimatch(filePath, pattern, { dot: true });
+  }
+
+  /**
+   * Validate and return a severity value, or default if invalid
+   */
+  private validateSeverity(value: string | undefined, defaultValue: Severity): Severity {
+    if (value && VALID_SEVERITIES.includes(value as Severity)) {
+      return value as Severity;
+    }
+    return defaultValue;
   }
 
   /**
@@ -192,20 +224,51 @@ export class FailKitDiagnosticsProvider implements vscode.Disposable {
     try {
       const result = this.analyzer.analyze(code, filePath);
 
-      // Apply severity overrides from configuration
+      // Store result in cache
+      this.resultsCache.set(filePath, result);
+
+      // Apply severity overrides from configuration with validation
       const config = vscode.workspace.getConfiguration('fail-kit');
       const diagnostics = result.issues.map((issue) => {
-        // Check for severity override
-        if (issue.ruleId === 'FK001') {
-          const override = config.get<string>('severity.missingReceipt');
-          if (override) {
-            issue.severity = override as any;
-          }
-        } else if (issue.ruleId === 'FK002') {
-          const override = config.get<string>('severity.missingErrorHandling');
-          if (override) {
-            issue.severity = override as any;
-          }
+        // Check for severity override with validation
+        switch (issue.ruleId) {
+          case 'FK001':
+            issue.severity = this.validateSeverity(
+              config.get<string>('severity.missingReceipt'),
+              issue.severity as Severity
+            );
+            break;
+          case 'FK002':
+            issue.severity = this.validateSeverity(
+              config.get<string>('severity.missingErrorHandling'),
+              issue.severity as Severity
+            );
+            break;
+          case 'FK003':
+          case 'FK007':
+            issue.severity = this.validateSeverity(
+              config.get<string>('severity.secretExposure'),
+              issue.severity as Severity
+            );
+            break;
+          case 'FK004':
+            issue.severity = this.validateSeverity(
+              config.get<string>('severity.sideEffect'),
+              issue.severity as Severity
+            );
+            break;
+          case 'FK005':
+            issue.severity = this.validateSeverity(
+              config.get<string>('severity.llmResilience'),
+              issue.severity as Severity
+            );
+            break;
+          case 'FK006':
+            issue.severity = this.validateSeverity(
+              config.get<string>('severity.missingProvenance'),
+              issue.severity as Severity
+            );
+            break;
         }
 
         return issueToDiagnostic(issue);
@@ -213,9 +276,16 @@ export class FailKitDiagnosticsProvider implements vscode.Disposable {
 
       this.diagnosticCollection.set(document.uri, diagnostics);
     } catch (error) {
-      console.error('F.A.I.L. Kit analysis error:', error);
+      // Report error with telemetry (if enabled)
+      reportError(error instanceof Error ? error : new Error(String(error)), {
+        action: 'analyzeDocument',
+        fileType: document.languageId,
+        codeLength: code.length,
+      });
+      
       // Clear diagnostics on error to avoid stale data
       this.diagnosticCollection.set(document.uri, []);
+      this.resultsCache.delete(filePath);
     }
   }
 
@@ -265,11 +335,33 @@ export class FailKitDiagnosticsProvider implements vscode.Disposable {
   }
 
   /**
+   * Get all analysis results from cache
+   */
+  public getAllResults(): Map<string, AnalysisResult> {
+    return new Map(this.resultsCache);
+  }
+
+  /**
+   * Get analysis result for a specific file
+   */
+  public getResult(filePath: string): AnalysisResult | undefined {
+    return this.resultsCache.get(filePath);
+  }
+
+  /**
+   * Clear all cached results
+   */
+  public clearAllResults(): void {
+    this.resultsCache.clear();
+  }
+
+  /**
    * Dispose of resources
    */
   public dispose(): void {
     this.debouncedAnalyze.cancel();
     this.diagnosticCollection.dispose();
     this.disposables.forEach((d) => d.dispose());
+    this.resultsCache.clear();
   }
 }

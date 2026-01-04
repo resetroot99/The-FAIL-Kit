@@ -46,7 +46,7 @@ function createReceipt(
   };
 }
 
-// ✅ LLM call WITH error handling
+// [OK] LLM call WITH error handling
 async function askOpenAI(prompt: string) {
   try {
     const response = await openai.chat.completions.create({
@@ -60,7 +60,7 @@ async function askOpenAI(prompt: string) {
   }
 }
 
-// ✅ Payment processing WITH receipt
+// [OK] Payment processing WITH receipt
 async function processPayment(amount: number, customerId: string) {
   const startTime = Date.now();
   const input = { amount, customerId };
@@ -85,7 +85,7 @@ async function processPayment(amount: number, customerId: string) {
   }
 }
 
-// ✅ Database mutation WITH receipt and error handling
+// [OK] Database mutation WITH receipt and error handling
 async function updateUserStatus(userId: string, status: string) {
   const startTime = Date.now();
   const input = { userId, status };
@@ -105,7 +105,7 @@ async function updateUserStatus(userId: string, status: string) {
   }
 }
 
-// ✅ Agent call WITH receipt and error handling
+// [OK] Agent call WITH receipt and error handling
 async function runAgent(input: string) {
   const startTime = Date.now();
 
@@ -125,7 +125,7 @@ async function runAgent(input: string) {
   }
 }
 
-// ✅ Email send WITH receipt
+// [OK] Email send WITH receipt
 async function notifyAdmin(subject: string, body: string) {
   const startTime = Date.now();
   const input = { to: 'admin@example.com', subject, body };

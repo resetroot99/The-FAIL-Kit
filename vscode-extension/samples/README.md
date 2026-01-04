@@ -43,8 +43,8 @@ This file shows **best practices** and should **not** trigger any warnings:
 When opening `agent-with-issues.ts`, you should see:
 
 ```
-⚠ FK001: payment operation without receipt generation. Destructive operations should generate audit receipts.
-⚠ FK002: openai LLM call without error handling. LLM calls can fail and should be wrapped in try/catch.
+[Warning] FK001: payment operation without receipt generation. Destructive operations should generate audit receipts.
+[Warning] FK002: openai LLM call without error handling. LLM calls can fail and should be wrapped in try/catch.
 ```
 
 ## Quick Fixes Available

@@ -9,7 +9,15 @@ export * from './patterns';
 export * from './astAnalyzer';
 export * from './receiptValidator';
 
-import { analyzeDocument, AnalysisResult, Issue, quickAnalyze } from './astAnalyzer';
+import {
+  analyzeDocument,
+  AnalysisResult,
+  AnalysisSummary,
+  Issue,
+  IssueCategory,
+  IssueSeverity,
+  quickAnalyze,
+} from './astAnalyzer';
 import { findReceiptPattern, analyzeReceiptGeneration } from './receiptValidator';
 import { isTestFile } from './patterns';
 
@@ -39,9 +47,22 @@ export class FailKitAnalyzer {
    * Analyze a document and return issues
    */
   analyze(code: string, filePath: string = 'temp.ts'): AnalysisResult {
+    const emptySummary: AnalysisSummary = {
+      totalIssues: 0,
+      criticalCount: 0,
+      highCount: 0,
+      mediumCount: 0,
+      lowCount: 0,
+      receiptMissing: 0,
+      errorHandlingMissing: 0,
+      riskScore: 0,
+      shipDecision: 'SHIP',
+      shipReason: 'No issues detected',
+    };
+
     // Skip test files if configured
     if (this.options.skipTestFiles && isTestFile(filePath)) {
-      return { issues: [], toolCalls: [], llmCalls: [], agentCalls: [] };
+      return { issues: [], toolCalls: [], llmCalls: [], agentCalls: [], summary: emptySummary };
     }
 
     // Check cache
@@ -60,6 +81,7 @@ export class FailKitAnalyzer {
           toolCalls: [],
           llmCalls: [],
           agentCalls: [],
+          summary: emptySummary,
         };
         this.cache.set(filePath, { hash, result: emptyResult });
         return emptyResult;
@@ -128,17 +150,38 @@ export const RULES = {
   },
   FK003: {
     id: 'FK003',
-    name: 'external-api-no-logging',
-    description: 'External API call without logging',
-    severity: 'info' as const,
-    category: 'observability',
+    name: 'secret-exposure',
+    description: 'API keys or tokens exposed in source code',
+    severity: 'error' as const,
+    category: 'security',
   },
   FK004: {
     id: 'FK004',
-    name: 'db-mutation-no-transaction',
-    description: 'Database mutation without transaction',
+    name: 'side-effect-unconfirmed',
+    description: 'Destructive operation without confirmation',
+    severity: 'warning' as const,
+    category: 'safety',
+  },
+  FK005: {
+    id: 'FK005',
+    name: 'llm-no-resilience',
+    description: 'LLM call without timeout/retry logic',
     severity: 'info' as const,
-    category: 'data-integrity',
+    category: 'resilience',
+  },
+  FK006: {
+    id: 'FK006',
+    name: 'missing-provenance',
+    description: 'Agent action missing action_id or timestamp',
+    severity: 'info' as const,
+    category: 'audit',
+  },
+  FK007: {
+    id: 'FK007',
+    name: 'hardcoded-credential',
+    description: 'Hardcoded password or credential in code',
+    severity: 'error' as const,
+    category: 'security',
   },
 };
 

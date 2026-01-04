@@ -202,4 +202,4 @@ pip install -e .
 
 ---
 
-**No trace, no ship.** 🛡️
+**No trace, no ship.**

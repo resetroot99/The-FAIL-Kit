@@ -411,6 +411,299 @@ def create_fail_kit_langgraph_endpoint(
     return router
 
 
+# ============================================
+# NEW v1.6.0: Compliance Mappings
+# ============================================
+
+COMPLIANCE_MAPPINGS: Dict[str, Dict[str, List[str]]] = {
+    "FK001": {
+        "soc2": ["CC6.1", "CC7.2", "CC7.3"],
+        "pci_dss": ["10.2.2", "10.3", "10.3.1"],
+        "hipaa": ["164.312(b)", "164.308(a)(1)(ii)(D)"],
+        "gdpr": ["Art. 30", "Art. 5(2)"],
+    },
+    "FK002": {
+        "soc2": ["CC7.4", "CC7.5"],
+        "pci_dss": ["6.5.5", "6.5.6"],
+        "hipaa": ["164.308(a)(1)", "164.306(a)(2)"],
+    },
+    "FK003": {
+        "soc2": ["CC6.7", "CC6.8", "CC6.1"],
+        "pci_dss": ["3.4", "6.5.3", "8.2.1"],
+        "hipaa": ["164.312(a)(1)", "164.312(e)(1)"],
+        "gdpr": ["Art. 32", "Art. 25"],
+    },
+    "FK004": {
+        "soc2": ["CC6.1", "CC7.1", "CC7.2"],
+        "pci_dss": ["7.1", "7.2", "10.2.5"],
+        "hipaa": ["164.312(d)", "164.308(a)(4)"],
+    },
+    "FK005": {
+        "soc2": ["A1.2", "CC7.4"],
+        "pci_dss": ["6.5.6", "12.10.1"],
+    },
+    "FK006": {
+        "soc2": ["CC5.2", "CC7.2", "CC7.3"],
+        "pci_dss": ["10.1", "10.2", "10.3.6"],
+        "hipaa": ["164.312(b)", "164.308(a)(1)(ii)(D)"],
+        "gdpr": ["Art. 30", "Art. 5(2)"],
+    },
+    "FK007": {
+        "soc2": ["CC6.7", "CC6.8"],
+        "pci_dss": ["2.3", "8.2.1", "8.2.3"],
+        "hipaa": ["164.312(a)(1)", "164.312(d)"],
+        "gdpr": ["Art. 32"],
+    },
+}
+
+
+def get_compliance_badges(rule_id: str) -> List[str]:
+    """Get compliance framework badges for a rule."""
+    mapping = COMPLIANCE_MAPPINGS.get(rule_id, {})
+    badges = []
+    if mapping.get("soc2"):
+        badges.append("SOC2")
+    if mapping.get("pci_dss"):
+        badges.append("PCI-DSS")
+    if mapping.get("hipaa"):
+        badges.append("HIPAA")
+    if mapping.get("gdpr"):
+        badges.append("GDPR")
+    return badges
+
+
+# ============================================
+# NEW v1.6.0: Resilience Utilities
+# ============================================
+
+class RetryConfig:
+    """Configuration for retry behavior."""
+    
+    def __init__(
+        self,
+        max_retries: int = 3,
+        base_delay: float = 1.0,
+        max_delay: float = 30.0,
+        exponential_base: float = 2.0,
+        jitter: bool = True
+    ):
+        self.max_retries = max_retries
+        self.base_delay = base_delay
+        self.max_delay = max_delay
+        self.exponential_base = exponential_base
+        self.jitter = jitter
+
+
+async def with_retry(
+    func: Callable,
+    config: Optional[RetryConfig] = None,
+    on_retry: Optional[Callable[[Exception, int], None]] = None
+) -> Any:
+    """
+    Execute a function with retry logic.
+    
+    Args:
+        func: Async function to execute
+        config: Retry configuration
+        on_retry: Callback for retry events
+    
+    Returns:
+        Result of the function
+    
+    Example:
+        result = await with_retry(
+            lambda: llm.invoke(prompt),
+            RetryConfig(max_retries=3)
+        )
+    """
+    import asyncio
+    import random
+    
+    cfg = config or RetryConfig()
+    last_error = None
+    
+    for attempt in range(cfg.max_retries + 1):
+        try:
+            return await func()
+        except Exception as e:
+            last_error = e
+            if attempt < cfg.max_retries:
+                delay = min(
+                    cfg.base_delay * (cfg.exponential_base ** attempt),
+                    cfg.max_delay
+                )
+                if cfg.jitter:
+                    delay *= (0.5 + random.random())
+                
+                if on_retry:
+                    on_retry(e, attempt + 1)
+                
+                await asyncio.sleep(delay)
+    
+    raise last_error
+
+
+def with_timeout(timeout_seconds: float):
+    """
+    Decorator to add timeout to async functions.
+    
+    Example:
+        @with_timeout(30.0)
+        async def call_llm(prompt: str):
+            return await llm.invoke(prompt)
+    """
+    import asyncio
+    from functools import wraps
+    
+    def decorator(func: Callable):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            return await asyncio.wait_for(
+                func(*args, **kwargs),
+                timeout=timeout_seconds
+            )
+        return wrapper
+    return decorator
+
+
+# ============================================
+# NEW v1.6.0: Evidence Generation
+# ============================================
+
+class EvidencePackage:
+    """Evidence package for audit exports."""
+    
+    def __init__(self, receipts: List[Dict[str, Any]], provenance: Dict[str, Any]):
+        self.version = "1.0.0"
+        self.generated_at = datetime.utcnow().isoformat() + "Z"
+        self.receipts = receipts
+        self.provenance = provenance
+        self.signature = self._sign()
+        self.compliance_mappings = self._map_compliance()
+    
+    def _sign(self) -> str:
+        """Generate HMAC signature for evidence integrity."""
+        import hmac
+        data = json.dumps(self.receipts, sort_keys=True)
+        return hmac.new(
+            b"fail-kit-evidence",
+            data.encode(),
+            hashlib.sha256
+        ).hexdigest()
+    
+    def _map_compliance(self) -> Dict[str, List[str]]:
+        """Map receipts to compliance frameworks."""
+        frameworks: Dict[str, List[str]] = {}
+        for receipt in self.receipts:
+            tool_name = receipt.get("tool_name", "")
+            # Map tool types to FK rules
+            if "payment" in tool_name.lower() or "charge" in tool_name.lower():
+                for framework, controls in COMPLIANCE_MAPPINGS.get("FK001", {}).items():
+                    if framework not in frameworks:
+                        frameworks[framework] = []
+                    frameworks[framework].extend(controls)
+        return frameworks
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Export as dictionary."""
+        return {
+            "version": self.version,
+            "generated_at": self.generated_at,
+            "receipts": self.receipts,
+            "provenance": self.provenance,
+            "signature": self.signature,
+            "signature_algorithm": "HMAC-SHA256",
+            "compliance_mappings": self.compliance_mappings,
+        }
+    
+    def to_json(self) -> str:
+        """Export as JSON string."""
+        return json.dumps(self.to_dict(), indent=2)
+    
+    def to_csv(self) -> str:
+        """Export receipts as CSV."""
+        import csv
+        import io
+        
+        output = io.StringIO()
+        writer = csv.writer(output)
+        
+        headers = ["action_id", "tool_name", "timestamp", "status", "input_hash", "output_hash"]
+        writer.writerow(headers)
+        
+        for receipt in self.receipts:
+            writer.writerow([receipt.get(h, "") for h in headers])
+        
+        return output.getvalue()
+
+
+def generate_evidence_package(
+    receipts: List[Dict[str, Any]],
+    git_hash: str = "unknown",
+    git_branch: str = "unknown"
+) -> EvidencePackage:
+    """
+    Generate an evidence package for audit export.
+    
+    Args:
+        receipts: List of action receipts
+        git_hash: Current git commit hash
+        git_branch: Current git branch
+    
+    Returns:
+        EvidencePackage with signed receipts
+    """
+    import platform
+    
+    provenance = {
+        "git_hash": git_hash,
+        "git_branch": git_branch,
+        "platform": platform.system(),
+        "python_version": platform.python_version(),
+        "fail_kit_version": "1.6.0",
+    }
+    
+    return EvidencePackage(receipts, provenance)
+
+
+# ============================================
+# NEW v1.6.0: Secret Detection
+# ============================================
+
+SECRET_PATTERNS = [
+    (r"sk[-_]live[-_][a-zA-Z0-9]{20,}", "stripe_secret_key"),
+    (r"sk[-_]test[-_][a-zA-Z0-9]{20,}", "stripe_test_key"),
+    (r"AKIA[A-Z0-9]{16}", "aws_access_key"),
+    (r"sk-[a-zA-Z0-9]{32,}", "openai_api_key"),
+    (r"ghp_[a-zA-Z0-9]{36}", "github_pat"),
+]
+
+
+def detect_secrets(text: str) -> List[Dict[str, str]]:
+    """
+    Detect potential secrets in text.
+    
+    Args:
+        text: Text to scan for secrets
+    
+    Returns:
+        List of detected secrets with type and masked value
+    """
+    import re
+    
+    findings = []
+    for pattern, secret_type in SECRET_PATTERNS:
+        matches = re.findall(pattern, text)
+        for match in matches:
+            findings.append({
+                "type": secret_type,
+                "masked": match[:4] + "..." + match[-4:] if len(match) > 8 else "***",
+                "severity": "critical",
+            })
+    
+    return findings
+
+
 # Convenience exports
 __all__ = [
     "ReceiptGeneratingTool",
@@ -420,5 +713,14 @@ __all__ = [
     "create_fail_kit_langgraph_endpoint",
     "extract_receipts_from_agent_executor",
     "wrap_tool_with_receipts",
-    "hash_data"
+    "hash_data",
+    # v1.6.0 additions
+    "COMPLIANCE_MAPPINGS",
+    "get_compliance_badges",
+    "RetryConfig",
+    "with_retry",
+    "with_timeout",
+    "EvidencePackage",
+    "generate_evidence_package",
+    "detect_secrets",
 ]

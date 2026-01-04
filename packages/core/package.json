@@ -1,0 +1,87 @@
+{
+  "name": "@fail-kit/core",
+  "version": "1.6.0",
+  "description": "F.A.I.L. Kit Core - Receipt generation, validation, and utilities for AI agent audit trails",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./receipt": {
+      "types": "./dist/receipt.d.ts",
+      "import": "./dist/receipt.mjs",
+      "require": "./dist/receipt.js"
+    },
+    "./validator": {
+      "types": "./dist/validator.d.ts",
+      "import": "./dist/validator.mjs",
+      "require": "./dist/validator.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts src/receipt.ts src/validator.ts --format cjs,esm --dts --clean",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src --ext .ts",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "fail-kit",
+    "ai",
+    "agent",
+    "audit",
+    "receipt",
+    "llm",
+    "langchain",
+    "openai",
+    "anthropic",
+    "testing",
+    "validation",
+    "compliance",
+    "soc2",
+    "hipaa",
+    "gdpr",
+    "pci-dss",
+    "iso27001",
+    "nist",
+    "security",
+    "resilience",
+    "provenance"
+  ],
+  "author": "F.A.I.L. Kit Contributors",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/resetroot99/The-FAIL-Kit.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/resetroot99/The-FAIL-Kit/issues"
+  },
+  "homepage": "https://github.com/resetroot99/The-FAIL-Kit/tree/main/packages/core#readme",
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0"
+  },
+  "peerDependencies": {
+    "typescript": ">=5.0.0"
+  },
+  "peerDependenciesMeta": {
+    "typescript": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -15,7 +15,7 @@ const openai = new OpenAI();
 const anthropic = new Anthropic();
 const stripe = new Stripe('sk_test_xxx');
 
-// ❌ FK002: LLM call without error handling
+// [Issue] FK002: LLM call without error handling
 async function askOpenAI(prompt: string) {
   const response = await openai.chat.completions.create({
     model: 'gpt-4',
@@ -24,7 +24,7 @@ async function askOpenAI(prompt: string) {
   return response.choices[0].message.content;
 }
 
-// ❌ FK002: Another LLM call without error handling
+// [Issue] FK002: Another LLM call without error handling
 async function askClaude(prompt: string) {
   const response = await anthropic.messages.create({
     model: 'claude-3-opus-20240229',
@@ -34,7 +34,7 @@ async function askClaude(prompt: string) {
   return response.content[0];
 }
 
-// ❌ FK001: Payment processing without receipt
+// [Issue] FK001: Payment processing without receipt
 async function processPayment(amount: number, customerId: string) {
   const charge = await stripe.charges.create({
     amount,
@@ -44,7 +44,7 @@ async function processPayment(amount: number, customerId: string) {
   return { success: true, chargeId: charge.id };
 }
 
-// ❌ FK001: Database mutation without receipt
+// [Issue] FK001: Database mutation without receipt
 async function updateUserStatus(userId: string, status: string) {
   await prisma.update({
     where: { id: userId },
@@ -52,14 +52,14 @@ async function updateUserStatus(userId: string, status: string) {
   });
 }
 
-// ❌ FK001 + FK002: Agent call without receipt or error handling
+// [Issue] FK001 + FK002: Agent call without receipt or error handling
 async function runAgent(input: string) {
   const agent = new AgentExecutor({ tools: [], llm: openai });
   const result = await agent.call({ input });
   return result.output;
 }
 
-// ❌ FK001: External API call (POST) without receipt
+// [Issue] FK001: External API call (POST) without receipt
 async function sendNotification(userId: string, message: string) {
   await axios.post('/api/notifications', {
     userId,
@@ -67,12 +67,12 @@ async function sendNotification(userId: string, message: string) {
   });
 }
 
-// ❌ FK001: File write without receipt
+// [Issue] FK001: File write without receipt
 async function saveReport(filename: string, content: string) {
   await fs.writeFile(`/reports/${filename}`, content);
 }
 
-// ❌ FK001: Email send without receipt
+// [Issue] FK001: Email send without receipt
 async function notifyAdmin(subject: string, body: string) {
   await sendEmail({
     to: 'admin@example.com',

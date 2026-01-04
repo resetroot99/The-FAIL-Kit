@@ -32,15 +32,15 @@ langchain/
 
 Both adapters provide:
 
-- ✅ **Automatic receipt generation** - No manual instrumentation needed
-- ✅ **Drop-in middleware** - Add one line to existing agents
-- ✅ **Full schema compliance** - Matches RECEIPT_SCHEMA.json exactly
-- ✅ **Receipt-generating tools** - Base class for custom tools
-- ✅ **Legacy tool wrapping** - Convert existing tools
-- ✅ **Error handling** - Automatic failure receipts
-- ✅ **SHA256 verification** - Hash inputs/outputs
-- ✅ **Custom metadata** - Extend receipts with tool-specific data
-- ✅ **LangGraph support** (Python) - For complex agent workflows
+- **Automatic receipt generation** - No manual instrumentation needed
+- **Drop-in middleware** - Add one line to existing agents
+- **Full schema compliance** - Matches RECEIPT_SCHEMA.json exactly
+- **Receipt-generating tools** - Base class for custom tools
+- **Legacy tool wrapping** - Convert existing tools
+- **Error handling** - Automatic failure receipts
+- **SHA256 verification** - Hash inputs/outputs
+- **Custom metadata** - Extend receipts with tool-specific data
+- **LangGraph support** (Python) - For complex agent workflows
 
 ## Installation
 
@@ -286,10 +286,10 @@ agent_executor = AgentExecutor(
 Tools should return structured data:
 
 ```python
-# ✅ Good
+# Good
 return {"status": "success", "result": data}
 
-# ❌ Bad
+# Bad
 return "done"
 ```
 
@@ -317,4 +317,4 @@ See [LICENSE.txt](../../LICENSE.txt)
 
 ---
 
-**No trace, no ship.** 🛡️
+**No trace, no ship.**
