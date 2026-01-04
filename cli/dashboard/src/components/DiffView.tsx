@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import type { AuditData } from '../main';
-import * as Diff from 'diff';
 
 interface DiffViewProps {
   current: AuditData;

@@ -255,7 +255,9 @@ async function forwardAndCollect(
     };
 
     // Remove proxy-specific headers
-    delete options.headers!['proxy-connection'];
+    if (options.headers && typeof options.headers === 'object') {
+      delete (options.headers as Record<string, unknown>)['proxy-connection'];
+    }
 
     const proxyReq = lib.request(options, (proxyRes) => {
       const responseChunks: Buffer[] = [];
@@ -311,7 +313,9 @@ async function forwardRequest(
       headers: { ...clientReq.headers },
     };
 
-    delete options.headers!['proxy-connection'];
+    if (options.headers && typeof options.headers === 'object') {
+      delete (options.headers as Record<string, unknown>)['proxy-connection'];
+    }
 
     const proxyReq = lib.request(options, (proxyRes) => {
       clientRes.writeHead(proxyRes.statusCode || 200, proxyRes.headers);
