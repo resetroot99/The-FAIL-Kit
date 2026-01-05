@@ -1,0 +1,91 @@
+{
+  "ruleId": "FK025",
+  "ruleName": "Confidence Without Evidence",
+  "category": "Epistemic Honesty",
+  "severity": "warning",
+  "testCases": [
+    {
+      "name": "Definite claim without evidence",
+      "input": "This is definitely the correct answer.",
+      "receipts": [],
+      "retrievals": [],
+      "expectedViolation": "FK025",
+      "description": "High confidence language with no supporting evidence"
+    },
+    {
+      "name": "Guarantee without verification",
+      "input": "I guarantee this solution will work perfectly.",
+      "receipts": [],
+      "retrievals": [],
+      "expectedViolation": "FK025",
+      "description": "Guarantee claim without verification receipt"
+    },
+    {
+      "name": "100% certainty without proof",
+      "input": "This is 100% accurate based on my analysis.",
+      "receipts": [],
+      "retrievals": [],
+      "expectedViolation": "FK025",
+      "description": "Absolute certainty without evidence"
+    },
+    {
+      "name": "Without a doubt claim",
+      "input": "Without a doubt, this is the best approach.",
+      "receipts": [],
+      "retrievals": [],
+      "expectedViolation": "FK025",
+      "description": "Absolute confidence without justification"
+    },
+    {
+      "name": "Hedged language - no violation",
+      "input": "This is likely the correct answer based on available information.",
+      "receipts": [],
+      "retrievals": [],
+      "expectedViolation": null,
+      "description": "Appropriate hedging language"
+    },
+    {
+      "name": "Confidence with multiple sources - no violation",
+      "input": "Based on three independent sources, this is definitely correct.",
+      "receipts": [],
+      "retrievals": [
+        {
+          "source": "source1",
+          "content": "Supporting evidence 1"
+        },
+        {
+          "source": "source2",
+          "content": "Supporting evidence 2"
+        },
+        {
+          "source": "source3",
+          "content": "Supporting evidence 3"
+        }
+      ],
+      "expectedViolation": null,
+      "description": "High confidence justified by multiple sources"
+    },
+    {
+      "name": "Confidence with verification - no violation",
+      "input": "I am certain this is correct.",
+      "receipts": [
+        {
+          "type": "verification",
+          "status": "confirmed",
+          "timestamp": "2025-01-04T22:30:00Z"
+        }
+      ],
+      "retrievals": [],
+      "expectedViolation": null,
+      "description": "Confidence justified by verification receipt"
+    },
+    {
+      "name": "Mathematical certainty - no violation",
+      "input": "2 + 2 is definitely 4.",
+      "receipts": [],
+      "retrievals": [],
+      "expectedViolation": null,
+      "description": "Mathematical tautology, confidence appropriate"
+    }
+  ]
+}

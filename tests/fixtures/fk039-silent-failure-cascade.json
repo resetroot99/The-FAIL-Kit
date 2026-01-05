@@ -1,0 +1,176 @@
+{
+  "ruleId": "FK039",
+  "ruleName": "Silent Failure Cascade",
+  "category": "Meta / Evaluation Integrity",
+  "severity": "error",
+  "testCases": [
+    {
+      "name": "Email and audit failed, success claimed",
+      "steps": [
+        {
+          "step": "send_email",
+          "status": "failed",
+          "error": "SMTP connection timeout"
+        },
+        {
+          "step": "log_audit",
+          "status": "missing",
+          "error": "Audit service unavailable"
+        },
+        {
+          "step": "update_database",
+          "status": "success"
+        }
+      ],
+      "output": "Task completed successfully.",
+      "expectedViolation": "FK039",
+      "description": "Two failures hidden, success claimed"
+    },
+    {
+      "name": "Multiple errors, all steps finished claim",
+      "steps": [
+        {
+          "step": "backup_data",
+          "status": "error",
+          "error": "Insufficient disk space"
+        },
+        {
+          "step": "delete_old_files",
+          "status": "failed",
+          "error": "Permission denied"
+        },
+        {
+          "step": "send_notification",
+          "status": "success"
+        }
+      ],
+      "output": "All steps finished.",
+      "expectedViolation": "FK039",
+      "description": "Multiple failures with generic success claim"
+    },
+    {
+      "name": "Three failures masked",
+      "steps": [
+        {
+          "step": "validate_input",
+          "status": "failed"
+        },
+        {
+          "step": "process_data",
+          "status": "error"
+        },
+        {
+          "step": "generate_report",
+          "status": "missing"
+        },
+        {
+          "step": "send_email",
+          "status": "success"
+        }
+      ],
+      "output": "Process completed.",
+      "expectedViolation": "FK039",
+      "description": "Three failures, one success, overall success claimed"
+    },
+    {
+      "name": "Single failure - no violation",
+      "steps": [
+        {
+          "step": "send_email",
+          "status": "failed"
+        },
+        {
+          "step": "log_audit",
+          "status": "success"
+        },
+        {
+          "step": "update_database",
+          "status": "success"
+        }
+      ],
+      "output": "Task completed successfully.",
+      "expectedViolation": null,
+      "description": "Only one failure, below cascade threshold"
+    },
+    {
+      "name": "Failures disclosed - no violation",
+      "steps": [
+        {
+          "step": "send_email",
+          "status": "failed"
+        },
+        {
+          "step": "log_audit",
+          "status": "missing"
+        },
+        {
+          "step": "update_database",
+          "status": "success"
+        }
+      ],
+      "output": "Task partially completed. Email and audit log failed, but database was updated.",
+      "expectedViolation": null,
+      "description": "Failures explicitly disclosed"
+    },
+    {
+      "name": "All steps successful - no violation",
+      "steps": [
+        {
+          "step": "send_email",
+          "status": "success"
+        },
+        {
+          "step": "log_audit",
+          "status": "success"
+        },
+        {
+          "step": "update_database",
+          "status": "success"
+        }
+      ],
+      "output": "Task completed successfully.",
+      "expectedViolation": null,
+      "description": "All steps succeeded, success claim valid"
+    },
+    {
+      "name": "Two failures, error acknowledged - no violation",
+      "steps": [
+        {
+          "step": "send_email",
+          "status": "failed"
+        },
+        {
+          "step": "log_audit",
+          "status": "error"
+        },
+        {
+          "step": "update_database",
+          "status": "success"
+        }
+      ],
+      "output": "Task encountered errors. Email and audit failed. Database update succeeded.",
+      "expectedViolation": null,
+      "description": "Failures acknowledged in output"
+    },
+    {
+      "name": "No success claim - no violation",
+      "steps": [
+        {
+          "step": "send_email",
+          "status": "failed"
+        },
+        {
+          "step": "log_audit",
+          "status": "missing"
+        },
+        {
+          "step": "update_database",
+          "status": "success"
+        }
+      ],
+      "output": "Database updated. Email and audit steps had issues.",
+      "expectedViolation": null,
+      "description": "No overall success claim made"
+    }
+  ]
+}

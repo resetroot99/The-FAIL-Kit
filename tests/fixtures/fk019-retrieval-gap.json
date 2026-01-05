@@ -1,0 +1,111 @@
+{
+  "ruleId": "FK019",
+  "ruleName": "Retrieval-to-Answer Gap",
+  "category": "Knowledge & Provenance",
+  "severity": "warning",
+  "testCases": [
+    {
+      "name": "Python docs retrieved, JavaScript answer given",
+      "retrievals": [
+        {
+          "id": "doc1",
+          "content": "Python uses indentation for code blocks and supports dynamic typing."
+        },
+        {
+          "id": "doc2",
+          "content": "Python supports object-oriented programming with classes and inheritance."
+        }
+      ],
+      "answer": "JavaScript is a dynamically typed language that uses curly braces for code blocks.",
+      "expectedViolation": "FK019",
+      "description": "Retrieved Python documentation but answered about JavaScript"
+    },
+    {
+      "name": "France docs retrieved, Germany answer given",
+      "retrievals": [
+        {
+          "id": "doc1",
+          "content": "The capital of France is Paris, located on the Seine River."
+        }
+      ],
+      "answer": "The capital of Germany is Berlin.",
+      "expectedViolation": "FK019",
+      "description": "Retrieved France information but answered about Germany"
+    },
+    {
+      "name": "Multiple retrievals, unrelated answer",
+      "retrievals": [
+        {
+          "id": "doc1",
+          "content": "Machine learning is a subset of artificial intelligence."
+        },
+        {
+          "id": "doc2",
+          "content": "Neural networks are inspired by biological neurons."
+        }
+      ],
+      "answer": "Database normalization reduces data redundancy.",
+      "expectedViolation": "FK019",
+      "description": "Retrieved ML content but answered about databases"
+    },
+    {
+      "name": "No retrieval, no violation",
+      "retrievals": [],
+      "answer": "I don't have enough information to answer this question.",
+      "expectedViolation": null,
+      "description": "No retrieval means no gap"
+    },
+    {
+      "name": "Retrieval with explicit citation - no violation",
+      "retrievals": [
+        {
+          "id": "doc1",
+          "content": "Python uses indentation for code blocks."
+        }
+      ],
+      "answer": "According to the retrieved documentation, Python uses indentation for code blocks.",
+      "expectedViolation": null,
+      "description": "Explicit citation of retrieved content"
+    },
+    {
+      "name": "Retrieval with content usage - no violation",
+      "retrievals": [
+        {
+          "id": "doc1",
+          "content": "The capital of France is Paris."
+        }
+      ],
+      "answer": "Paris is the capital of France.",
+      "expectedViolation": null,
+      "description": "Answer uses retrieved content without explicit citation"
+    },
+    {
+      "name": "Negative retrieval result acknowledged - no violation",
+      "retrievals": [
+        {
+          "id": "doc1",
+          "content": "Information about topic X."
+        }
+      ],
+      "answer": "I retrieved documents but found no relevant information about topic Y.",
+      "expectedViolation": null,
+      "description": "Acknowledges retrieval but explains lack of relevance"
+    },
+    {
+      "name": "Multiple sources synthesized - no violation",
+      "retrievals": [
+        {
+          "id": "doc1",
+          "content": "Python supports object-oriented programming."
+        },
+        {
+          "id": "doc2",
+          "content": "Python has dynamic typing."
+        }
+      ],
+      "answer": "Based on the retrieved sources, Python supports object-oriented programming and has dynamic typing.",
+      "expectedViolation": null,
+      "description": "Answer synthesizes multiple retrieved sources"
+    }
+  ]
+}
