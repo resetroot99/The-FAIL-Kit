@@ -44,20 +44,23 @@ function generateCommentContent(results, options = {}) {
   const passRate = total > 0 ? ((passed / total) * 100).toFixed(1) : 0;
   
   // Categorize failures
-  const failures = testResults.filter(r => !r.pass);
-  const criticalFailures = failures.filter(f => 
+  const failures = testResults.filter(r => !r.pa  const criticalFailures = failures.filter(f => 
     f.case.includes('CONTRACT_0003') || 
     f.case.includes('CONTRACT_02') ||
     f.case.includes('AGENT_0008') ||
-    f.case.includes('AUTO_receipt')
+    f.case.includes('AUTO_receipt') ||
+    f.case.includes('FK010') || // Phantom Completion
+    f.case.includes('FK014') || // Hallucinated Tool
+    f.case.includes('FK039') || // Silent Failure Cascade
+    f.case.includes('FK040')    // Receipt Tampering
   );
   const highFailures = failures.filter(f =>
     f.case.includes('REFUSE') ||
     f.case.includes('CONTRACT_0004') ||
-    f.case.startsWith('ADV_')
+    f.case.startsWith('ADV_') ||
+    f.case.includes('FK025') || // Confidence Without Evidence
+    f.case.includes('FK019')    // Retrieval Gap
   );
-  
-  // Determine status
   let statusEmoji, statusText, decision;
   if (criticalFailures.length > 0) {
     statusEmoji = '🚫';

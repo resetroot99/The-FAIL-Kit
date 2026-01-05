@@ -140,14 +140,7 @@ class CodebaseScanner {
         
         this.results.agentFunctions.push({
           name: functionName,
-          file: filePath,
-          line: this.getLineNumber(content, match.index)
-        });
-      }
-    });
-  }
-
-  /**
+          file: filePat  /**
    * Scan for tool/action calls
    */
   scanForToolCalls(content, filePath) {
@@ -172,9 +165,63 @@ class CodebaseScanner {
         });
       }
     });
+
+    // NEW: Extended Rule Detection (FK010-FK040)
+    this.scanForExtendedRules(content, filePath);
   }
 
   /**
+   * Scan for extended rules (FK010-FK040)
+   */
+  scanForExtendedRules(content, filePath) {
+    if (!this.results.violations) this.results.violations = [];
+
+    const extendedPatterns = [
+      // FK010: Phantom Completion
+      { 
+        id: 'FK010', 
+        pattern: /I have (sent|updated|deleted|created|transferred|executed)/gi,
+        description: 'Potential phantom completion claim'
+      },
+      // FK014: Hallucinated Tool
+      { 
+        id: 'FK014', 
+        pattern: /I used the (\w+) tool/gi,
+        description: 'Explicit tool usage claim'
+      },
+      // FK025: Confidence Without Evidence
+      { 
+        id: 'FK025', 
+        pattern: /\b(definitely|certainly|guaranteed|absolutely)\b/gi,
+        description: 'High-confidence language'
+      },
+      // FK019: Retrieval Gap
+      { 
+        id: 'FK019', 
+        pattern: /retrieved|source|document/gi,
+        description: 'Retrieval reference'
+      },
+      // FK039: Silent Failure Cascade
+      { 
+        id: 'FK039', 
+        pattern: /task completed successfully|all steps finished/gi,
+        description: 'Overall success claim'
+      }
+    ];
+
+    extendedPatterns.forEach(({ id, pattern, description }) => {
+      let match;
+      while ((match = pattern.exec(content)) !== null) {
+        this.results.violations.push({
+          id,
+          description,
+          file: filePath,
+          line: this.getLineNumber(content, match.index),
+          context: match[0]
+        });
+      }
+    });
+  }
    * Scan for LLM calls
    */
   scanForLLMCalls(content, filePath) {
