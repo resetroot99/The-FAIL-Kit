@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fail-kit"
-version = "1.6.0"
+version = "2.0.0"
 description = "F.A.I.L. Kit adapter for LangChain agents - Receipts, auditing, policy enforcement, compliance, and resilience"
 readme = "README.md"
 requires-python = ">=3.9"

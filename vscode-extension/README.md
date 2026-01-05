@@ -2,7 +2,7 @@
 
 > **ℹ️ Repository Note:** This is the primary source for the F.A.I.L. Kit VSCode extension. Changes here are automatically synced to the standalone [vscode-fail](https://github.com/resetroot99/vscode-fail) repository.
 
-**Forensic Audit of Intelligent Logic** - The complete agent code audit toolkit for VS Code.
+**Forensic Audit of Intelligent Logic** - Real-time code analysis for robust AI agent tool use.
 
 [![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/AliJakvani.fail-kit-vscode?color=blue&label=VS%20Code)](https://marketplace.visualstudio.com/items?itemName=AliJakvani.fail-kit-vscode)
 [![npm](https://img.shields.io/npm/v/@fail-kit/core?color=red&label=npm)](https://www.npmjs.com/package/@fail-kit/core)
@@ -10,52 +10,140 @@
 
 ---
 
-Catch execution integrity failures before they reach production. F.A.I.L. Kit analyzes your AI agent code as you type, detecting missing receipts, error handling gaps, and audit trail issues.
+## Why This Exists
+
+AI agents fail silently. Your agent says it sent the email, updated the database, or transferred money. **Did it?** Or did it just sound confident?
+
+F.A.I.L. Kit catches execution integrity failures before they reach production:
+
+- **Tool calls without receipts** - No proof the action happened
+- **Silent failures** - Agent claims success when the tool failed
+- **Missing error handling** - LLM calls with no fallback
+- **Phantom completions** - Agent reports work it never did
+
+This extension analyzes your agent code **as you type**, detecting these patterns and offering one-click fixes.
 
 ## Features
 
-- **Professional Dashboard** - Light-themed audit report with ship decisions
-- **Auto-Fix System** - One-click fixes for common issues
-- **Regression Detection** - Compare against baseline to track progress
-- **Severity Classification** - Critical, High, Medium, Low with business impact
-- **Export Reports** - Generate markdown reports for documentation
+### Real-Time Robust Tool Use Analysis
 
-### Real-Time Analysis
-Analyzes your code as you type, highlighting issues inline with actionable suggestions.
+F.A.I.L. Kit enforces **receipt-driven execution** - every tool call must produce proof of completion.
 
-### Execution Integrity Checks
-- **Missing Receipt Detection** (FK001): Warns when tool calls lack audit receipts
-- **Missing Error Handling** (FK002): Warns when LLM calls lack try/catch blocks
-- **Silent Failure Detection**: Catches agents that claim success when tools fail
-- **Audit Trail Gaps**: Identifies operations without proper logging
+#### 1. Missing Receipts (FK001)
+
+Tool calls without audit trails. Agent invokes a function but doesn't capture proof.
+
+**Violation:**
+
+```typescript
+await sendEmail(contract); // ❌ No receipt
+return 'Email sent';
+```
+
+**Auto-fixed:**
+
+```typescript
+const receipt = await sendEmail(contract);
+if (!receipt.success) throw new Error(receipt.error);
+return receipt;
+```
+
+#### 2. Silent Failures (FK008)
+
+Agent claims completion when the tool returned an error.
+
+**Violation:**
+
+```typescript
+const result = await processPayment(order);
+return 'Payment processed'; // ❌ Ignores result.status
+```
+
+**Detection:** Receipt shows `status: "failed"`, output claims success.
+
+#### 3. Missing Error Handling (FK002)
+
+LLM calls without try/catch or timeout handling.
+
+**Auto-fixed:**
+
+```typescript
+try {
+  const response = await llm.invoke(prompt, { timeout: 30000 });
+  return response;
+} catch (error) {
+  logError(error);
+  return fallbackResponse();
+}
+```
+
+#### 4. Tool Hallucination (FK014)
+
+Agent invokes functions that don't exist.
+
+**Detection:** Checks tool registry against claimed tool calls.
+
+#### 5. Confidence Without Evidence (FK025)
+
+High-confidence claims with no supporting receipts.
+
+**Example:** "Database updated" but no tool receipt exists.
 
 ### Professional Dashboard
-Click "F.A.I.L. Kit: Open Dashboard" to see:
-- Ship Decision (BLOCK / NEEDS_REVIEW / SHIP)
-- Severity breakdown (Critical, High, Medium, Low)
-- Root cause analysis
-- Pass rate metrics
-- Issue timeline
 
-### Auto-Fix System
-- Receipt generation for tool calls
-- Try-catch wrappers for LLM calls
-- Error escalation patterns
-- Works with high confidence (90%+)
+- **Ship Decision** - BLOCK / NEEDS_REVIEW / SHIP
+- **Severity Breakdown** - Critical, High, Medium, Low
+- **Root Cause Analysis** - Common failure patterns
+- **Pass Rate Metrics** - Track improvements
+- **Issue Timeline** - When problems were introduced
 
-### Regression Detection
-- Set baseline at any point
-- Compare current issues against baseline
-- Track improvements over time
-- CI/CD friendly reports
+### One-Click Auto-Fix
+
+High-confidence fixes (90%+):
+
+- ✅ Add receipt generation after tool calls
+- ✅ Wrap LLM calls in try/catch
+- ✅ Add timeout handling
+- ✅ Generate error escalation code
+- ✅ Insert audit logging
 
 ### Multi-Framework Support
-- LangChain (Python & JavaScript)
-- OpenAI Assistants API
-- Anthropic Claude
-- CrewAI
-- AutoGPT
-- Custom agent implementations
+
+- **LangChain** (Python & JavaScript) - Agent executor, tools, chains
+- **OpenAI Assistants API** - Function calling, tool use
+- **Anthropic Claude** - Tool use with MCP
+- **CrewAI** - Multi-agent orchestration
+- **AutoGPT** - Autonomous agent execution
+- **Custom Agents** - Any framework using tool/function calling
+
+### Regression Detection
+
+- Set baseline at any point
+- Compare current state vs baseline
+- Track improvements over time
+- CI/CD integration ready
+
+## Real-World Incidents Prevented
+
+### 1. Sales Agent Email Failure
+
+**Incident:** Agent claimed it emailed contract to legal. Three days later, deal delayed.
+**F.A.I.L. Kit catches:** No receipt for `sendEmail()` call (FK001).
+
+### 2. Backup Agent False Success
+
+**Incident:** Nightly backup claimed success. Six months later, no backup file exists.
+**F.A.I.L. Kit catches:** Receipt shows `status: "failed"`, agent claimed success (FK008).
+
+### 3. Payment Processing Ghost Transaction
+
+**Incident:** Customer charged, transaction never completed, product shipped for free.
+**F.A.I.L. Kit catches:** No tool invocation receipt, but agent output includes transaction ID (FK014).
+
+### 4. Database Mutation Without Proof
+
+**Incident:** Agent reports "Database updated" but no audit log exists.
+**F.A.I.L. Kit catches:** High-confidence claim with no supporting receipt (FK025).
 
 ## Installation
 
@@ -87,56 +175,159 @@ Then press `F5` in VS Code to launch the Extension Development Host.
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
+| Command                              | Description                      |
+| ------------------------------------ | -------------------------------- |
 | `F.A.I.L. Kit: Analyze Current File` | Trigger analysis on current file |
-| `F.A.I.L. Kit: Analyze Workspace` | Analyze all files in workspace |
-| `F.A.I.L. Kit: Open Dashboard` | Open the audit dashboard |
-| `F.A.I.L. Kit: Set Baseline` | Save current state as baseline |
-| `F.A.I.L. Kit: Compare to Baseline` | Compare against saved baseline |
-| `F.A.I.L. Kit: Auto-Fix All Issues` | Apply auto-fixes to current file |
-| `F.A.I.L. Kit: Export Report` | Export markdown report |
+| `F.A.I.L. Kit: Analyze Workspace`    | Analyze all files in workspace   |
+| `F.A.I.L. Kit: Open Dashboard`       | Open the audit dashboard         |
+| `F.A.I.L. Kit: Set Baseline`         | Save current state as baseline   |
+| `F.A.I.L. Kit: Compare to Baseline`  | Compare against saved baseline   |
+| `F.A.I.L. Kit: Auto-Fix All Issues`  | Apply auto-fixes to current file |
+| `F.A.I.L. Kit: Export Report`        | Export markdown report           |
 
 ## Detection Rules
 
-| Rule ID | Description | Severity |
-|---------|-------------|----------|
-| **FK001** | Tool call without receipt generation | Warning/Error |
-| **FK002** | LLM call without error handling | Warning |
-| **FK003** | External API call without logging | Info |
-| **FK004** | Database mutation without transaction | Info |
+### Core Rules
+
+| Rule ID   | Description                                         | Severity      | Auto-Fix  |
+| --------- | --------------------------------------------------- | ------------- | --------- |
+| **FK001** | Tool call without receipt generation                | Warning/Error | ✅ Yes    |
+| **FK002** | LLM call without error handling                     | Warning       | ✅ Yes    |
+| **FK003** | External API call without logging                   | Info          | ✅ Yes    |
+| **FK004** | Database mutation without transaction               | Info          | ✅ Yes    |
+| **FK008** | Phantom success (tool failed, agent claims success) | Critical      | ⚠️ Manual |
+| **FK014** | Hallucinated tool invocation                        | High          | ❌ No     |
+| **FK025** | Confidence without evidence                         | Medium        | ⚠️ Manual |
+
+### Extended Ruleset
+
+- **FK010** - Phantom completion (claimed work not done)
+- **FK019** - Retrieval gap (missing context in RAG)
+- **FK039** - Silent failure cascade (error propagation)
+- **CONTRACT_0001** - Output schema violation
+- **CONTRACT_0003** - Claimed actions without receipts
+- **AGENT_0007** - State amnesia (context loss)
 
 ## Severity Classification
 
-| Level | Impact | Examples |
-|-------|--------|----------|
+| Level        | Impact            | Examples                          |
+| ------------ | ----------------- | --------------------------------- |
 | **Critical** | Blocks deployment | Payment operations, data deletion |
-| **High** | Needs review | Database mutations, email sending |
-| **Medium** | Should fix | File operations, API calls |
-| **Low** | Nice to have | Logging, minor validations |
+| **High**     | Needs review      | Database mutations, email sending |
+| **Medium**   | Should fix        | File operations, API calls        |
+| **Low**      | Nice to have      | Logging, minor validations        |
 
 ## Supported Patterns
 
-### Tool Calls (FK001)
+### Tool Calls Requiring Receipts (FK001)
 
-- Database: `prisma.create()`, `prisma.update()`, `db.execute()`
-- HTTP: `axios.post()`, `fetch()` (POST/PUT/DELETE)
-- Email: `sendEmail()`, `mailer.send()`
-- Files: `fs.writeFile()`, `s3.putObject()`
-- Payments: `stripe.charges.create()`, `paymentAPI.charge()`
+**Database Operations:**
 
-### LLM Calls (FK002)
+```typescript
+await prisma.user.create({ data: userData }); // ❌ No receipt
+await db.execute(query); // ❌ No receipt
+const receipt = await prisma.user.create(userData); // ✅ Receipt captured
+```
 
-- OpenAI: `openai.chat.completions.create()`
-- Anthropic: `anthropic.messages.create()`
-- LangChain: `llm.invoke()`, `agent.call()`
-- Generic: `generateText()`, `streamText()`
+**HTTP Requests (Mutating):**
+
+```typescript
+await axios.post('/api/orders', order); // ❌ No receipt
+await fetch('/api/users', { method: 'POST' }); // ❌ No receipt
+```
+
+**Email Operations:**
+
+```typescript
+await sendEmail(recipient, content); // ❌ No receipt
+await mailer.send({ to, subject, body }); // ❌ No receipt
+```
+
+**File System Operations:**
+
+```typescript
+await fs.writeFile('output.txt', data); // ❌ No receipt
+await s3.putObject({ bucket, key, body }); // ❌ No receipt
+```
+
+**Payment Processing:**
+
+```typescript
+await stripe.charges.create({ amount, currency }); // ❌ No receipt
+await paymentAPI.charge(customerId, amount); // ❌ No receipt
+```
+
+### LLM Calls Requiring Error Handling (FK002)
+
+**OpenAI:**
+
+```typescript
+const response = await openai.chat.completions.create({
+  model: 'gpt-4',
+  messages: [{ role: 'user', content: prompt }],
+}); // ❌ No error handling
+```
+
+**Anthropic:**
+
+```typescript
+const message = await anthropic.messages.create({
+  model: 'claude-3-5-sonnet-20241022',
+  messages: [{ role: 'user', content: prompt }],
+}); // ❌ No error handling
+```
+
+**LangChain:**
+
+```typescript
+const result = await llm.invoke(prompt); // ❌ No error handling
+const output = await agent.call({ input }); // ❌ No error handling
+```
+
+**Generic AI SDK:**
+
+```typescript
+const text = await generateText({ prompt }); // ❌ No error handling
+const stream = streamText({ prompt }); // ❌ No error handling
+```
 
 ### Agent Frameworks
 
-- LangChain: `AgentExecutor.call()`, `agent.invoke()`
-- CrewAI: `crew.kickoff()`, `task.execute()`
-- AutoGPT: `agent.run()`
+**LangChain:**
+
+```typescript
+const executor = AgentExecutor.fromAgentAndTools({ agent, tools });
+const result = await executor.call({ input: 'Book a flight' });
+// F.A.I.L. Kit verifies: tool receipts, error handling, state tracking
+```
+
+**CrewAI:**
+
+```python
+crew = Crew(agents=[agent], tasks=[task])
+result = crew.kickoff()
+# F.A.I.L. Kit verifies: task completion receipts, failure handling
+```
+
+**AutoGPT:**
+
+```python
+agent = Agent.from_workspace(workspace_path)
+result = agent.run(task)
+# F.A.I.L. Kit verifies: action receipts, phantom completion detection
+```
+
+**Custom Agents:**
+
+```typescript
+class MyAgent {
+  async executeTool(toolName: string, args: any) {
+    const result = await this.tools[toolName](args);
+    // F.A.I.L. Kit requires: receipt generation here
+    return result;
+  }
+}
+```
 
 ## Configuration
 
@@ -145,12 +336,7 @@ Then press `F5` in VS Code to launch the Extension Development Host.
   "fail-kit.enableRealTimeAnalysis": true,
   "fail-kit.severity.missingReceipt": "warning",
   "fail-kit.severity.missingErrorHandling": "warning",
-  "fail-kit.excludePatterns": [
-    "**/node_modules/**",
-    "**/*.test.ts",
-    "**/*.spec.ts",
-    "**/dist/**"
-  ],
+  "fail-kit.excludePatterns": ["**/node_modules/**", "**/*.test.ts", "**/*.spec.ts", "**/dist/**"],
   "fail-kit.autoFix.minConfidence": 90,
   "fail-kit.regression.enabled": true
 }
@@ -168,25 +354,74 @@ await anotherOperation(); // No warning
 
 ## Known Limitations
 
-- **TypeScript/JavaScript only** - Python support planned for v1.1.0
-- **Single-file analysis** - Cross-file receipt tracking not yet supported
-- **Dynamic calls not detected** - Calls via `eval()` won't be caught
+- **TypeScript/JavaScript only** - Python support via LSP server (experimental)
+- **Single-file analysis** - Cross-file receipt tracking planned for v2.1
+- **Dynamic calls not detected** - Calls via `eval()` or dynamic imports won't be caught
+- **Requires static analysis** - Runtime-only tool registration not supported
 
 ## Roadmap
 
-- **v1.1.0**: Python support, cross-file analysis
-- **v1.2.0**: Custom rule configuration, team sharing
-- **v2.0.0**: Full multi-language support, CI/CD integration
+- **v2.1**: Cross-file receipt tracking, Python full support
+- **v2.2**: Custom rule configuration, team-shared baselines
+- **v2.5**: Real-time collaboration features
+- **v3.0**: Multi-language support (Go, Rust, Java), CI/CD native integration
+
+## Why Receipts Matter
+
+Traditional software has **error codes**. AI agents need **execution receipts**.
+
+**Without receipts:**
+
+```typescript
+await sendEmail(contract);
+return 'Email sent'; // ❓ Did it actually send?
+```
+
+**With receipts:**
+
+```typescript
+const receipt = await sendEmail(contract);
+if (!receipt.success) {
+  throw new Error(`Email failed: ${receipt.error}`);
+}
+return receipt; // ✅ Proof of execution
+```
+
+Receipts provide:
+
+- **Proof of execution** - Tool was actually called
+- **Success/failure status** - Whether it worked
+- **Error details** - What went wrong
+- **Audit trail** - Who, what, when, where
+- **Replay capability** - Reproduce the execution
 
 ## Related
 
-- [F.A.I.L. Kit CLI](https://github.com/resetroot99/The-FAIL-Kit) - Command-line audit tool
-- [@fail-kit/core](https://github.com/resetroot99/The-FAIL-Kit/tree/main/packages/core) - Receipt generation library
+- **[F.A.I.L. Kit CLI](https://github.com/resetroot99/The-FAIL-Kit)** - Command-line audit tool with 172+ test cases
+- **[@fail-kit/core](https://github.com/resetroot99/The-FAIL-Kit/tree/main/packages/core)** - Receipt generation and validation library
+- **[Receipt Standard](https://github.com/resetroot99/The-FAIL-Kit/tree/main/receipt-standard)** - Open standard for execution proof
+- **[Ali's Book of Fail](https://github.com/resetroot99/Alis-book-of-fail)** - Open-source evaluation harness and doctrine
+
+## Community & Support
+
+**Issues:** Found a bug? [Open an issue](https://github.com/resetroot99/vscode-fail/issues)
+
+**Discussions:** Questions? [GitHub Discussions](https://github.com/resetroot99/The-FAIL-Kit/discussions)
+
+**Contributing:** We welcome contributions! See [CONTRIBUTING.md](https://github.com/resetroot99/The-FAIL-Kit/blob/main/CONTRIBUTING.md)
+
+**Enterprise Support:** For advisory services or custom integrations, contact ali@jakvan.io
 
 ## License
 
 MIT License - See [LICENSE](LICENSE)
 
+Free and open source. Use it, modify it, ship it.
+
 ---
 
-**Made by the F.A.I.L. Kit Team**
+**No trace, no ship.**
+
+---
+
+**Made by the F.A.I.L. Kit Team** | [Website](https://fail-kit.dev) | [GitHub](https://github.com/resetroot99/The-FAIL-Kit)

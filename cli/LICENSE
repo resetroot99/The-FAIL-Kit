@@ -1,111 +1,21 @@
-THE F.A.I.L. KIT CLI LICENSE
-Forensic Audit of Intelligent Logic
-Version 1.0 - January 1, 2026
+MIT License
 
-Copyright (c) 2026 F.A.I.L. Kit Team
+Copyright (c) 2026 Ali Jakvani and The F.A.I.L. Kit Contributors
 
-This is a commercial license for The F.A.I.L. Kit CLI (Forensic Audit of Intelligent Logic).
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-GRANT OF LICENSE
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-Subject to the terms and conditions of this license, the Licensor grants you a
-non-exclusive, non-transferable, limited license to use The F.A.I.L. Kit CLI
-(the "CLI") for internal business purposes only.
-
-PERMITTED USES
-
-You may:
-1. Use the CLI to audit your own AI systems
-2. Run the test cases against systems you own or operate
-3. Implement the provided enforcement code in your production systems
-4. Share audit results within your organization
-5. Modify the enforcement code for your internal use
-
-PROHIBITED USES
-
-You may NOT:
-1. Redistribute the CLI to third parties
-2. Resell or repackage the CLI
-3. Use the CLI to audit client systems without a separate advisory agreement
-4. Share the CLI with contractors, vendors, or partners outside your organization
-5. Publish or make available the test cases, runbook, or templates publicly
-6. Remove or modify this license file
-
-ADVISORY SERVICES
-
-If you wish to use this CLI to audit systems you do not own or operate (e.g.,
-client systems, partner systems), you must engage the Licensor for advisory
-services. Contact ali@jakvan.io for pricing.
-
-Available tiers:
-- The Guided Audit ($4,500) - We run the audit and present findings
-- The Enterprise Gate ($15,000/year) - Custom test development and quarterly reviews
-
-NO WARRANTY
-
-THE CLI IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
-INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
-PARTICULAR PURPOSE, AND NONINFRINGEMENT.
-
-IN NO EVENT SHALL THE LICENSOR BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM,
-OUT OF, OR IN CONNECTION WITH THE CLI OR THE USE OR OTHER DEALINGS IN THE CLI.
-
-LIMITATION OF LIABILITY
-
-The Licensor's total liability for any claims arising out of or related to this
-license or the CLI shall not exceed the amount you paid for the CLI.
-
-TERMINATION
-
-This license is effective until terminated. Your rights under this license will
-terminate automatically without notice if you fail to comply with any term of
-this license.
-
-Upon termination, you must cease all use of the CLI and destroy all copies in
-your possession.
-
-GOVERNING LAW
-
-This license shall be governed by and construed in accordance with the laws of
-the United States, without regard to its conflict of law provisions.
-
-ENTIRE AGREEMENT
-
-This license constitutes the entire agreement between you and the Licensor
-regarding the CLI and supersedes all prior or contemporaneous understandings
-regarding such subject matter.
-
-CONTACT
-
-For questions about this license, advisory services, or to report violations:
-ali@jakvan.io
-
----
-
-OPEN SOURCE COMPONENTS
-
-The F.A.I.L. Kit is based on Ali's Book of Fail, an open-source evaluation 
-harness and doctrine for AI systems licensed under the MIT License. 
-
-The open-source harness is available at:
-https://github.com/resetroot99/Alis-book-of-fail
-
-Additionally, the Receipt Standard is open-sourced under the MIT License to 
-enable industry-wide adoption.
-
-The Receipt Standard repository:
-https://github.com/resetroot99/The-FAIL-Kit/tree/main/receipt-standard
-
-The open-source components remain under the MIT License. This commercial license
-applies only to the curated test cases, runbook, report templates, enforcement
-code, policy packs, and failure mode catalog included in this CLI.
-
----
-
-By using the CLI, you acknowledge that you have read this license, understand it,
-and agree to be bound by its terms and conditions.
-
----
-
-No trace, no ship.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

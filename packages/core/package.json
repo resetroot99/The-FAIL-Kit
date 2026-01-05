@@ -1,6 +1,6 @@
 {
   "name": "@fail-kit/core",
-  "version": "1.6.0",
+  "version": "2.0.0",
   "description": "F.A.I.L. Kit Core - Receipt generation, validation, and utilities for AI agent audit trails",
   "main": "dist/index.js",
   "module": "dist/index.mjs",

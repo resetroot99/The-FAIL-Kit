@@ -1,6 +1,6 @@
 {
   "name": "@fail-kit/middleware-express",
-  "version": "1.5.1",
+  "version": "2.0.0",
   "description": "F.A.I.L. Kit middleware for Express - Add forensic audit endpoint in 5 lines",
   "main": "fail-audit-middleware.js",
   "scripts": {

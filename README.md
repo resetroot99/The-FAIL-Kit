@@ -6,20 +6,24 @@
 
 ![The Interrogation](assets/fail_kit_interrogation.png)
 
-**Version 1.6.0** | [Website](https://fail-kit.dev) | [Quick Start](#quick-start) | [Installation](#installation) | [Documentation](#documentation) | [Support](#support)
+**Version 2.0.0** | [Website](https://fail-kit.dev) | [Quick Start](#quick-start) | [Installation](#installation) | [Documentation](#documentation) | [Support](#support)
 
 > **"Because your agent is a fluent liar and it's time for an interrogation."**
 
-## License Notice
+## License
 
-**The F.A.I.L. Kit is a commercially licensed product.** The core test cases, runbook, enforcement code, and policy packs are proprietary. However, the following components are open-source under the MIT License:
+The F.A.I.L. Kit is **fully open source** under the MIT License. This includes:
 
-- **Receipt Standard** (`receipt-standard/`) - Schema, SDKs, and examples
-- **Integration Examples** (`examples/`) - Framework integration code
+- CLI tools and audit framework
+- Test cases and runbook
+- Enforcement code and policy packs
+- Receipt Standard - Schema, SDKs, and examples
+- Integration examples and middleware
+- VSCode extension
 
 This product is built on [Ali's Book of Fail](https://github.com/resetroot99/Alis-book-of-fail), an open-source (MIT) evaluation harness and doctrine.
 
-For full license details, see [LICENSE.txt](LICENSE.txt).
+See [LICENSE.txt](LICENSE.txt) for full details.
 
 ---
 
@@ -809,6 +813,20 @@ The **Receipt Standard** (receipt-standard/) is open-sourced under MIT to enable
 - Framework integration examples
 
 The F.A.I.L. Kit test cases, enforcement gates, and policy packs are available under the MIT license.
+
+---
+
+## Contributing & Support
+
+**Open Source:** The F.A.I.L. Kit is fully open source under the MIT License. We welcome contributions!
+
+**Contributing:** See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute.
+
+**Issues:** Found a bug? [Open an issue](https://github.com/resetroot99/The-FAIL-Kit/issues)
+
+**Discussions:** Questions? Join [GitHub Discussions](https://github.com/resetroot99/The-FAIL-Kit/discussions)
+
+**Enterprise Support:** For advisory services, custom test development, or consulting, contact ali@jakvan.io
 
 ---
 

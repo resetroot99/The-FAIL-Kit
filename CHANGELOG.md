@@ -5,6 +5,65 @@ All notable changes to The F.A.I.L. Kit will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-01-04
+
+### 🎉 Major Release: Fully Open Source
+
+**The F.A.I.L. Kit is now fully open source under the MIT License!**
+
+This is a major milestone - transitioning from a commercial license to a fully open, community-driven project.
+
+### Changed
+
+- **License:** Converted entire project to MIT License
+  - All test cases, runbook, and enforcement code now open source
+  - CLI tools, VSCode extension, and all packages freely available
+  - Receipt Standard remains MIT (no change)
+  - Updated LICENSE.txt, cli/LICENSE, and all package metadata
+  
+- **Documentation:** Updated all docs to reflect open source model
+  - README.md revised with new license information
+  - CONTRIBUTING.md rewritten for open source contribution model
+  - Removed commercial language across all documentation
+  
+- **VSCode Extension:** Major README enhancement
+  - Added "Why This Exists" section with clear problem statement
+  - Added 4 real-world incident examples
+  - Detailed code examples for each detection rule
+  - Added FK008, FK014, FK025 rules with descriptions
+  - Enhanced "Why Receipts Matter" section
+  - Better community and support information
+
+- **Versioning:** Bumped all packages to 2.0.0
+  - `@fail-kit/cli`: 1.6.0 → 2.0.0
+  - `fail-kit-vscode`: 1.3.0 → 2.0.0
+  - `@fail-kit/core`: 1.6.0 → 2.0.0
+  - `@fail-kit/middleware-express`: 1.5.1 → 2.0.0
+  - `@fail-kit/middleware-nextjs`: 1.5.1 → 2.0.0
+  - `fail-kit` (Python LangChain): 1.6.0 → 2.0.0
+  - `fail-kit` (Python FastAPI): 1.5.1 → 2.0.0
+  - `fail-kit-lsp`: 1.0.0 → 2.0.0
+  - `fail-kit-receipt-standard`: 1.5.1 → 2.0.0
+
+### Added
+
+- Automated GitHub Actions workflow for VSCode extension sync
+  - Automatically syncs `vscode-extension/` to standalone repo
+  - Triggered on push to main or manual workflow dispatch
+  - Maintains separate VSCode Marketplace presence
+
+### Community
+
+We now welcome contributions from everyone! See [CONTRIBUTING.md](CONTRIBUTING.md) for:
+- How to contribute test cases, code, documentation
+- Development setup instructions
+- Code style guidelines
+- Pull request process
+
+**Enterprise support:** Still available for custom integrations and advisory services at ali@jakvan.io
+
+---
+
 ## [1.5.1] - 2026-01-02
 
 ### Fixed

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "fail-kit-lsp"
-version = "1.0.0"
+version = "2.0.0"
 description = "F.A.I.L. Kit Language Server for Python - Forensic analysis for LangChain, CrewAI, and AutoGen"
 readme = "README.md"
 license = "MIT"

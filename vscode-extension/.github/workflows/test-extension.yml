@@ -1,0 +1,38 @@
+name: Test Extension
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+      fail-fast: true
+
+    steps:
+    - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@1a4442cacd436585916779262731d5b12878567e # v3.8.1
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Compile
+      run: npm run compile
+
+    - name: Lint
+      run: npm run lint
