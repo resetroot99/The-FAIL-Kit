@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "fail-kit"
+name = "fail-kit-fastapi"
 version = "2.0.0"
 description = "F.A.I.L. Kit - Forensic Audit of Intelligent Logic - FastAPI middleware"
 readme = "README.md"
