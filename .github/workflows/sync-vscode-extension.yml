@@ -1,0 +1,65 @@
+name: Sync VSCode Extension to Standalone Repo
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'vscode-extension/**'
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout The-FAIL-Kit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Checkout vscode-fail
+        uses: actions/checkout@v4
+        with:
+          repository: resetroot99/vscode-fail
+          token: ${{ secrets.VSCODE_SYNC_TOKEN }}
+          path: vscode-fail
+
+      - name: Sync files
+        run: |
+          # Remove all files from vscode-fail except .git
+          find vscode-fail -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
+          
+          # Copy everything from vscode-extension to vscode-fail
+          cp -r vscode-extension/* vscode-fail/
+          cp -r vscode-extension/.* vscode-fail/ 2>/dev/null || true
+          
+          # Remove .git directory if it was copied
+          rm -rf vscode-fail/.git/.git
+
+      - name: Check for changes
+        id: check_changes
+        run: |
+          cd vscode-fail
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          
+          if [[ -n $(git status --porcelain) ]]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit and push changes
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          cd vscode-fail
+          git add -A
+          git commit -m "Sync from The-FAIL-Kit/vscode-extension
+
+          Automated sync from main repository.
+          Source commit: ${{ github.sha }}"
+          git push origin main
+
+      - name: No changes detected
+        if: steps.check_changes.outputs.has_changes == 'false'
+        run: echo "No changes to sync"
