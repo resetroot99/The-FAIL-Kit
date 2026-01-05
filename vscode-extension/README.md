@@ -1,5 +1,7 @@
 # F.A.I.L. Kit for VS Code
 
+> **ℹ️ Repository Note:** This is the primary source for the F.A.I.L. Kit VSCode extension. Changes here are automatically synced to the standalone [vscode-fail](https://github.com/resetroot99/vscode-fail) repository.
+
 **Forensic Audit of Intelligent Logic** - The complete agent code audit toolkit for VS Code.
 
 [![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/AliJakvani.fail-kit-vscode?color=blue&label=VS%20Code)](https://marketplace.visualstudio.com/items?itemName=AliJakvani.fail-kit-vscode)
