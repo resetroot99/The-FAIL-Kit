@@ -140,7 +140,13 @@ class CodebaseScanner {
         
         this.results.agentFunctions.push({
           name: functionName,
-          file: filePat  /**
+          file: filePath
+        });
+      }
+    });
+  }
+
+  /**
    * Scan for tool/action calls
    */
   scanForToolCalls(content, filePath) {
@@ -222,6 +228,8 @@ class CodebaseScanner {
       }
     });
   }
+
+  /**
    * Scan for LLM calls
    */
   scanForLLMCalls(content, filePath) {
