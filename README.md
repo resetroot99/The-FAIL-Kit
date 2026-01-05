@@ -1,8 +1,12 @@
 # F.A.I.L. Kit
 ## Forensic Audit of Intelligent Logic
 
+[![CI](https://github.com/resetroot99/The-FAIL-Kit/actions/workflows/ci.yml/badge.svg)](https://github.com/resetroot99/The-FAIL-Kit/actions/workflows/ci.yml)
 [![npm version](https://img.shields.io/npm/v/@fail-kit/cli.svg)](https://www.npmjs.com/package/@fail-kit/cli)
 [![npm downloads](https://img.shields.io/npm/dm/@fail-kit/cli.svg)](https://www.npmjs.com/package/@fail-kit/cli)
+[![PyPI](https://img.shields.io/pypi/v/fail-kit)](https://pypi.org/project/fail-kit/)
+[![VS Code](https://img.shields.io/visual-studio-marketplace/v/AliJakvani.fail-kit-vscode)](https://marketplace.visualstudio.com/items?itemName=AliJakvani.fail-kit-vscode)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE.txt)
 
 ![The Interrogation](assets/fail_kit_interrogation.png)
 

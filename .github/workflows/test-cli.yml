@@ -1,14 +1,7 @@
-name: Test CLI
+name: Test CLI (Legacy)
 
 on:
-  push:
-    branches: [ main ]
-    paths:
-      - 'cli/**'
-  pull_request:
-    branches: [ main ]
-    paths:
-      - 'cli/**'
+  workflow_dispatch:
 
 permissions:
   contents: read

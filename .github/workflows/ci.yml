@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  test-cli:
+    name: Test CLI
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: ./cli
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+      fail-fast: true
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: cli/package-lock.json
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run tests
+      run: npm test
+
+  lint-cli:
+    name: Lint CLI
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: ./cli
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Use Node.js 20
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: 'npm'
+        cache-dependency-path: cli/package-lock.json
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Check syntax
+      run: node -c src/index.js src/scanner.js src/config.js
+
+  build-vscode:
+    name: Build VSCode Extension
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: ./vscode-extension
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Use Node.js 20
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: 'npm'
+        cache-dependency-path: vscode-extension/package-lock.json
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Compile TypeScript
+      run: npm run compile
+
+    - name: Build package
+      run: npm run package
