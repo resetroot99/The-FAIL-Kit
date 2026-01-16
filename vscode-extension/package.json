@@ -177,6 +177,11 @@
           "default": false,
           "description": "Enable anonymous error telemetry to help improve F.A.I.L. Kit"
         },
+        "fail-kit.debug": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable debug logging to F.A.I.L. Kit Debug output channel"
+        },
         "failKit.pythonLsp.enabled": {
           "type": "boolean",
           "default": false,

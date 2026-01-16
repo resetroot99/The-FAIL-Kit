@@ -8,7 +8,7 @@
 import * as vscode from 'vscode';
 import { minimatch } from 'minimatch';
 import { FailKitAnalyzer, Issue, AnalysisResult, RULES } from './analyzer';
-import { debounce, reportError } from './utils';
+import { debounce, reportError, debugLog } from './utils';
 
 const VALID_SEVERITIES = ['error', 'warning', 'info', 'hint'] as const;
 type Severity = typeof VALID_SEVERITIES[number];
@@ -102,6 +102,9 @@ export class FailKitDiagnosticsProvider implements vscode.Disposable {
       enableQuickCheck: true,
     });
 
+    // Validate configuration on initialization
+    this.validateConfiguration();
+
     // Create debounced analysis function (500ms delay)
     // Check if document is still open to prevent race conditions
     this.debouncedAnalyze = debounce((document: vscode.TextDocument) => {
@@ -154,6 +157,9 @@ export class FailKitDiagnosticsProvider implements vscode.Disposable {
    */
   private onConfigChange(event: vscode.ConfigurationChangeEvent): void {
     if (event.affectsConfiguration('fail-kit')) {
+      // Validate configuration
+      this.validateConfiguration();
+      
       // Re-analyze all open documents with new settings
       this.analyzer.clearCache();
       vscode.workspace.textDocuments.forEach((doc) => {
@@ -161,6 +167,62 @@ export class FailKitDiagnosticsProvider implements vscode.Disposable {
           this.analyzeDocument(doc);
         }
       });
+    }
+  }
+
+  /**
+   * Validate configuration settings
+   */
+  private validateConfiguration(): void {
+    const config = vscode.workspace.getConfiguration('fail-kit');
+    const excludePatterns = config.get<string[]>('excludePatterns', []);
+    const invalidPatterns: string[] = [];
+
+    for (const pattern of excludePatterns) {
+      try {
+        // Test if pattern is valid by using minimatch
+        minimatch('test', pattern, { dot: true });
+      } catch (error) {
+        invalidPatterns.push(pattern);
+        debugLog(`Invalid exclude pattern: ${pattern}`, error);
+      }
+    }
+
+    if (invalidPatterns.length > 0) {
+      vscode.window.showWarningMessage(
+        `F.A.I.L. Kit: Invalid exclude patterns detected: ${invalidPatterns.join(', ')}. Please check your settings.`,
+        'Open Settings'
+      ).then(choice => {
+        if (choice === 'Open Settings') {
+          vscode.commands.executeCommand(
+            'workbench.action.openSettings',
+            '@ext:AliJakvani.fail-kit-vscode excludePatterns'
+          );
+        }
+      });
+    }
+
+    // Validate severity settings
+    const severitySettings = [
+      'severity.missingReceipt',
+      'severity.missingErrorHandling',
+    ];
+
+    for (const setting of severitySettings) {
+      const value = config.get<string>(setting);
+      if (value && !VALID_SEVERITIES.includes(value as Severity)) {
+        vscode.window.showWarningMessage(
+          `F.A.I.L. Kit: Invalid severity value for ${setting}: ${value}. Must be one of: ${VALID_SEVERITIES.join(', ')}`
+        );
+      }
+    }
+
+    // Validate auto-fix confidence
+    const minConfidence = config.get<number>('autoFix.minConfidence', 90);
+    if (minConfidence < 0 || minConfidence > 100) {
+      vscode.window.showWarningMessage(
+        `F.A.I.L. Kit: autoFix.minConfidence must be between 0 and 100, got ${minConfidence}`
+      );
     }
   }
 
@@ -221,6 +283,11 @@ export class FailKitDiagnosticsProvider implements vscode.Disposable {
     const code = document.getText();
     const filePath = document.uri.fsPath;
 
+    debugLog(`Analyzing document: ${filePath}`, {
+      lines: code.split('\n').length,
+      size: code.length,
+    });
+
     try {
       const result = this.analyzer.analyze(code, filePath);
 
@@ -275,13 +342,22 @@ export class FailKitDiagnosticsProvider implements vscode.Disposable {
       });
 
       this.diagnosticCollection.set(document.uri, diagnostics);
+      
+      debugLog(`Analysis complete for ${filePath}`, {
+        issues: diagnostics.length,
+        toolCalls: result.toolCalls.length,
+        llmCalls: result.llmCalls.length,
+      });
     } catch (error) {
       // Report error with telemetry (if enabled)
-      reportError(error instanceof Error ? error : new Error(String(error)), {
+      const err = error instanceof Error ? error : new Error(String(error));
+      reportError(err, {
         action: 'analyzeDocument',
         fileType: document.languageId,
         codeLength: code.length,
       });
+      
+      debugLog(`Error analyzing ${filePath}`, err);
       
       // Clear diagnostics on error to avoid stale data
       this.diagnosticCollection.set(document.uri, []);
@@ -299,7 +375,7 @@ export class FailKitDiagnosticsProvider implements vscode.Disposable {
   }
 
   /**
-   * Analyze the entire workspace
+   * Analyze the entire workspace with progress indicator
    */
   public async analyzeWorkspace(): Promise<{ filesAnalyzed: number; issuesFound: number }> {
     const files = await vscode.workspace.findFiles(
@@ -310,18 +386,41 @@ export class FailKitDiagnosticsProvider implements vscode.Disposable {
     let filesAnalyzed = 0;
     let issuesFound = 0;
 
-    for (const file of files) {
-      try {
-        const document = await vscode.workspace.openTextDocument(file);
-        if (this.shouldAnalyze(document)) {
-          this.analyzeDocument(document);
-          filesAnalyzed++;
-          issuesFound += this.diagnosticCollection.get(document.uri)?.length || 0;
+    // Create progress status bar item
+    const progressStatusBar = vscode.window.createStatusBarItem(
+      vscode.StatusBarAlignment.Right,
+      99
+    );
+
+    try {
+      for (const file of files) {
+        try {
+          const document = await vscode.workspace.openTextDocument(file);
+          if (this.shouldAnalyze(document)) {
+            // Update progress
+            filesAnalyzed++;
+            progressStatusBar.text = `$(sync~spin) Analyzing ${filesAnalyzed}/${files.length}`;
+            progressStatusBar.show();
+
+            this.analyzeDocument(document);
+            const fileIssues = this.diagnosticCollection.get(document.uri)?.length || 0;
+            issuesFound += fileIssues;
+
+            debugLog(`Analyzed ${file.fsPath}`, {
+              issues: fileIssues,
+              progress: `${filesAnalyzed}/${files.length}`,
+            });
+          }
+        } catch (error) {
+          // Skip files that can't be opened
+          debugLog(`Could not analyze ${file.fsPath}`, error);
+          console.warn(`Could not analyze ${file.fsPath}:`, error);
         }
-      } catch (error) {
-        // Skip files that can't be opened
-        console.warn(`Could not analyze ${file.fsPath}:`, error);
       }
+    } finally {
+      // Hide progress indicator
+      progressStatusBar.hide();
+      progressStatusBar.dispose();
     }
 
     return { filesAnalyzed, issuesFound };

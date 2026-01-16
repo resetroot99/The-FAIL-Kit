@@ -41,7 +41,7 @@ import { registerSandboxCommands } from './sandbox/server';
 import { registerCICommands } from './ci';
 import { registerPolicyCommands } from './policies';
 import { registerSDKCommands, runCustomRules, matchesToIssues } from './sdk';
-import { initTelemetry, reportError } from './utils';
+import { initTelemetry, reportError, showDebugChannel } from './utils';
 import { PythonLSPClient, createPythonLSPClient } from './python-lsp';
 
 let diagnosticsProvider: FailKitDiagnosticsProvider | undefined;
@@ -546,30 +546,167 @@ export function activate(context: vscode.ExtensionContext): void {
     })
   );
 
-  // Register status bar item
+  // Register status bar item with enhanced functionality
   const statusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
     100
   );
   statusBarItem.text = '$(shield) FAIL-Kit';
-  statusBarItem.tooltip = 'F.A.I.L. Kit: Click to analyze current file';
-  statusBarItem.command = 'fail-kit.analyzeFile';
+  statusBarItem.tooltip = 'F.A.I.L. Kit: Click for options';
+  statusBarItem.command = 'fail-kit.showStatusMenu';
   statusBarItem.show();
   context.subscriptions.push(statusBarItem);
 
-  // Update status bar based on diagnostics
+  // Enhanced status bar menu command
+  context.subscriptions.push(
+    vscode.commands.registerCommand('fail-kit.showStatusMenu', async () => {
+      if (!diagnosticsProvider) {
+        vscode.window.showWarningMessage('F.A.I.L. Kit not initialized');
+        return;
+      }
+
+      // Gather diagnostics from all files
+      const allDiagnostics: vscode.Diagnostic[] = [];
+      const allResults = diagnosticsProvider.getAllResults();
+      for (const [filePath, result] of allResults) {
+        const uri = vscode.Uri.file(filePath);
+        const diags = diagnosticsProvider.getDiagnostics(uri);
+        allDiagnostics.push(...diags);
+      }
+
+      // Calculate severity breakdown
+      const critical = allDiagnostics.filter(d => d.severity === vscode.DiagnosticSeverity.Error).length;
+      const warnings = allDiagnostics.filter(d => d.severity === vscode.DiagnosticSeverity.Warning).length;
+      const info = allDiagnostics.filter(d => d.severity === vscode.DiagnosticSeverity.Information).length;
+      const hints = allDiagnostics.filter(d => d.severity === vscode.DiagnosticSeverity.Hint).length;
+      const total = allDiagnostics.length;
+
+      const items: vscode.QuickPickItem[] = [
+        {
+          label: '$(dashboard) Open Dashboard',
+          description: 'View detailed analysis report',
+          detail: total > 0 ? `${total} issues found` : 'No issues detected',
+        },
+        {
+          label: '$(sync) Analyze Workspace',
+          description: 'Re-analyze all files',
+        },
+        {
+          label: '$(file-code) Analyze Current File',
+          description: 'Analyze active editor',
+        },
+      ];
+
+      if (total > 0) {
+        items.push(
+          { label: '', kind: vscode.QuickPickItemKind.Separator },
+          {
+            label: `$(error) Critical: ${critical}`,
+            description: 'Errors that block deployment',
+          },
+          {
+            label: `$(warning) Warnings: ${warnings}`,
+            description: 'Issues that need review',
+          },
+          {
+            label: `$(info) Info: ${info}`,
+            description: 'Suggestions and improvements',
+          },
+          {
+            label: `$(lightbulb) Hints: ${hints}`,
+            description: 'Minor recommendations',
+          }
+        );
+      }
+
+      items.push(
+        { label: '', kind: vscode.QuickPickItemKind.Separator },
+        {
+          label: '$(settings) Open Settings',
+          description: 'Configure F.A.I.L. Kit',
+        },
+        {
+          label: '$(output) Show Debug Log',
+          description: 'View debug output',
+        }
+      );
+
+      const choice = await vscode.window.showQuickPick(items, {
+        title: 'F.A.I.L. Kit',
+        placeHolder: total > 0 ? `${total} issues detected` : 'No issues found',
+      });
+
+      if (!choice) return;
+
+      switch (choice.label) {
+        case '$(dashboard) Open Dashboard':
+          vscode.commands.executeCommand('fail-kit.generateReport');
+          break;
+        case '$(sync) Analyze Workspace':
+          vscode.commands.executeCommand('fail-kit.analyzeWorkspace');
+          break;
+        case '$(file-code) Analyze Current File':
+          vscode.commands.executeCommand('fail-kit.analyzeFile');
+          break;
+        case '$(settings) Open Settings':
+          vscode.commands.executeCommand(
+            'workbench.action.openSettings',
+            '@ext:AliJakvani.fail-kit-vscode'
+          );
+          break;
+        case '$(output) Show Debug Log':
+          showDebugChannel();
+          break;
+      }
+    })
+  );
+
+  // Update status bar based on diagnostics with severity breakdown
+  function updateStatusBar(diagnostics: vscode.Diagnostic[]): void {
+    const critical = diagnostics.filter(d => d.severity === vscode.DiagnosticSeverity.Error).length;
+    const warnings = diagnostics.filter(d => d.severity === vscode.DiagnosticSeverity.Warning).length;
+    const total = diagnostics.length;
+
+    if (total === 0) {
+      statusBarItem.text = '$(shield) FAIL-Kit';
+      statusBarItem.backgroundColor = undefined;
+      statusBarItem.tooltip = 'F.A.I.L. Kit: No issues detected';
+    } else {
+      // Show critical errors and warnings in status bar
+      if (critical > 0) {
+        statusBarItem.text = `$(shield) FAIL-Kit: ${critical}E ${warnings}W`;
+        statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.errorBackground');
+        statusBarItem.tooltip = `F.A.I.L. Kit: ${critical} critical, ${warnings} warnings (${total} total)`;
+      } else if (warnings > 0) {
+        statusBarItem.text = `$(shield) FAIL-Kit: ${warnings}W`;
+        statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
+        statusBarItem.tooltip = `F.A.I.L. Kit: ${warnings} warnings (${total} total)`;
+      } else {
+        statusBarItem.text = `$(shield) FAIL-Kit: ${total}`;
+        statusBarItem.backgroundColor = undefined;
+        statusBarItem.tooltip = `F.A.I.L. Kit: ${total} issues detected`;
+      }
+    }
+  }
+
+  // Update status bar on editor change
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor((editor) => {
       if (editor && diagnosticsProvider) {
         const diagnostics = diagnosticsProvider.getDiagnostics(editor.document.uri);
-        if (diagnostics.length > 0) {
-          statusBarItem.text = `$(shield) FAIL-Kit (${diagnostics.length})`;
-          statusBarItem.backgroundColor = new vscode.ThemeColor(
-            'statusBarItem.warningBackground'
-          );
-        } else {
-          statusBarItem.text = '$(shield) FAIL-Kit';
-          statusBarItem.backgroundColor = undefined;
+        updateStatusBar(diagnostics);
+      }
+    })
+  );
+
+  // Update status bar on diagnostics change
+  context.subscriptions.push(
+    vscode.languages.onDidChangeDiagnostics(() => {
+      if (diagnosticsProvider) {
+        const editor = vscode.window.activeTextEditor;
+        if (editor) {
+          const diagnostics = diagnosticsProvider.getDiagnostics(editor.document.uri);
+          updateStatusBar(diagnostics);
         }
       }
     })

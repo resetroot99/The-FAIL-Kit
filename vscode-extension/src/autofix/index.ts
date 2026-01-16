@@ -145,6 +145,36 @@ function applyEditToString(content: string, edit: vscode.WorkspaceEdit, uri: vsc
 /**
  * Apply a fix with preview confirmation
  */
+/**
+ * Get context-aware error message with examples
+ */
+function getFixErrorMessage(issue: Issue, reason: string): string {
+  const examples: Record<string, { bad: string; good: string }> = {
+    FK001: {
+      bad: 'await sendEmail(contract);',
+      good: 'const receipt = await sendEmail(contract);\nif (!receipt.success) throw new Error(receipt.error);',
+    },
+    FK002: {
+      bad: 'const response = await llm.invoke(prompt);',
+      good: 'try {\n  const response = await llm.invoke(prompt);\n} catch (error) {\n  console.error(\'LLM call failed:\', error);\n  throw error;\n}',
+    },
+    FK003: {
+      bad: 'const apiKey = "sk-1234567890";',
+      good: 'const apiKey = process.env.API_KEY;',
+    },
+    FK004: {
+      bad: 'await db.delete({ id: userId });',
+      good: 'const confirmed = await confirmAction?.(\'delete\') ?? true;\nif (!confirmed) throw new Error(\'Operation cancelled\');\nawait db.delete({ id: userId });',
+    },
+  };
+
+  const example = examples[issue.ruleId];
+  if (example) {
+    return `${reason}\n\n**Example Fix:**\n\n❌ **Before:**\n\`\`\`typescript\n${example.bad}\n\`\`\`\n\n✅ **After:**\n\`\`\`typescript\n${example.good}\n\`\`\`\n\nSee documentation: ${issue.docLink || 'https://github.com/resetroot99/The-FAIL-Kit'}`;
+  }
+  return `${reason}\n\nSee documentation: ${issue.docLink || 'https://github.com/resetroot99/The-FAIL-Kit'}`;
+}
+
 export async function applyFixWithPreview(
   issue: Issue,
   document: vscode.TextDocument,
@@ -152,7 +182,8 @@ export async function applyFixWithPreview(
 ): Promise<{ applied: boolean; historyId?: string; error?: string }> {
   const preview = await previewFix(issue, document);
   if (!preview) {
-    return { applied: false, error: 'No fix available for this issue' };
+    const errorMsg = getFixErrorMessage(issue, 'No fix available for this issue');
+    return { applied: false, error: errorMsg };
   }
 
   if (showPreview) {
@@ -221,14 +252,16 @@ export async function applyFixWithPreview(
   const fix = fixer?.generateFix(issue, document);
   
   if (!fix) {
-    return { applied: false, error: 'Failed to generate fix' };
+    const errorMsg = getFixErrorMessage(issue, 'Failed to generate fix. This may require manual intervention.');
+    return { applied: false, error: errorMsg };
   }
 
   const success = await vscode.workspace.applyEdit(fix);
   
   if (!success) {
     // Remove from history if failed
-    return { applied: false, error: 'Failed to apply fix' };
+    const errorMsg = getFixErrorMessage(issue, 'Failed to apply fix. The file may have been modified or is read-only.');
+    return { applied: false, error: errorMsg };
   }
 
   return { applied: true, historyId };
