@@ -570,7 +570,7 @@ function generateDashboard(results) {
       color: var(--text-primary);
       font-weight: 500;
       padding: 8px 12px;
-      background: rgba(255, 255, 255, 0.03);
+      background: rgba(255, 255, 255, 0.5);
       border-radius: 4px;
       border-left: 3px solid var(--accent);
     }
@@ -606,7 +606,7 @@ function generateDashboard(results) {
     .root-cause-item {
       margin-bottom: 16px;
       padding: 10px;
-      background: rgba(255, 255, 255, 0.02);
+      background: rgba(0, 0, 0, 0.02);
       border-radius: 4px;
     }
     
@@ -714,7 +714,7 @@ function generateDashboard(results) {
       display: flex;
       gap: 12px;
       padding: 8px 16px;
-      background: rgba(0, 0, 0, 0.2);
+      background: var(--bg-tertiary);
       border-bottom: 1px solid var(--border);
       font-size: 10px;
     }
@@ -739,7 +739,7 @@ function generateDashboard(results) {
     }
     
     .timeline-lane {
-      background: rgba(255, 255, 255, 0.02);
+      background: rgba(0, 0, 0, 0.02);
       border: 1px solid var(--border);
       border-radius: 6px;
       padding: 12px;
@@ -880,7 +880,7 @@ function generateDashboard(results) {
     
     .forensic-search {
       padding: 12px;
-      background: rgba(0, 0, 0, 0.2);
+      background: var(--bg-tertiary);
       border-bottom: 1px solid var(--border);
       position: sticky;
       top: 0;
@@ -930,11 +930,11 @@ function generateDashboard(results) {
     }
     
     .filter-chip:hover {
-      background: rgba(255, 255, 255, 0.05);
+      background: rgba(0, 0, 0, 0.05);
     }
     
     .filter-chip.active {
-      background: rgba(34, 211, 238, 0.15);
+      background: rgba(59, 130, 246, 0.15);
       border-color: var(--accent);
       color: var(--accent);
     }
@@ -951,17 +951,17 @@ function generateDashboard(results) {
       border-radius: 6px;
       cursor: pointer;
       border-left: 2px solid transparent;
-      background: rgba(255, 255, 255, 0.02);
+      background: rgba(0, 0, 0, 0.02);
       transition: all 0.2s;
     }
     
     .forensic-item:hover {
-      background: rgba(255, 255, 255, 0.05);
+      background: rgba(0, 0, 0, 0.05);
       border-left-color: var(--accent);
     }
     
     .forensic-item.selected {
-      background: rgba(34, 211, 238, 0.1);
+      background: rgba(59, 130, 246, 0.1);
       border-left-color: var(--accent);
     }
     
@@ -991,10 +991,10 @@ function generateDashboard(results) {
       letter-spacing: 0.5px;
     }
     
-    .tag-critical { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
-    .tag-high { background: rgba(245, 158, 11, 0.2); color: #fcd34d; }
-    .tag-medium { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
-    .tag-low { background: rgba(107, 114, 128, 0.2); color: #9ca3af; }
+    .tag-critical { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+    .tag-high { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+    .tag-medium { background: rgba(59, 130, 246, 0.2); color: var(--info); }
+    .tag-low { background: rgba(107, 114, 128, 0.2); color: #6b7280; }
     
     .forensic-case {
       font-family: 'JetBrains Mono', monospace;
@@ -1075,7 +1075,7 @@ function generateDashboard(results) {
     .fix-hint {
       margin-top: 8px;
       padding: 8px;
-      background: rgba(34, 211, 238, 0.1);
+      background: rgba(59, 130, 246, 0.1);
       border-left: 3px solid var(--accent);
       border-radius: 4px;
       font-size: 10px;
@@ -1140,7 +1140,7 @@ function generateDashboard(results) {
     
     .provenance-item {
       padding: 8px;
-      background: rgba(255, 255, 255, 0.02);
+      background: rgba(0, 0, 0, 0.02);
       border-radius: 4px;
     }
     
@@ -1171,7 +1171,7 @@ function generateDashboard(results) {
     /* Severity Legend */
     .severity-legend {
       padding: 12px 16px;
-      background: rgba(0, 0, 0, 0.2);
+      background: var(--bg-tertiary);
       border-bottom: 1px solid var(--border);
       font-size: 10px;
       display: flex;
@@ -1214,12 +1214,12 @@ function generateDashboard(results) {
     }
     
     ::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(0, 0, 0, 0.1);
       border-radius: 3px;
     }
     
     ::-webkit-scrollbar-thumb:hover {
-      background: rgba(255, 255, 255, 0.2);
+      background: rgba(0, 0, 0, 0.2);
     }
   </style>
 </head>
