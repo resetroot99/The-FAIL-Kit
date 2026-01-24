@@ -195,7 +195,7 @@ const CATEGORY_META: Record<string, { name: string; color: string; icon: string 
 };
 
 /**
- * Generate dashboard HTML for VS Code webview - matches v1.5.2 design
+ * Generate dashboard HTML for VS Code webview - Light theme design v1.6.0
  */
 export function generateDashboardHTML(
   data: DashboardData,
