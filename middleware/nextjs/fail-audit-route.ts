@@ -67,17 +67,22 @@ export function failAuditRoute(
   return async (req: NextRequest) => {
     try {
       const body = await req.json();
-      const { prompt, context } = body;
+      const { prompt, context, inputs } = body;
+      // CLI sends { inputs: { user: "..." } }; accept either prompt or inputs.user
+      const promptText =
+        typeof prompt === 'string'
+          ? prompt
+          : (inputs && typeof inputs.user === 'string' ? inputs.user : '');
 
-      if (!prompt) {
+      if (!promptText.trim()) {
         return NextResponse.json(
-          { error: 'Missing required field: prompt' },
+          { error: 'Missing required field: prompt or inputs.user' },
           { status: 400 }
         );
       }
 
       // Call the user's handler
-      const result = await handler(prompt, context || {});
+      const result = await handler(promptText, context || {});
 
       // Auto-generate receipts if enabled and not provided
       let receipts = result.receipts || [];

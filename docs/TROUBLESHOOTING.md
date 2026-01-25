@@ -73,6 +73,55 @@ npm ci
 
 ---
 
+### Request failed with status code 404 (Next.js)
+
+**Problem:** All tests fail with `Error: Request failed with status code 404`. The dev server is running on the expected port.
+
+**Cause:** The eval route does not exist or is at a different path. The CLI calls `POST /api/eval/run` (Next.js) or `POST /eval/run` (Express/FastAPI).
+
+**Solution for Next.js App Router:**
+
+1. **Create the route** at `app/api/eval/run/route.ts`:
+
+   ```bash
+   mkdir -p app/api/eval/run
+   ```
+
+2. **Add the handler** (use `@fail-kit/middleware-nextjs`):
+
+   ```ts
+   // app/api/eval/run/route.ts
+   import { failAuditRoute } from '@fail-kit/middleware-nextjs';
+
+   export const POST = failAuditRoute(async (prompt, context) => {
+     const result = await yourAgent.process(prompt);
+     return {
+       response: result.text,
+       actions: result.actions ?? [],
+       receipts: result.receipts ?? []
+     };
+   });
+   ```
+
+3. **Confirm the dev server is running** (e.g. `npm run dev` on port 3000).
+
+4. **Test the endpoint:**
+   ```bash
+   curl -X POST http://localhost:3000/api/eval/run \
+     -H "Content-Type: application/json" \
+     -d '{"inputs":{"user":"hello"}}'
+   ```
+   You should get JSON (not 404).
+
+5. **Re-run the audit:**
+   ```bash
+   npx @fail-kit/cli run --endpoint http://localhost:3000/api/eval/run
+   ```
+
+If you use **Pages Router**, use `pages/api/eval/run.ts` instead and export a default request handler that accepts POST and forwards `inputs.user` as the prompt.
+
+---
+
 ### Timeout errors
 
 **Problem:** Tests timeout with `ETIMEDOUT` or `ESOCKETTIMEDOUT`
