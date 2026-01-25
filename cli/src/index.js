@@ -535,6 +535,14 @@ program
     const report = generateReport(auditResults, format);
     fs.writeFileSync(outputPath, report);
     
+    // When format is json, also generate HTML alongside so users get both without a second command
+    let htmlPath = null;
+    if (format === 'json') {
+      htmlPath = outputPath.replace(/\.json$/i, '.html');
+      const htmlReport = generateReport(auditResults, 'dashboard');
+      fs.writeFileSync(htmlPath, htmlReport);
+    }
+    
     // Summary
     if (!ciMode) {
       console.log(chalk.bold('\n' + '═'.repeat(50)));
@@ -543,8 +551,9 @@ program
     console.log(chalk.green('Passed:'), passed);
     console.log(chalk.red('Failed:'), failed);
       console.log(chalk.dim('\nReport saved to:'), outputPath);
-      
-      if (format !== 'html') {
+      if (htmlPath) {
+        console.log(chalk.dim('HTML report:'), htmlPath);
+      } else if (format !== 'html' && format !== 'dashboard') {
         console.log(chalk.dim('Generate HTML report:'), chalk.bold(`fail-audit report ${path.basename(outputPath)}`));
       }
     console.log('');
