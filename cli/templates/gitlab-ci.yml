@@ -42,7 +42,7 @@ cache:
       
       # Generate HTML dashboard
       fail-audit report audit-results.json \
-        --format html \
+        --format dashboard \
         --output audit-dashboard.html
       
       # Generate JUnit report for GitLab integration

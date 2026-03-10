@@ -103,7 +103,7 @@ fail-kit:report:
   script:
     - npx fail-audit report
         --input report.json
-        --format html
+        --format dashboard
         --output fail-kit-report.html
   artifacts:
     paths:

@@ -3,7 +3,7 @@
  * Central export for all report formats.
  */
 
-const { generateHtmlReport, getSeverity, getDocLink, getRemediation } = require('./html');
+const { getSeverity, getDocLink, getRemediation } = require('./html');
 const { generateJunitReport, generateMinimalJunitReport } = require('./junit');
 const { generateMarkdownReport, generateCompactMarkdownReport, generateOneLiner } = require('./markdown');
 const { generateDashboard } = require('./dashboard');
@@ -19,8 +19,6 @@ const { generateReactDashboard, gatherProvenance, loadBaseline } = require('./re
 function generateReport(results, format, options = {}) {
   switch (format.toLowerCase()) {
     case 'html':
-      return generateHtmlReport(results);
-    
     case 'dashboard':
       return generateDashboard(results);
     
@@ -75,8 +73,7 @@ function getExtension(format) {
 module.exports = {
   generateReport,
   getExtension,
-  // HTML exports
-  generateHtmlReport,
+  // Shared helpers (from html.js)
   getSeverity,
   getDocLink,
   getRemediation,

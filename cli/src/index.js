@@ -574,7 +574,7 @@ program
 program
   .command('report <results-file>')
   .description('Generate a report from audit results')
-  .option('-f, --format <format>', 'Output format: html, markdown, junit', 'html')
+  .option('-f, --format <format>', 'Output format: dashboard, html, markdown, junit', 'dashboard')
   .option('-o, --output <file>', 'Output file path')
   .action((resultsFile, options) => {
     console.log(chalk.bold.cyan('\nF.A.I.L. Kit - Generating Report\n'));
@@ -598,8 +598,8 @@ program
     fs.writeFileSync(outputPath, report);
     
     console.log(chalk.green('✓ Report generated:'), outputPath);
-    if (format === 'html') {
-    console.log(chalk.dim('Open in browser to view.\n'));
+    if (format === 'html' || format === 'dashboard') {
+      console.log(chalk.dim('Open in browser to view.\n'));
     } else {
       console.log('');
     }

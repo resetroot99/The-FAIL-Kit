@@ -65,7 +65,7 @@ jobs:
           fail-audit run --format json --output audit-results.json --ci || echo "AUDIT_FAILED=true" >> $GITHUB_OUTPUT
           
           # Generate HTML dashboard
-          fail-audit report audit-results.json --format html --output audit-dashboard.html
+          fail-audit report audit-results.json --format dashboard --output audit-dashboard.html
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
