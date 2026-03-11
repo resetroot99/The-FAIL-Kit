@@ -6,7 +6,7 @@
 
 **The forensic code integrity auditor for AI-generated projects.**
 
-FLAW scans your codebase and tells you what's actually broken, what's fake, and what's missing — in plain English. Built for vibe coders who ship fast and need to know what's real.
+FLAW scans your codebase and tells you what's actually broken, what's fake, and what's missing — in plain English. Built for developers who ship fast and need to know what's real.
 
 Part of the **[FAIL Kit](https://github.com/resetroot99/The-FAIL-Kit)** ecosystem.
 

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "flaw-audit"
 version = "2.0.0"
-description = "FLAW — Flow Logic Audit Watch. Code auditor for AI-generated and vibe-coded projects."
+description = "FLAW — Flow Logic Audit Watch. Code auditor for AI-generated projects."
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.8"
@@ -13,7 +13,7 @@ authors = [
     {name = "resetroot99"},
     {name = "ajakvani"},
 ]
-keywords = ["audit", "code-quality", "vibe-coding", "ai-code-review", "static-analysis"]
+keywords = ["audit", "code-quality", "ai-code-review", "static-analysis"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console",

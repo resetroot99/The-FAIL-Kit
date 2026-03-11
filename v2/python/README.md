@@ -2,7 +2,7 @@
 
 **FLAW — Flow Logic Audit Watch**
 
-Code integrity auditor for AI-generated and vibe-coded projects. Scans your codebase and tells you what's broken, what's fake, and what's missing.
+Code integrity auditor for AI-generated projects. Scans your codebase and tells you what's broken, what's fake, and what's missing.
 
 This is the Python wrapper for the FLAW engine. Requires Node.js >= 18.
 

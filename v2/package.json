@@ -4,7 +4,7 @@
   "description": "FLAW — Flow Logic Audit Watch. Code integrity auditor for AI-generated projects.",
   "type": "module",
   "bin": {
-    "flaw": "./dist/index.js"
+    "flaw": "dist/index.js"
   },
   "files": [
     "dist/",
@@ -21,7 +21,14 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "keywords": ["audit", "code-quality", "vibe-coding", "ai-code-review", "static-analysis", "flaw", "code-audit"],
+  "keywords": [
+    "audit",
+    "code-quality",
+    "ai-code-review",
+    "static-analysis",
+    "flaw",
+    "code-audit"
+  ],
   "license": "MIT",
   "author": "resetroot99",
   "contributors": [
@@ -30,7 +37,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/resetroot99/FLAW.git"
+    "url": "git+https://github.com/resetroot99/FLAW.git"
   },
   "homepage": "https://github.com/resetroot99/FLAW",
   "bugs": {
