@@ -1,4 +1,4 @@
-# flaw-audit
+# flaw-kit
 
 **FLAW — Flow Logic Audit Watch**
 
@@ -9,7 +9,7 @@ This is the Python wrapper for the FLAW engine. Requires Node.js >= 18.
 ## Install
 
 ```bash
-pip install flaw-audit
+pip install flaw-kit
 ```
 
 ## Usage

@@ -1,5 +1,5 @@
 {
-  "name": "flaw-audit",
+  "name": "flaw-kit",
   "version": "2.0.0",
   "description": "FLAW — Flow Logic Audit Watch. Code integrity auditor for AI-generated projects.",
   "type": "module",

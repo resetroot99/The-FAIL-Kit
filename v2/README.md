@@ -31,13 +31,13 @@ Standard linters (ESLint, Prettier) check syntax. Standard type checkers (TypeSc
 
 ```bash
 # npm (recommended)
-npm install -g flaw-audit
+npm install -g flaw-kit
 
 # or run directly
-npx flaw-audit
+npx flaw-kit
 
 # Python wrapper (requires Node.js)
-pip install flaw-audit
+pip install flaw-kit
 ```
 
 Requires Node.js >= 18.

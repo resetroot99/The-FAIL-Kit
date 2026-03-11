@@ -59,11 +59,11 @@ def main():
         # Try npx fallback
         npx = shutil.which("npx")
         if npx:
-            result = subprocess.run([npx, "flaw-audit"] + sys.argv[1:])
+            result = subprocess.run([npx, "flaw-kit"] + sys.argv[1:])
             sys.exit(result.returncode)
 
         print("\033[31mError: FLAW engine not found.\033[0m")
-        print("Install via npm: npm install -g flaw-audit")
+        print("Install via npm: npm install -g flaw-kit")
         sys.exit(1)
 
 

@@ -3,7 +3,7 @@ requires = ["setuptools>=68.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "flaw-audit"
+name = "flaw-kit"
 version = "2.0.0"
 description = "FLAW — Flow Logic Audit Watch. Code auditor for AI-generated projects."
 readme = "README.md"
