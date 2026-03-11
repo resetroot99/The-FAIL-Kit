@@ -14,6 +14,47 @@
 
 > **"Because your agent is a fluent liar and it's time for an interrogation."**
 
+---
+
+## 🆕 NEW: FLAW — Flow Logic Audit Watch
+
+**The forensic code integrity auditor for AI-generated projects.** FLAW scans your codebase and tells you what's actually broken, what's fake, and what's missing — in plain English.
+
+```bash
+# Install
+npm install -g flaw-kit
+
+# Scan any project
+npx flaw-kit .
+
+# Interactive mode with /commands
+npx flaw-kit
+```
+
+```
+  ╺╸ FLAW v2.0.0
+
+  ✓ Scanned my-app in 174ms
+    23/100 · 0C 33H 14M · 49 issues · severe smell
+```
+
+**12 static analyzers** · **100-point scoring** across 10 categories · **AI Smell Index** · **6 Launch Gates** · Interactive REPL with 16 /commands · HTML reports · Production roadmap · Purpose alignment plan · Agent rules generator · Fix guides · AI-ready prompts
+
+| What it catches | Example |
+|----------------|---------|
+| Dead UI controls | Buttons with `onClick` that call nothing |
+| Phantom endpoints | Frontend calls APIs that don't exist |
+| Silent failures | `catch(e) {}` swallowing every error |
+| Fake flows | Hardcoded responses pretending to be logic |
+| Auth gaps | Routes missing authentication checks |
+| Schema drift | Frontend expects fields the backend doesn't send |
+| Mock leakage | Test/seed data in production paths |
+| Stub code | TODO/FIXME/placeholder implementations |
+
+Also available on PyPI: `pip install flaw-kit`
+
+**[→ Full FLAW documentation](v2/README.md)** · **[→ GitHub repo](https://github.com/resetroot99/FLAW)**
+
 ## License
 
 The F.A.I.L. Kit is **fully open source** under the MIT License. This includes:
@@ -862,6 +903,16 @@ See [AUDIT_RUNBOOK.md](AUDIT_RUNBOOK.md) for guidance on interpreting results.
 
 ## Version History
 
+**v2.0.0 — FLAW** (March 11, 2026)
+- **FLAW — Flow Logic Audit Watch** — forensic code integrity auditor for AI-generated projects
+- 12 static analyzers, 100-point scoring, AI Smell Index, 6 Launch Gates
+- Interactive REPL with 16 /commands, tab completion, session caching
+- HTML reports with forensic panel, promise vs reality, purpose alignment
+- Production roadmap, agent rules generator, fix guides, AI prompts
+- Cross-boundary wiring analysis and dependency graph
+- Published as `flaw-kit` on npm and PyPI
+- Zero runtime deps beyond `glob` — all regex-based, no AST, no network calls
+
 **v1.2.0** (January 2, 2026)
 - **Automatic test case generation** - `fail-audit scan` command
 - Codebase scanner detects endpoints, agent functions, tool calls, LLM invocations
@@ -899,4 +950,4 @@ See [AUDIT_RUNBOOK.md](AUDIT_RUNBOOK.md) for guidance on interpreting results.
 
 ---
 
-*The F.A.I.L. Kit v1.0 | [GitHub](https://github.com/resetroot99/The-FAIL-Kit) | [Ali's Book of Fail](https://github.com/resetroot99/Alis-book-of-fail) | [Contact](mailto:ali@jakvan.io)*
+*The F.A.I.L. Kit v2.0 | [FLAW](https://github.com/resetroot99/FLAW) | [GitHub](https://github.com/resetroot99/The-FAIL-Kit) | [Ali's Book of Fail](https://github.com/resetroot99/Alis-book-of-fail) | [Contact](mailto:ali@jakvan.io)*
